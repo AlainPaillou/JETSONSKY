@@ -33,5 +33,5 @@ JetsonSky can also be used on a PC Windows 10/11 64b system. The PC must have a 
 For those who do not have a ZWO camera, i will provide soon a modified version of JetsonSky which will be able to manage videos (no camera required).
 
 IMPORTANT license information :
-This softawre and any part of this software are free to use for personal use.
-This softawre and any part of this software are NOT free to use for professional or commercial use.
+This softawre and any part of this software are free of use for personal use.
+This softawre and any part of this software are NOT free of use for any kind of professional or commercial use.
