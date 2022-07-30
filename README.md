@@ -1,6 +1,11 @@
 # JETSONSKY
 
-UPDATE : PC version is uploaded. See below.
+NEW UPDATE : Video treatment software (no camera control) is uploaded. 2 versions :
+- in the main directory : Jetson version
+- in Windows directory : Windows 10/11 version
+
+
+UPDATE : PC version (with camera control) is uploaded. See below.
 
 
 This program is mainly dedicated to astronomy live video with live treatments.
