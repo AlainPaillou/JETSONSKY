@@ -8,8 +8,8 @@ You will need to install CUDA :
 
 https://developer.nvidia.com/cuda-downloads?target_os=Windows&target_arch=x86_64
 
-You will also need Microsoft C compiler cl.exe : you can install Microsoft Visual studio with C/C++ to get this compiler (it's free for personal use). Dont forget to add cl.exe PATH to the windows environment variables !
-
+You will also need Microsoft C compiler cl.exe : you can install Microsoft Visual studio with C/C++ to get this compiler (it's free for personal use). 
+Dont forget to add cl.exe PATH to the windows environment variables !
 
 You will need Python 3 (i recommend Python 3.10 ; DO NOT USE PYTHON 3.11 beta) :
 
