@@ -32,6 +32,10 @@ import pycuda.cumath
 #Dev_system = "PC Windows"
 Dev_system = "Jetson Linux"
 
+# Choose the size of the fonts in the Main Window - It depends of your system - can be set from 5 to 7
+MainWindowFontSize = 5
+
+
 # Set the path and the name of the video you want to work with
 Video_Test ='/home/JetsonSky/Videos/Your_Video.avi'
 
@@ -3752,7 +3756,7 @@ w,h=1850,1060
 fenetre_principale.geometry("%dx%d+0+0" % (w, h))
 fenetre_principale.protocol("WM_DELETE_WINDOW", quitter)
 default_font = nametofont("TkDefaultFont")
-default_font.configure(size=6)
+default_font.configure(size=MainWindowFontSize)
 fenetre_principale.title(titre)
 
 # Création cadre général
