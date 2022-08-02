@@ -1,5 +1,7 @@
 # JETSONSKY
 
+2022-08-02 UPDATE : upload of a PDF file to explain options you can set in the main window of JetsonSky
+
 2022-08-01 UPDATE : New Linux and Windows versions released (with camera control). Version 12_02
 Changes :
 - added a variable to set Main Window fonts size (from 5 to 7, depending of your system.
