@@ -1,5 +1,20 @@
 # JETSONSKY
 
+2022-08-07 UPDATE : ABOUT ZWO cameras
+
+If you use a Windows 10/11 PC, you will need ZWO ASI camera driver installed on your computer (as i said previously, see below).
+
+If you use Linux system (such as Nvidia Jetson SBC or x64 system under Linux), yu won't need ZWO ASI camera driver. You will need ZWO SDK for Linux which is in the Lib directory.
+You will alsso need to instal asi.rules (which is in Lib directory). To install those rules, just do :
+
+$ sudo install asi.rules /lib/udev/rules.d
+or
+$ sudo install asi.rules /etc/udev/rules.d
+
+Just check where the rules are to see which version of the command you need.
+
+
+
 2022-08-02 UPDATE : upload of a PDF file to explain options you can set in the main window of JetsonSky
 
 2022-08-01 UPDATE : New Linux and Windows versions released (with camera control). Version 12_02
