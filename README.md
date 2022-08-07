@@ -1,6 +1,6 @@
 # JETSONSKY
 
-2022-08-07 UPDATE : ABOUT ZWO cameras
+#### 2022-08-07 UPDATE : ABOUT ZWO cameras
 
 If you use a Windows 10/11 PC, you will need ZWO ASI camera driver installed on your computer (as i said previously, see below).
 
@@ -13,11 +13,9 @@ $ sudo install asi.rules /etc/udev/rules.d
 
 Just check where the rules are to see which version of the command you need.
 
+#### 2022-08-02 UPDATE : upload of a PDF file to explain options you can set in the main window of JetsonSky
 
-
-2022-08-02 UPDATE : upload of a PDF file to explain options you can set in the main window of JetsonSky
-
-2022-08-01 UPDATE : New Linux and Windows versions released (with camera control). Version 12_02
+#### 2022-08-01 UPDATE : New Linux and Windows versions released (with camera control). Version 12_02
 Changes :
 - added a variable to set Main Window fonts size (from 5 to 7, depending of your system.
 Set the good value in line 41 in the program
@@ -25,13 +23,11 @@ Set the good value in line 41 in the program
 - added support of ZWO ASI224MC camera
 - added support of ZWO ASI290MC and ASI290MM camera
 
-
-2022-07-30 UPDATE : Video treatment software (no camera control) is uploaded. 2 versions :
+#### 2022-07-30 UPDATE : Video treatment software (no camera control) is uploaded. 2 versions :
 - in the main directory : Jetson version
 - in Windows directory : Windows 10/11 version
 
-
-2022-07-29 UPDATE : PC version (with camera control) is uploaded. See below.
+#### 2022-07-29 UPDATE : PC version (with camera control) is uploaded. See below.
 
 *****************************************************************************
 
