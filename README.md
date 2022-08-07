@@ -8,7 +8,9 @@ If you use Linux system (such as Nvidia Jetson SBC or x64 system under Linux), y
 You will alsso need to instal asi.rules (which is in Lib directory). To install those rules, just do :
 
 $ sudo install asi.rules /lib/udev/rules.d
+
 or
+
 $ sudo install asi.rules /etc/udev/rules.d
 
 Just check where the rules are to see which version of the command you need.
