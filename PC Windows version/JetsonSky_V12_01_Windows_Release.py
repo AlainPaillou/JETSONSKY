@@ -66,6 +66,7 @@ else :
 
 # Titre programme
 titre = "JetsonSky V12.01 Windows release - CUDA / OPENCV - Copyright Alain PAILLOU 2018-2022"
+flag_noir_blanc = 0 # Set if colour or monochrome video : 0 is colour video   1 is monochrome video
 
 # Setting the Images & videos quality
 flag_HQ = 0 # si 1 : sauvegarde HQ non compressée    si 0 : sauvegarde LQ compressée
