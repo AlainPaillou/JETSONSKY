@@ -48,4 +48,6 @@ https://astronomy-imaging-camera.com/software-drivers
 
 The rest is the same as Jetson version. You will have to create Images and Videos and set the good path in the main program.
 
+Don't forget to create Lib directory and put in this library the 
+
 If everything is ok, the software will run.
