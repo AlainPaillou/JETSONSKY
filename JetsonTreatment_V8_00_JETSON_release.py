@@ -38,6 +38,7 @@ MainWindowFontSize = 5
 
 # Set the path and the name of the video you want to work with
 Video_Test ='/home/JetsonSky/Videos/Your_Video.avi'
+flag_noir_blanc = 0 # Set if colour or monochrome video : 0 is colour video   1 is monochrome video
 
 # Choose the directories to save video treatments and images captures
 image_path = '/home/JetsonSky/Images'
