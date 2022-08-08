@@ -56,7 +56,7 @@ NOTE : to install PyCuda, here is a command line you should try (many thanks to 
 sudo pip3 install --global-option=build_ext --global-option="-I/usr/local/cuda/include" --global-option="-L/usr/local/cuda/lib64" pycuda
 
 
-In the Lib directroy, you will find ZWO drivers for linux (ArmV8 for ZWO SDK for linux).
+In the Lib directroy, you will find ZWO drivers for linux (ZWO SDK ArmV8 for linux).
 
 In the zwoasi directory, you will find a Python gateway to use ZWO camera library.
 
