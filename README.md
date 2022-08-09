@@ -1,5 +1,7 @@
 # JETSONSKY
 
+**** 2022-08-09 UPDATE : New libraries from ZWO SDK (V1.26) uploaded for both Linux & Windows versions
+
 **** 2022-08-07 UPDATE : ABOUT ZWO cameras
 
 If you use a Windows 10/11 PC, you will need ZWO ASI camera driver installed on your computer (as i said previously, see below).
