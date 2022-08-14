@@ -1949,8 +1949,17 @@ class acquisition(Thread) :
                             image_tmp=cv2.cvtColor(image_tmp, type_debayer)                       
                         if flag_nouvelle_resolution == True :
                             calque_stars = np.empty_like(image_tmp)
+                            calque_stars[:,:,0] = 0
+                            calque_stars[:,:,1] = 0
+                            calque_stars[:,:,2] = 0                            
                             calque_satellites = np.empty_like(image_tmp)
+                            calque_satellites[:,:,0] = 0
+                            calque_satellites[:,:,1] = 0
+                            calque_satellites[:,:,2] = 0                            
                             calque_TIP = np.empty_like(image_tmp)
+                            calque_TIP[:,:,0] = 0
+                            calque_TIP[:,:,1] = 0
+                            calque_TIP[:,:,2] = 0                            
                             flag_nouvelle_resolution = False
                         if flag_sub_dark == True and dispo_dark == 'Dark disponible' :
                             image_tmp = cv2.subtract(image_tmp,Master_Dark)
