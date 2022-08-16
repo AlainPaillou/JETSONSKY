@@ -1,5 +1,7 @@
 # JETSONSKY
 
+**** 2022-08-16 UPDATE : New version of JetsonSky for both Linux & Windows. Mainly bugs fix for mono camera treatments. Version is now 14.05
+
 **** 2022-08-14 UPDATE : New version of JetsonSky for both Linux & Windows. Small changes (bugs fix). Version is now 14.03
 
 **** 2022-08-09 UPDATE : New libraries from ZWO SDK (V1.26) uploaded for both Linux & Windows versions
