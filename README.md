@@ -1,6 +1,9 @@
 # JETSONSKY
 
-**** 2022-08-16 UPDATE : New version of JetsonSky for both Linux & Windows. Mainly bugs fix for mono camera treatments. Version is now 14.05
+
+**** 2022-08-17 UPDATE : New version of JetsonSky for both Linux & Windows. bugs fixed for mono camera treatments. Version is now 14.06
+
+**** 2022-08-16 UPDATE : New version of JetsonSky for both Linux & Windows. Mainly bugs fixed for mono camera treatments. Version is now 14.05
 
 **** 2022-08-14 UPDATE : New version of JetsonSky for both Linux & Windows. Small changes (bugs fix). Version is now 14.03
 
