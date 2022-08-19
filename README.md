@@ -1,5 +1,12 @@
 # JETSONSKY
 
+**** 2022-08-19 UPDATE : I made a minor change in JetsonSky (remain V14_06) due to Pillow versions.
+For older Pillow version, PIL.Image.Resampling.NEAREST (newest version) must be replaced by PIL.Image.NEAREST (old versions).
+You can choose the good version in the software lines 2040-2044.
+I have also tested JetsonSky successfully with Jetson Xavier NX.
+
+If you use a Jetson Nano 2GB, you could have some memory issues. Maybe you will have to create a SWAP file.
+
 
 **** 2022-08-17 UPDATE : New version of JetsonSky for both Linux & Windows. bugs fixed for mono camera treatments. Version is now 14.06
 
