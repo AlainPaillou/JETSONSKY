@@ -2037,7 +2037,11 @@ def refresh() :
             if flag_cap_video == True :
                 video_capture()
             if res_cam_x > cam_displ_x and flag_full_res == 0 :
-                cadre_image.im=img_cam.resize((cam_displ_x,cam_displ_y), PIL.Image.Resampling.NEAREST)
+
+#               Depending of PILLWO version, use one off those 2 line
+#                cadre_image.im=img_cam.resize((cam_displ_x,cam_displ_y), PIL.Image.Resampling.NEAREST) # use this line for newest Pillow version
+                cadre_image.im=img_cam.resize((cam_displ_x,cam_displ_y), PIL.Image.NEAREST) # use this line for old Pillow version
+                
             else :
                 cadre_image.im = img_cam
             if flag_cross == True :
