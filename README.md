@@ -1,5 +1,7 @@
 # JETSONSKY
 
+**** 2022-08-21 UPDATE : minor fug fixes. The Pillow version do not need anymore to be set manually in the software. Version is now V14_07 for both Linux and Windows versions
+
 **** 2022-08-19 UPDATE : I made a minor change in JetsonSky (remain V14_06) due to Pillow versions.
 For older Pillow version, PIL.Image.Resampling.NEAREST (newest version) must be replaced by PIL.Image.NEAREST (old versions).
 You can choose the good version in the software lines 2040-2044.
