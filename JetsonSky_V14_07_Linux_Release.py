@@ -3432,9 +3432,9 @@ def application_filtrage() :
             if flag_DEMO == 1 :
                 image_traitee[0:height,0:width//2] = image_brute[0:height,0:width//2]
                 
-        stop_time_test = time.perf_counter()
-        time_exec_test= int((stop_time_test-start_time_test)*1000)
-        labelInfo1.config(text = str(time_exec_test) + " ms                 ")
+#        stop_time_test = time.perf_counter()
+#        time_exec_test= int((stop_time_test-start_time_test)*1000)
+#        labelInfo1.config(text = str(time_exec_test) + " ms                 ")
 
     else :
         image_traitee = image_brute
