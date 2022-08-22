@@ -1,6 +1,6 @@
 # JETSONSKY
 
-**** 2022-08-22 UPDATE : I have uploaded the latest version of zwoasi library (Pyhon gateway to ZWO SDK library) for both Linux and Windows systems. Many thanks to Steve Marple for this great library.
+**** 2022-08-22 UPDATE : I have uploaded the latest version of zwoasi library (Pyhon gateway to ZWO SDK library) for both Linux and Windows systems. Many thanks to Steve Marple for this great library. The old version of the library is in the Old_version directory.
 
 
 **** 2022-08-21 UPDATE : minor bug fixes. The Pillow version do not need anymore to be set manually in the software. Version is now V14_07 for both Linux and Windows versions
