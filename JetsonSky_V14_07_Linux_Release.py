@@ -2223,8 +2223,7 @@ def application_filtrage() :
            Im1fsdnOK,Im2fsdnOK,image_traiteefsdn1,image_traiteefsdn2,old_image,val_reds,val_greens,val_blues,trsf_r,trsf_g,trsf_b,\
            flag_dyn_AADP,Corr_GS,calque_TIP,azimut,hauteur,flag_type_clahe
     
-    imag_brute = np.empty_like(image_brute)
-    imag_brute = image_brute
+    imag_brute = image_brute.copy()
 
     if flag_filtrage_ON == True :
         image_traitee = imag_brute        
@@ -2649,7 +2648,6 @@ def application_filtrage() :
                    np.intc(flag_sharpen_soft1), np.intc(flag_unsharp_mask), block=(nb_ThreadsX,nb_ThreadsY,1), grid=(nb_blocksX,nb_blocksY))
                 
                 drv.memcpy_dtoh(image_traitee, r_gpu)
-#                image_traitee = res_r
                 r_gpu.free()
                 img_r_gpu.free()
 
@@ -2663,9 +2661,6 @@ def application_filtrage() :
         if flag_noir_blanc == 0 and flag_colour_camera == True:
             # traitement image couleur
             height,width,layers = imag_brute.shape
-            
-#            if flag_DEMO == 1 :
-#                image_initiale = imag_brute[0:height,0:width//2]
                 
             nb_pixels = height * width
             nb_blocksX = (width // nb_ThreadsX) + 1
