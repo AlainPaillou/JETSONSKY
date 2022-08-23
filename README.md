@@ -14,7 +14,7 @@ I have also tested JetsonSky successfully with Jetson Xavier NX.
 
 If you use a Jetson Nano 2GB, you could have some memory issues. Maybe you will have to create a SWAP file.
 
-I really recommend at least a Jetson Xavier NX tobrun my software. Jetson Nano will be to weak.
+I really recommend at least a Jetson Xavier NX to run my software. Jetson Nano will be a bit weak with hires cameras.
 
 
 **** 2022-08-17 UPDATE : New version of JetsonSky for both Linux & Windows. bugs fixed for mono camera treatments. Version is now 14.06
