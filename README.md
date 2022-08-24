@@ -2,6 +2,8 @@
 
 **** 2022-08-24 UPDATE :New version released (V14_09) for Linux and Windows. Some bugs fixed and code optimization to improve live treatments speed. Did not have time to make deep tests so some bugs may occur. Old version (V14_07) still here for download if necessary.
 
+For Windows version only : V14_10 released with the ZWO EFWmini 5 positions control (electrical filter wheel).
+
 **** 2022-08-22 UPDATE : I have uploaded the latest version of zwoasi library (Pyhon gateway to ZWO SDK library) for both Linux and Windows systems. Many thanks to Steve Marple for this great library. The old version of the library is in the Old_version directory.
 
 I have also fixed a bug with monochrome video DEMO. Now it works. The version is still V14_07 for Linux and Windows systems.
