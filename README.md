@@ -1,6 +1,9 @@
 # JETSONSKY
 
-**** 2022-08-24 UPDATE :New version released (V14_09) for Linux and Windows. Some bugs fixed and code optimization to improve live treatments speed. Did not have time to make deep tests so some bugs may occur. Old version (V14_07) still here for download if necessary.
+**** 2022-09-11 UPDATE : I have changed the organisation of the directory. Now, we have 1 directory for Linux ArmV8 version and 1 directory for Windows version.
+In each directory, you will find all the files and i have added 1 zip file with all the files and directories. It will be more simple to download the needed files.
+
+**** 2022-08-24 UPDATE : New version released (V14_09) for Linux and Windows. Some bugs fixed and code optimization to improve live treatments speed. Did not have time to make deep tests so some bugs may occur. Old version (V14_07) still here for download if necessary.
 
 For Windows version only : V14_10 released with the ZWO EFWmini 5 positions control (electrical filter wheel).
 
