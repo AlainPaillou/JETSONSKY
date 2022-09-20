@@ -1,6 +1,6 @@
 # JETSONSKY
 
-**** 2022-09-20 UPDATE :new versions of JetsonSky and Video treatment only software for both Linux and Windows systems. It is beta versions (V14_13).
+**** 2022-09-20 UPDATE : new versions of JetsonSky and Video treatment only software for both Linux and Windows systems. It is beta versions (V14_13).
 Changes :
 - satellite detection & tracking have been modified
 - contraste CLAHE for night video have been modified
