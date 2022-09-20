@@ -1,5 +1,23 @@
 # JETSONSKY
 
+**** 2022-09-20 UPDATE :new versions of JetsonSky and Video treatment only software for both Linux and Windows systems. It is beta versions (V14_13).
+Changes :
+- satellite detection & tracking have been modified
+- contraste CLAHE for night video have been modified
+- added support for ZWO ASI678MC, ASI662MC, ASI482MC, ASI462MC, ASI385MC cameras
+
+So, supported cameras are :
+- ASI178MM & ASI178MC
+- ASI224MC
+- ASI385MC
+- ASI462MC
+- ASI482MC, ASI485MC, ASI585MC
+- ASI662MC
+- ASI678MC
+
+Those new files ARE NOT in the ZIP files.
+
+
 **** 2022-09-11 UPDATE : I have changed the organisation of the directory. Now, we have 1 directory for Linux ArmV8 version and 1 directory for Windows version.
 In each directory, you will find all the files and i have added 1 zip file with all the files and directories. It will be more simple to download the needed files.
 
