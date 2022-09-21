@@ -53,7 +53,7 @@ if Dev_system == "Jetson Linux" :
     video_path= '/home/JetsonSky/Videos'
 
     # Path to librairies ZWO Jetson sbc
-    sys.path.insert(0, "/home/Python/JetsonSky/Lib")
+    sys.path.insert(0, "/home/JetsonSky/Lib")
     env_filename_camera = '/home/JetsonSky/Lib/libASICamera2.so'
     env_filename_efw = '/home/JetsonSky/Lib/libEFWFilter.so'
     
@@ -5114,7 +5114,7 @@ cadre_image.place(anchor="w", x=60,y=cam_displ_y/2+5)
 
 
 init_camera()
-init_efw()
+#init_efw()
 
 echelle50.set(val_USB)
 echelle14.set(val_red)
