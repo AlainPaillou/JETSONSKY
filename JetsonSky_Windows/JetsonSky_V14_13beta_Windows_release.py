@@ -3580,7 +3580,7 @@ def application_filtrage() :
             calque_TIP[:,:,1] = 0
             calque_TIP[:,:,2] = 0
         else :
-            calque_TIP = 0
+            calque_TIP [:,:] = 0
         font = cv2.FONT_HERSHEY_SIMPLEX
         cv2.putText(calque_TIP, Date_hour_image, (pos,pos), font, size, (255, 255, 255), 1, cv2.LINE_AA)
 
@@ -3604,7 +3604,7 @@ def application_filtrage() :
                 calque_TIP[:,:,1] = 0
                 calque_TIP[:,:,2] = 0
             else :
-                calque_TIP = 0
+                calque_TIP [:,:] = 0
         font = cv2.FONT_HERSHEY_SIMPLEX
         mount_info()
         posX = width // 2 -100
