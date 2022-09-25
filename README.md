@@ -1,5 +1,21 @@
 # JETSONSKY
 
+**** 2022-09-25 UPDATE : new versions of JetsonSky for both Linux and Windows systems. New version is V14_16.
+
+Added some cameras. Supported cameras :
+- ASI178MC, ASI178MM, ASI178MM Pro
+- ASI224MC
+- ASI290MC, ASI290MM
+- ASI294MC, ASI294MM, ASI294MC Pro, ASI294MM Pro
+- ASI385MC
+- ASI462MC
+- ASI482MC
+- ASI485MC, ASI585MC
+- ASI662MC
+- ASI678MC
+- ASI1600MC, ASI1600MM
+
+
 **** 2022-09-20 UPDATE : new versions of JetsonSky and Video treatment only software for both Linux and Windows systems. It is beta versions (V14_13).
 Changes :
 - satellite detection & tracking have been modified
