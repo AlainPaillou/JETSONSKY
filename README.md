@@ -1,5 +1,12 @@
 # JETSONSKY
 
+**** 2022-10-21 UPDATE : new versions of JetsonSky for both Linux and Windows systems. New version is V14_19.
+
+Added a "ghost reducer" when using adaptative absorber denoise filter (AADF). Just check or uncheck the checkbox "ghost reducer".
+
+Added support for ZWO ASI533MM/MC and ASI533MM/MC Pro (i did not test this support).
+
+
 **** 2022-09-25 UPDATE : new versions of JetsonSky for both Linux and Windows systems. New version is V14_16.
 
 Added some cameras. Supported cameras :
