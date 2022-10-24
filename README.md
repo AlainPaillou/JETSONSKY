@@ -1,5 +1,7 @@
 # JETSONSKY
 
+**** 2022-10-24 UPDATE : Issue solved in V14_19. Version stay the same. Need to upload again V14_19.
+
 **** 2022-10-21 UPDATE : new versions of JetsonSky for both Linux and Windows systems. New version is V14_19.
 
 Added a "ghost reducer" when using adaptative absorber denoise filter (AADF). Just check or uncheck the checkbox "ghost reducer".
