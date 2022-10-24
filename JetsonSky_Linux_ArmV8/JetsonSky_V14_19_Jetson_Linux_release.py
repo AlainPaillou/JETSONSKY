@@ -2444,7 +2444,7 @@ def application_filtrage() :
            flag_cap_pic,flag_traitement,val_contrast_CLAHE,flag_histogram_phitheta,image_traitee,flag_front,Date_hour_image,\
            val_heq2,val_SGR,val_NGB,val_AGR,flag_filtre_work,flag_AmpSoft,val_ampl,grad_vignet,compteur_FSDN,flag_SAT,val_SAT,flag_NB_estime,\
            Im1fsdnOK,Im2fsdnOK,image_traiteefsdn1,image_traiteefsdn2,old_image,val_reds,val_greens,val_blues,trsf_r,trsf_g,trsf_b,\
-           flag_dyn_AADP,Corr_GS,calque_TIP,azimut,hauteur,flag_type_clahe
+           flag_dyn_AADP,Corr_GS,calque_TIP,azimut,hauteur,flag_type_clahe,flag_ghost_reducer
     
     imag_brute = image_brute.copy()
 
@@ -2506,7 +2506,7 @@ def application_filtrage() :
                     drv.memcpy_htod(img_r_gpu2, res_r2)
 
                     adaptative_absorber_denoise_Mono(r_gpu, img_r_gpu1, img_r_gpu2,\
-                                         np.int_(width), np.int_(height),np.intc(flag_dyn_AADP),block=(nb_ThreadsX,nb_ThreadsY,1), grid=(nb_blocksX,nb_blocksY))
+                                         np.int_(width), np.int_(height),np.intc(flag_dyn_AADP),np.intc(flag_ghost_reducer),block=(nb_ThreadsX,nb_ThreadsY,1), grid=(nb_blocksX,nb_blocksY))
 
                 drv.memcpy_dtoh(imag_brute, r_gpu)
                 r_gpu.free()
@@ -2931,7 +2931,7 @@ def application_filtrage() :
                     drv.memcpy_htod(img_r_gpu2, res_r2)
                     
                     adaptative_absorber_denoise_Color(r_gpu, g_gpu, b_gpu, img_r_gpu1, img_g_gpu1, img_b_gpu1, img_r_gpu2, img_g_gpu2, img_b_gpu2,\
-                                         np.int_(width), np.int_(height),np.intc(flag_dyn_AADP),block=(nb_ThreadsX,nb_ThreadsY,1), grid=(nb_blocksX,nb_blocksY))
+                                         np.int_(width), np.int_(height),np.intc(flag_dyn_AADP),np.intc(flag_ghost_reducer),block=(nb_ThreadsX,nb_ThreadsY,1), grid=(nb_blocksX,nb_blocksY))
 
                     drv.memcpy_dtoh(res_r1, r_gpu)
                     drv.memcpy_dtoh(res_g1, g_gpu)
