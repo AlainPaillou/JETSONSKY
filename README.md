@@ -1,5 +1,15 @@
 # JETSONSKY
 
+**** 2022-11-03 UPDATE : New version of JetsonSky released (V14_20beta) :
+Windows and Linux programs are now the same. Il will modify the directories structure later in order to have only 1 directory for both versions.
+
+Changes :
+- some improvements to speed up the software
+- modified the ghost reduction with a slider to choose the reduction. Ghost reduction will be only active with Low dynamic AADF noise removal filter
+
+This is a beta version because i did not have to test everything.
+
+
 **** 2022-10-24 UPDATE : Issue solved in V14_19. Version stay the same. Need to upload again V14_19.
 
 **** 2022-10-21 UPDATE : new versions of JetsonSky for both Linux and Windows systems. New version is V14_19.
