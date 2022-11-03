@@ -7,7 +7,7 @@ Changes :
 - some improvements to speed up the software
 - modified the ghost reduction with a slider to choose the reduction. Ghost reduction will be only active with Low dynamic AADF noise removal filter
 
-This is a beta version because i did not have to test everything.
+This is a beta version because i did not have enough time to test everything.
 
 
 **** 2022-10-24 UPDATE : Issue solved in V14_19. Version stay the same. Need to upload again V14_19.
