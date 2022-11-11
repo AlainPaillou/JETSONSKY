@@ -1,0 +1,10 @@
+The Lib directory contains the ARMV8 version of ZWO library
+
+If you want to get an other version of the library, you will have to download the ZWO Linux SDK and get the version which is suitable for you.
+
+You can download the ZWO Linux SDK here :
+
+https://astronomy-imaging-camera.com/software-drivers
+
+The SDK is in Developper section.
+
