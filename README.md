@@ -1,5 +1,16 @@
 # JETSONSKY
 
+**** 2022-11-11 UPDATE : Changes in directories organization and new version of JetsonSky
+
+Now, everything is in one directory : JetsonSky
+
+The new version of JetsonSky (V15_01) is the same for Linux and Windows systems.
+
+This new version of the software gets speed improvements for live treatments.
+
+The previous directories are still here for some time. If new JetsonSky version is ok, i will remove the old directories.
+
+
 **** 2022-11-03 UPDATE : New version of JetsonSky released (V14_20beta) :
 Windows and Linux programs are now the same. Il will modify the directories structure later in order to have only 1 directory for both versions.
 
