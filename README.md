@@ -1,5 +1,10 @@
 # JETSONSKY
 
+**** 2022-11-12 UPDATE : New version released V15_02. Old V15_01 has been removed.
+
+Bugs fixed and small speed enhancement (Minimize the use of PILLOW which is quite slow library).
+
+
 **** 2022-11-11 UPDATE : Changes in directories organization and new version of JetsonSky
 
 Now, everything is in one directory : JetsonSky
