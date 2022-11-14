@@ -1,5 +1,10 @@
 # JETSONSKY
 
+**** 2022-11-14 UPDATE : New version released V15_03. Old V15_02 has been removed.
+
+Bugs fixed.
+
+
 **** 2022-11-12 UPDATE : New version released V15_02. Old V15_01 has been removed.
 
 Bugs fixed and small speed enhancement (Minimize the use of PILLOW which is quite slow library).
