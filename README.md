@@ -4,6 +4,8 @@
 
 Bugs fixed and small optimizations.
 
+Also released JetsonTreatment V15_04. For video treatment only (no camera needed).
+
 
 **** 2022-11-14 UPDATE : New version released V15_03. Old V15_02 has been removed.
 
