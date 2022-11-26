@@ -3123,7 +3123,7 @@ def application_filtrage() :
 
             # bilateral openCV
             if flag_bilateral == 1 :
-                if flag_cupy == False :
+                if flag_vpi == False :
                     res_b1,res_g1,res_r1=cv2.split(cv2.bilateralFilter(cv2.merge((res_b1,res_g1,res_r1)),5,125,125)) # Application filtre bilateral
                 else :
                     colour_image = cv2.merge((res_b1,res_g1,res_r1))
