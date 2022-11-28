@@ -2010,7 +2010,7 @@ def satellites_tracking ():
             diff_int = np.clip(diff_int,0,255)
             diff = np.uint8(diff_int)
             seuilb = np.percentile(diff, 99) + 15
-#            diff[0:50,0:750] = 0
+            diff[0:50,0:750] = 0
             ret,thresh = cv2.threshold(diff, seuilb , 255, cv2.THRESH_BINARY)
             imggrey1 = imggrey2
             image_sat=cv2.merge((thresh,thresh,thresh))
