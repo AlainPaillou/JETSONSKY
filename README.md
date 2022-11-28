@@ -1,5 +1,11 @@
 # JETSONSKY
 
+**** 2022-11-28 UPDATE : New version released V17_02 added (JetsonSky and JetsonTreatment).
+
+Bugs removed.
+
+Oldest versions have been removed
+
 **** 2022-11-26 UPDATE : New beta version released V17_01d added to Jetsonsky directory
 
 This version add support of Cupy and VPI libraries.
