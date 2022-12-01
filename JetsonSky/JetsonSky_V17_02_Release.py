@@ -2370,7 +2370,7 @@ def refresh() :
             cadre_image.photo=PIL.ImageTk.PhotoImage(cadre_image.im)
             cadre_image.create_image(cam_displ_x/2,cam_displ_y/2, image=cadre_image.photo)    
     if flag_quitter == False:
-        fenetre_principale.after(1, refresh)
+        fenetre_principale.after(5, refresh)
 
 def satellites_tracking ():
     global imggrey1,imggrey2,image_traitee,calque_satellites,flag_sat_exist,sat_x,sat_y,sat_s,sat_old_x,sat_old_y,sat_cntdwn,nb_sat,sat_id,compteur_sat, \
