@@ -1,5 +1,11 @@
 # JETSONSKY
 
+**** 2022-12-03 UPDATE : New version released V17_03 added (JetsonSky).
+
+Bugs removed.
+
+Older version have been removed
+
 **** 2022-11-28 UPDATE : New version released V17_02 added (JetsonSky and JetsonTreatment).
 
 Bugs removed.
