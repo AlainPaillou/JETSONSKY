@@ -626,6 +626,21 @@ class Camera(object):
             logger.debug('wrote %s', filename)
         return img
 
+    def capture_video_frame_RAW8(self, buffer_=None, filename=None, timeout=None):
+        """Capture a single frame from video. Type :class:`numpy.ndarray`.
+        Video mode must have been started previously otherwise a :class:`ZWO_Error` will be raised. A new buffer
+        will be used to store the image unless one has been supplied with the `buffer` keyword argument.
+        If `filename` is not ``None`` the image is saved using :py:meth:`PIL.Image.Image.save()`.
+        :func:`capture_video_frame()` will wait indefinitely unless a `timeout` has been given.
+        The SDK suggests that the `timeout` value, in milliseconds, should be twice the exposure plus 500 ms."""
+        data = self.get_video_data(buffer_=buffer_, timeout=timeout)
+        whbi = self.get_roi_format()
+        shape = [whbi[1], whbi[0]]
+        img = np.frombuffer(data, dtype=np.uint8)
+        img = img.reshape(shape)
+        return img
+
+
     def capture_video_frame(self, buffer_=None, filename=None, timeout=None):
         """Capture a single frame from video. Type :class:`numpy.ndarray`.
         Video mode must have been started previously otherwise a :class:`ZWO_Error` will be raised. A new buffer
