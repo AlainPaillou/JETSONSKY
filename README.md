@@ -1,5 +1,16 @@
 # JETSONSKY
 
+**** 2023-02-23 UPDATE : New version released V18_01RC added (JetsonSky).
+
+Better management of frames acquisition (frame rate should be better)
+
+Added HDR function for colour capture only.
+
+**IMPORTANT** : you must get the new init.py file in zwoasi directory to get the V18_01RC version works !!!
+
+This is r release candidate version because i did not test it in real conditions.
+
+
 **** 2022-12-03 UPDATE : New version released V17_03 added (JetsonSky).
 
 Bugs removed.
