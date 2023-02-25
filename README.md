@@ -1,5 +1,14 @@
 # JETSONSKY
 
+**** 2023-02-25 UPDATE : New version released V18_02RC added (JetsonSky).
+
+Some issues are solved from V18_01RC version.
+
+**IMPORTANT** : you must get the new __init__.py file in zwoasi directory (and place it in your zwoasi directory) to get the V18_02RC version works !!!
+
+
+
+
 **** 2023-02-23 UPDATE : New version released V18_01RC added (JetsonSky).
 
 Better management of frames acquisition (frame rate should be better). Don't forget to adjust USB parameter during capture in order to get the best frame rate.
