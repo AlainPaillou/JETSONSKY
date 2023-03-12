@@ -1,5 +1,11 @@
 # JETSONSKY
 
+**** 2023-03-12 UPDATE : New version released V18_05aRC added (JetsonSky). It's e test version.
+
+V18_05aRC allow GSTREAMER use for Video writing if OpenCV has been compiled with GSTREAMER (hardware encoding). This will give a higher frame rate when writing the video.
+
+
+
 **** 2023-02-25 UPDATE : New version released V18_02RC added (JetsonSky).
 
 Some issues are solved from V18_01RC version.
