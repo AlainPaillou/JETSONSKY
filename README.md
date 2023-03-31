@@ -4,12 +4,12 @@
 
 3 softwares :
 - JetsonSky : needs ZWO camera - Acquisition and live treatments
-- Jetson Videos : decidated to video treatments (load an existing video and apply treatments). No camera management
-- Jetson Images : decidated to image treatments (load an existing image and apply treatments). No camera management
+- Jetson Videos : dedicated to video treatments (load an existing video and apply treatments). No camera management
+- Jetson Images : dedicated to image treatments (load an existing image and apply treatments). No camera management
 
 Video and Image version software is more user friendly (you can directly load and save Images/Videos)
 
-The 3 softwares get now relative path. This means you don't need anymore to set your entire path in the code. You just have to respect this directories architecture :
+The 3 software get now relative path. This means you don't need anymore to set your entire path in the code. You just have to respect this directories architecture :
 
 ../../YourDirectory/
 
