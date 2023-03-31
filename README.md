@@ -11,14 +11,14 @@ Video and Image version software is more user friendly (you can directly load an
 
 The 3 softwares get now relative path. This means you don't need anymore to set your entire path in the code. You just have to respect this directories architecture :
 
-../../YourDirectory
-                   /Videos
-                   /Images
-                   /Lib
-                   /zwoasi
-                   /zwoefw
+../../YourDirectory/
+../../YourDirectory/Videos
+../../YourDirectory/Images
+../../YourDirectory/Lib
+../../YourDirectory/zwoasi
+../../YourDirectory/zwoefw
 
-
+At it is RC software, i guess there are some bugs inside.
 
 
 **** 2023-03-12 UPDATE : New version released V18_05aRC added (JetsonSky). It's a test version.
