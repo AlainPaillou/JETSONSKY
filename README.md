@@ -12,11 +12,17 @@ Video and Image version software is more user friendly (you can directly load an
 The 3 softwares get now relative path. This means you don't need anymore to set your entire path in the code. You just have to respect this directories architecture :
 
 ../../YourDirectory/
+
 ../../YourDirectory/Videos
+
 ../../YourDirectory/Images
+
 ../../YourDirectory/Lib
+
 ../../YourDirectory/zwoasi
+
 ../../YourDirectory/zwoefw
+
 
 At it is RC software, i guess there are some bugs inside.
 
