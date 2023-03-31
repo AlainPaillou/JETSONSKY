@@ -24,7 +24,7 @@ The 3 softwares get now relative path. This means you don't need anymore to set 
 ../../YourDirectory/zwoefw
 
 
-At it is RC software, i guess there are some bugs inside.
+As it is RC software, i guess there are some bugs inside.
 
 
 **** 2023-03-12 UPDATE : New version released V18_05aRC added (JetsonSky). It's a test version.
