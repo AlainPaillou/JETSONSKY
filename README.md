@@ -1,6 +1,27 @@
 # JETSONSKY
 
-**** 2023-03-12 UPDATE : New version released V18_05aRC added (JetsonSky). It's e test version.
+**** 2023-03-31 UPDATE : New versions released V20_05RC added (release candidate). It's test versions.
+
+3 softwares :
+- JetsonSky : needs ZWO camera - Acquisition and live treatments
+- Jetson Videos : decidated to video treatments (load an existing video and apply treatments). No camera management
+- Jetson Images : decidated to image treatments (load an existing image and apply treatments). No camera management
+
+Video and Image version software is more user friendly (you can directly load and save Images/Videos)
+
+The 3 softwares get now relative path. This means you don't need anymore to set your entire path in the code. You just have to respect this directories architecture :
+
+../../YourDirectory
+                   /Videos
+                   /Images
+                   /Lib
+                   /zwoasi
+                   /zwoefw
+
+
+
+
+**** 2023-03-12 UPDATE : New version released V18_05aRC added (JetsonSky). It's a test version.
 
 V18_05aRC allow GSTREAMER use for Video writing if OpenCV has been compiled with GSTREAMER (hardware encoding). This will give a higher frame rate when writing the video.
 
