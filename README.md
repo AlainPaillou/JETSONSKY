@@ -1,5 +1,12 @@
 # JETSONSKY
 
+**** 2023-04-10 UPDATE : New version released V20_08Beta added (beta version). It's test version.
+
+Better frame management.
+Added FPS numbrer in TIP.
+GSTreamer hardware encoding for compressed colour video supported
+
+
 **** 2023-03-31 UPDATE : New versions released V20_05RC added (release candidate). It's test versions.
 
 3 softwares :
