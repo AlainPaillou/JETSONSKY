@@ -1,5 +1,12 @@
 # JETSONSKY
 
+**** 2023-04-12 UPDATE : New version released V20_09Beta added (beta version). It's test version. It replace V20_08beta version (removed).
+
+Some small improvements.
+
+Many thanks to Honey_Patouceul !
+
+
 **** 2023-04-10 UPDATE : New version released V20_08Beta added (beta version). It's test version.
 
 Better frame management.
