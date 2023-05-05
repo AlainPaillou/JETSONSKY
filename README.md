@@ -1,5 +1,21 @@
 # JETSONSKY
 
+**** 2023-05-05 UPDATE : New versions released. It's Release Candidates (tes)t versions.
+
+V30_01RC : it is the last version of JetsonSky using PyCuda.
+
+Improve frame rate, treatments speed.
+Can manage a camera (if a camera is plugged). If no camera, it will manage existing videos.
+
+V40_03RC : This version does not use PyCuda. Cupy replaces PyCuda.
+
+Improve frame rate, treatments speed.
+Can manage a camera (if a camera is plugged). If no camera, it will manage existing videos.
+Some useless filters have been removed.
+
+The future version won't use PyCuda anymore.
+
+
 **** 2023-04-12 UPDATE : New version released V20_09Beta added (beta version). It's test version. It replace V20_08beta version (removed).
 
 Some small improvements.
