@@ -2802,7 +2802,7 @@ def application_filtrage(res_b1,res_g1,res_r1) :
             # Amplification soft image
             if flag_AmpSoft == 1 and flag_lin_gauss == 3 :           
                 niveau_blur = 7
-                imagegreyblur=gaussianblur_mono(imag_brute,niveau_blur)
+                imagegreyblur=gaussianblur_mono(res_b1,niveau_blur)
                 correction = cp.asarray(Corr_GS)
                 r_gpu = res_b1
                             
