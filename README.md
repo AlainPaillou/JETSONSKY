@@ -1,5 +1,10 @@
 # JETSONSKY
 
+**** 2023-05-07 UPDATE : New versions V30_02RC and V40_04RC released. Bugs removed.
+
+V30_01RC and V40_03RC have been removed.
+
+
 **** 2023-05-05 UPDATE : New versions released. It's Release Candidates (tes)t versions.
 
 V30_01RC : it is the last version of JetsonSky using PyCuda.
