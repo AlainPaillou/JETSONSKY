@@ -1,6 +1,6 @@
 # JETSONSKY
 
-**** 2023-05-107 UPDATE : New versions V30_03RC and V40_05RC released. Older versions removed.
+**** 2023-05-10 UPDATE : New versions V30_03RC and V40_05RC released. Older versions removed.
 
 Some bugs are solved.
 
