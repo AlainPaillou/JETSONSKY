@@ -1,5 +1,12 @@
 # JETSONSKY
 
+**** 2023-05-07 UPDATE : New versions V30_03RC and V40_05RC released. Older versions removed.
+
+Some bugs are solved.
+More stable FPS (information displayed). Many thanks to Honey_Patouceul.
+Some optimizations.
+Python priority set to highest (need to start Python with superuser mode under Windows). Brings higher frame rate.
+
 **** 2023-05-07 UPDATE : New versions V30_02RC and V40_04RC released. Bugs removed.
 
 V30_01RC and V40_03RC have been removed.
