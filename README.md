@@ -1,5 +1,14 @@
 # JETSONSKY
 
+**** 2023-05-18 UPDATE : New version V40_09RC released.
+
+Bugs fixed
+
+Some improvements
+
+GStreamer mp4 video saving with GPU acceleration seems to be ok with Windows plateform
+
+
 **** 2023-05-14 UPDATE : New version V40_07RC released.
 
 Bug fixed.
