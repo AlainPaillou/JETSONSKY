@@ -1,6 +1,6 @@
 # JETSONSKY
 
-**** 2023-05-21 UPDATE : New version V40_10RC released.
+**** 2023-05-21 UPDATE : New version V40_11RC released.
 
 Bugs fixed
 
