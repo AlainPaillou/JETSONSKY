@@ -1,5 +1,15 @@
 # JETSONSKY
 
+**** 2023-05-24 UPDATE : New version V40_12RC released.
+
+This is a 3 in 1 version :
+- can manage ZWO camera
+- can manage video only (no camera)
+- can manage image only (no camera)
+
+This is a RC version and i think it may be buggy. It seems to work but i did not make many tests with it.
+
+
 **** 2023-05-21 UPDATE : New version V40_11RC released.
 
 Bugs fixed
