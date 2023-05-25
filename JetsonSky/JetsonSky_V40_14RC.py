@@ -3119,7 +3119,6 @@ def application_filtrage(res_b1,res_g1,res_r1) :
 
 
                         if flag_AADF_VHD == False :
-                            print("low dyn")
                             res_b2 = res_b1.copy()
                             res_g2 = res_g1.copy()
                             res_r2 = res_r1.copy()
@@ -3127,7 +3126,6 @@ def application_filtrage(res_b1,res_g1,res_r1) :
                             res_g1 = g_gpu
                             res_b1 = b_gpu
                         else :
-                            print("high dyn")
                             res_r1 = r_gpu
                             res_g1 = g_gpu
                             res_b1 = b_gpu
