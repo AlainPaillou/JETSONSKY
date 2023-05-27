@@ -2438,7 +2438,7 @@ def refresh() :
             if flag_image_mode == True :
                 image_brute = image_brut_read
                 res_cam_y,res_cam_x,layer = image_brute.shape
-                flag_image_video_loaded == True    
+                flag_image_video_loaded = True    
             if flag_image_video_loaded == True :    
                 r,g,b = cv2.split(image_brute)
                 if type_flip == "vertical" :
