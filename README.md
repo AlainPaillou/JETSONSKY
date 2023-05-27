@@ -1,5 +1,10 @@
 # JETSONSKY
 
+**** 2023-05-27 UPDATE :
+
+Bugs fixed in V40_14RC version. It was impossible to make image treatment with this very small bug. The V40_14RC needs to be reloaded.
+
+
 **** 2023-05-25 UPDATE : New version V40_14RC released.
 
 Bugs fixed. V40_12RC removed.
