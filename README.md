@@ -1,9 +1,9 @@
 # JETSONSKY
 
-**** 2023-05-28 UPDATE : 2 new versions are uploaded. Old V40_14RC has been removed/
+**** 2023-05-28 UPDATE : 2 new versions are uploaded. Old V40_14RC has been removed.
 
 - New V40_15RC is in fact V40_14C with some bugs removed
-- New V40_16RC added a trigger for satellite detection. Means when clic Start Record, recording will be active only if a satellite is detected. Otherwise, recording wait for satellites. It's a beta version function. Needs some tests in real conditions. Also work with video treatment only (no camera).
+- New V40_16RC added a trigger for satellite detection (check box under satellite checkbox on the left of the screen). Means when clic Start Record, recording will be active only if a satellite is detected. Otherwise, recording wait for satellites. It's a beta version function. Needs some tests in real conditions. Also work with video treatment only (no camera).
 
 
 **** 2023-05-27 UPDATE :
