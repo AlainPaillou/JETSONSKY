@@ -1,5 +1,11 @@
 # JETSONSKY
 
+**** 2023-06-08 UPDATE : 1 new version uploaded V40_18RC. I made some outdoor tests but it can still get some bugs.
+
+- Can now set 3 different ratio for the camera capture (4/3, 16/9 and 1/1).
+- some bugs fixed
+
+
 **** 2023-05-28 UPDATE : 2 new versions are uploaded. Old V40_14RC has been removed.
 
 - New V40_15RC is in fact V40_14C with some bugs removed
