@@ -2,7 +2,8 @@
 
 **** 2023-06-08 UPDATE : 1 new version uploaded V40_18RC. I made some outdoor tests but it can still get some bugs.
 
-- Can now set 3 different ratio for the camera capture (4/3, 16/9 and 1/1).
+- Can now set 3 different ratio for the camera capture (4/3, 16/9 and 1/1)
+- can now select Video directory and Images directory. It is useful if you want to use an other drive (for example external SSD drive)
 - some bugs fixed
 
 
