@@ -351,7 +351,7 @@ fenetre_principale.protocol("WM_DELETE_WINDOW", quitter)
 default_font = nametofont("TkDefaultFont")
 default_font.configure(size=MainWindowFontSize)
 fenetre_principale.title(titre)
-fenetre_principale.state("zoomed")
+#fenetre_principale.state("zoomed")
 
 # Création cadre général
 cadre = Frame (fenetre_principale, width = w , heigh = h)
