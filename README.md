@@ -3,7 +3,7 @@
 **** 2023-06-25 UPDATE : 1 new version uploaded V40_19RC.
 
 - added gamma correction (internal camera correction) for camera setup (ZWO cameras)
-- added slow or fast imag read (camera). Slow option will give better image
+- added slow or fast image read (camera). Slow option will give better image
   
 
 **** 2023-06-09 UPDATE : a brief documentation about V40_18RC has been uploaded (JETSONSKY_V40_18RC_INFO.pdf)
