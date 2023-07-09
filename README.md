@@ -1,5 +1,10 @@
 # JETSONSKY
 
+**** 2023-07-09 UPDATE : 1 new version uploaded V40_20RC. Previous version (V40_19RC) has been removed.
+
+Small update to avoid error with Windows version if GStreamer directory is missing or if you set the wrong paths in the source code (lines 40 to 42).
+
+
 **** 2023-06-25 UPDATE : 1 new version uploaded V40_19RC.
 
 - added gamma correction (internal camera correction) for camera setup (ZWO cameras)
