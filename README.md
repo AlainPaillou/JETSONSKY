@@ -5,6 +5,10 @@
 - Some bugs removed.
 - added a checkbox to reverse Red and Blue channels.
 
+For memory :
+- V30_03RC uses Pycuda. This version is the last version with Pycuda. No more development with this library
+- V40_XXRC use Cupy. This is LT releases.
+
 **** 2023-07-09 UPDATE : 1 new version uploaded V40_20RC. Previous version (V40_19RC) has been removed.
 
 Small update to avoid error with Windows version if GStreamer directory is missing or if you set the wrong paths in the source code (lines 40 to 42).
