@@ -1,5 +1,9 @@
 # JETSONSKY
 
+**** 2023-07-15 UPDATE : 1 new version uploaded V40_22RC. Previous version (V40_21RC) has been removed.
+
+- Some bugs removed.
+
 **** 2023-07-14 UPDATE : 1 new version uploaded V40_21RC. Previous version (V40_20RC) has been removed.
 
 - Some bugs removed.
