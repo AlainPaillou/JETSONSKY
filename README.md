@@ -9,6 +9,8 @@ Donc forget to check if you have the latest ZWO SDK libraries. You can find the 
 
 https://www.zwoastro.com/downloads/developers
 
+If you use Windows system and if you have installed GStreamer, check JetsonSky lines 40 to 41 to set the good GStreamer paths.
+
 
 **** 2023-07-15 UPDATE : 1 new version uploaded V40_22RC. Previous version (V40_21RC) has been removed.
 
