@@ -1,5 +1,15 @@
 # JETSONSKY
 
+**** 2023-08-22 UPDATE : 1 new version uploaded V40_23RC. Previous version (V40_22RC) has been removed.
+
+- Some bugs removed.
+- some changes with color saturation enhancement.
+
+Donc forget to check if you have the latest ZWO SDK libraries. You can find the SDK for Windows and Linux here :
+
+https://www.zwoastro.com/downloads/developers
+
+
 **** 2023-07-15 UPDATE : 1 new version uploaded V40_22RC. Previous version (V40_21RC) has been removed.
 
 - Some bugs removed.
