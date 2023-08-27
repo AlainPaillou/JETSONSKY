@@ -1,5 +1,10 @@
 # JETSONSKY
 
+**** 2023-08-27 UPDATE : 1 new version uploaded V40_25RC. Previous version (V40_23RC) has been removed.
+
+- Some bugs removed.
+- more simple stars & satellites routines.
+
 **** 2023-08-22 UPDATE : 1 new version uploaded V40_23RC. Previous version (V40_22RC) has been removed.
 
 - Some bugs removed.
