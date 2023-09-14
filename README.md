@@ -1,5 +1,13 @@
 # JETSONSKY
 
+**** 2023-09-14 UPDATE :
+Some useful informations to install JetsonSky can be find here :
+
+https://forums.developer.nvidia.com/t/electronically-assisted-astronomy-with-a-jetson-nano/76861/764
+
+
+
+
 **** 2023-08-27 UPDATE : 1 new version uploaded V40_25RC. Previous version (V40_23RC) has been removed.
 
 - Some bugs removed.
