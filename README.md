@@ -1,5 +1,9 @@
 # JETSONSKY
 
+**** 2023-11-01 UPDATE : 1 new version uploaded V40_26RC. Previous version (V40_25RC) has been removed.
+
+- Some bugs removed.
+
 **** 2023-09-14 UPDATE :
 Some useful informations to install JetsonSky can be find here :
 
