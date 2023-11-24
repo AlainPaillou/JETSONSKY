@@ -1,5 +1,10 @@
 # JETSONSKY
 
+**** 2023-11-24 UPDATE : 1 new version uploaded V41_01RC.
+
+- Added a bigger screen resolution for 1440p, 1600p or more screen. It's a beta version
+
+
 **** 2023-11-01 UPDATE : 1 new version uploaded V40_26RC. Previous version (V40_25RC) has been removed.
 
 - Some bugs removed.
