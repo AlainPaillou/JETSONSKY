@@ -1,5 +1,10 @@
 # JETSONSKY
 
+**** 2023-11-25 UPDATE : 1 new version uploaded V41_02RC. Old V41_01RC was removed.
+
+- A bad bug was removed in pictures capture function. It's a beta version
+
+
 **** 2023-11-24 UPDATE : 1 new version uploaded V41_01RC.
 
 - Added a bigger screen resolution for 1440p, 1600p or more screen. It's a beta version
