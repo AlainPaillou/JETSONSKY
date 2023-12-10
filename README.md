@@ -1,5 +1,11 @@
 # JETSONSKY
 
+**** 2023-12-10 UPDATE : 1 new version uploaded V41_03RC. Old V41_02RC was removed.
+
+- Some bugs removed
+- add a window at the very beginning of the program. YYou can choose a 1440p or a 1080p window if you screen gets a higher resolution than FullHD.
+  
+
 **** 2023-11-25 UPDATE : 1 new version uploaded V41_02RC. Old V41_01RC was removed.
 
 - A bad bug was removed in pictures capture function. It's a beta version
