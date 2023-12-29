@@ -3498,7 +3498,7 @@ def application_filtrage(res_b1,res_g1,res_r1) :
                                                
                 # Contrast CLAHE openCV
                 if flag_contrast_CLAHE ==1 :
-                    if flag_OpenCvCuda == False :
+                    if flag_OpenCvCuda == True :
                         clahe = cv2.cuda.createCLAHE(clipLimit=val_contrast_CLAHE, tileGridSize=(val_grid_CLAHE,val_grid_CLAHE))
                         srcb = cv2.cuda_GpuMat()
                         srcb.upload(res_b1.get())
