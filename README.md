@@ -1,5 +1,10 @@
 # JETSONSKY
 
+**** 2024-01-01 UPDATE : 1 new version uploaded V41_06RC.
+
+- Some bugs removed
+- add a filter to manage atmospheric turbulence (only for static target).
+
 **** 2023-12-10 UPDATE : 1 new version uploaded V41_03RC. Old V41_02RC was removed.
 
 - Some bugs removed
