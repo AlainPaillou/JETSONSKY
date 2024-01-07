@@ -1,5 +1,13 @@
 # JETSONSKY
 
+**** 2024-01-07 UPDATE : 1 new version uploaded V41_07RC. Old V41_03RC and V41_06RC arenremoved.
+
+- Some bugs removed
+- add a checkbox (STAB) to enable image stabilization
+- add a checkbox (TRF) to enable Turbulence Reduction Filter. Associated with a slider from 0.5 to 10 (the lower is the value, the lower the turbulence will be)
+- add the possibility to get the undebayer video (for colour video) if checkbox "Filter ON" is unchecked if a camera is plugged. If you save a video, it will be uncompressed format with undebayered video.
+  
+
 **** 2024-01-01 UPDATE : 1 new version uploaded V41_06RC.
 
 - Some bugs removed
