@@ -1,6 +1,13 @@
 # JETSONSKY
 
-**** 2024-01-07 UPDATE : 1 new version uploaded V41_07RC. Old V41_03RC and V41_06RC arenremoved.
+**** 2024-02-02 UPDATE : 1 new version uploaded V41_11RC. Old V41_07RC is removed.
+
+- Some bugs removed
+- add a new noise removal filter : 3FNR
+- colour enhancement is improved
+
+
+**** 2024-01-07 UPDATE : 1 new version uploaded V41_07RC. Old V41_03RC and V41_06RC are removed.
 
 - Some bugs removed
 - add a checkbox (STAB) to enable image stabilization
