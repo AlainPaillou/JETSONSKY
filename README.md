@@ -1,5 +1,15 @@
 # JETSONSKY
 
+**** 2024-02-23 UPDATE : 1 new version uploaded V42_01RC.
+
+- Some bugs removed
+- Speed optimazation
+- No longer needs Pytorch & TorchVision any more
+- Improve noise removal filter 3FNR
+- Added new noise removal Filter called NR P2. This filter works on a single frame, like NR P1, KNN & NLM2 filters. 3FNR, AADF and Variation reduction filters works with several frames
+- Added CLL filter which is a Low Light Contrast enhancement filter. It calculates a LUT to modify Low Lights. You can see LUT chacking TRCLL Checkbox and see how the 3 parameters change the LUT.
+
+
 **** 2024-02-02 UPDATE : 1 new version uploaded V41_11RC. Old V41_07RC is removed.
 
 - Some bugs removed
