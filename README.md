@@ -1,5 +1,9 @@
 # JETSONSKY
 
+**** 2024-02-24 UPDATE : 1 new version uploaded V42_02RC. Previous V42_01RC is removed.
+
+- Some optimazations for Jetson Linux version.
+
 **** 2024-02-23 UPDATE : 1 new version uploaded V42_01RC.
 
 - Some bugs removed
