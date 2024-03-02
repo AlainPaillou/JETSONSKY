@@ -1,5 +1,11 @@
 # JETSONSKY
 
+**** 2024-03-02 UPDATE : 1 new version uploaded V42_04RC.
+- Some bugs removed
+- added GPU image debayering (4 different bayer pattern) only for Windows (Linux keeps opencv debayer)
+- added hot pixels removal for RAW capture or video only (not RGB capture or video)
+
+
 **** 2024-02-24 UPDATE : 1 new version uploaded V42_02RC. Previous V42_01RC is removed.
 
 - Some optimazations for Jetson Linux version.
