@@ -1,5 +1,27 @@
 # JETSONSKY
 
+**** 2024-09-23 UPDATE : New version of JetsonSky : V50_15RC for both Linux and Windows systems
+
+Many changes since V42_04RC version :
+- AI craters and satellites detection using YOLOv8 models. For now, my crater.pt model is too big to be uploaded on Github. I will try to upload a small model later.
+- Image stabilization
+- Image quality estimation to reduce atmospheric turbulence
+- Red and blue channel adjustment
+- zoom on any part of the image using keyboard arrows
+- many improvements and changes
+
+Depending of your keyboard and region, you will have to adapt the keys in the software :
+
+- For Windows system : the key binding is from line 95 to 119
+- For Linux system : the key binding is from line 1235 to 147
+
+JetsonSky is still free to use for non commercial and personal use only. For any other kind of use, please ask me before
+
+I recommand to use Windows system. Linux system works but i guess there are still many bugs in this version.
+
+Still need A NVidia GPU and many librairies.
+
+
 **** 2024-03-02 UPDATE : 1 new version uploaded V42_04RC.
 - Some bugs removed
 - added GPU image debayering (4 different bayer pattern) only for Windows (Linux keeps opencv debayer)
