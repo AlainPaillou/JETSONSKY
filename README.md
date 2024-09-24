@@ -1,5 +1,29 @@
 # JETSONSKY
 
+**** 2024-09-24 UPDATE : 
+
+I have uploaded the crater detection model in AI_models directory. In JetsonSky software line 149, be sure you have this code :
+Moon_crater_model = "./AI_models/AI_craters_model6_8s_3c_180e.pt"
+
+You can have some useful informations about JetsonSky on my Youtube channel :
+
+https://www.youtube.com/@alainpaillou29
+
+You can watch those videos :
+
+https://youtu.be/D519BtGzNEk?si=vqwYtYx_ptMFmMzT
+
+https://youtu.be/8Z-xmI_ZayU?si=0sa6-h0z-Xte-Ft2
+
+https://youtu.be/e0zTX6M7lS8?si=Ce33tz9ZiKs9vDlX
+
+https://youtu.be/PQY2ur1r1fA?si=zgq1JDpq_YsOfHRm
+
+https://youtu.be/nFuEpkNlS94?si=-D2kSwCk0OLqN91k
+
+https://youtu.be/G24Pe0Bk6a0?si=ZJ4zEcIswapCqARZ
+
+
 **** 2024-09-23 UPDATE : New version of JetsonSky : V50_15RC for both Linux and Windows systems
 
 Many changes since V42_04RC version :
