@@ -146,7 +146,7 @@ if Dev_system == "Linux" :
     stab_right = ('d')
     stab_left = ('q')
 
-Moon_crater_model = "./AI_models/AI_craters_model6_8l_3c_149e_1.pt"
+Moon_crater_model = "./AI_models/AI_craters_model6_8s_3c_180e.pt"
 Satellites_model = "./AI_models/AI_Sat_model1_8n_3c_300e.pt"
 Custom_satellites_model_tracker = "./AI_models/sattelite_custom_tracker.yaml"
 
