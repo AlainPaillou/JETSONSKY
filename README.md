@@ -1,5 +1,11 @@
 # JETSONSKY
 
+**** 2024-10-03 UPDATE : 
+
+I have uploaded a new version of JetsonSky : V50_17RC
+
+I recommend you to also upload and read the V50_17RC documentation (pdf) because you will hace to set the kind of keyboard you use in the main program.
+
 **** 2024-09-24 UPDATE : 
 
 I have uploaded the crater detection model in AI_models directory. In JetsonSky software line 149, be sure you have this code :
