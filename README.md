@@ -2,6 +2,12 @@
 
 **** 2024-10-03 UPDATE : 
 
+I have uploaded a new version of JetsonSky : V50_18RC
+
+For video post treatment only : added a large slider bar at the bottom of the window to display the video position (frame displayed) and to allow to choose the part of the video you want to display (while moving the slider).
+
+**** 2024-10-03 UPDATE : 
+
 I have uploaded a new version of JetsonSky : V50_17RC
 
 I recommend you to also upload and read the V50_17RC documentation (pdf) because you will hace to set the kind of keyboard you use in the main program.
