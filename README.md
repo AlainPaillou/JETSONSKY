@@ -1,6 +1,6 @@
 # JETSONSKY
 
-**** 2024-10-03 UPDATE : 
+**** 2024-10-06 UPDATE : 
 
 I have uploaded a new version of JetsonSky : V50_18RC
 
