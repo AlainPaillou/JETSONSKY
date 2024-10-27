@@ -46,7 +46,7 @@
 # - Plane
 
 
-JetsonSky_version = "V50_19RC"
+JetsonSky_version = "V50_20RC"
 
 # Choose your keyboard layout
 keyboard_layout = "AZERTY"
