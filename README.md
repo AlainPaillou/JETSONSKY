@@ -1,5 +1,11 @@
 # JETSONSKY
 
+**** 2024-10-27 UPDATE : 
+
+I have uploaded a new version of JetsonSky : V50_20RC
+
+Some bugs removed.
+
 **** 2024-10-06 UPDATE : 
 
 I have uploaded a new version of JetsonSky : V50_18RC
