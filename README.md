@@ -1,5 +1,13 @@
 # JETSONSKY
 
+**** 2024-11-03 UPDATE : 
+
+I have uploaded a new version of JetsonSky : V50_24RC
+
+THis version allow 16 bits images capture. With those 16 bits images, you can select the numbers of bits (from 8 to 16) you will keep to work with. This allows small signal enhancement. i need to make more tests to get the best 16 bits images use.
+
+IMPORTANT : from V50_24RC version you will have to use zwoasi_cupy library instead of old zwoasi library.
+
 **** 2024-10-27 UPDATE : 
 
 I have uploaded a new version of JetsonSky : V50_20RC
