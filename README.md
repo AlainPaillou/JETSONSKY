@@ -14,6 +14,8 @@ If you want to make tests with 16 bits SER file, you can download a test video f
 
 https://drive.google.com/file/d/1qPviaGZvQkVqvf6GS91-7f4pXqau4PD-/view?usp=sharing
 
+This video is a RAW video. This means you will have to debayer it with JetsonSky (RGGB pattern).
+
 16 bits video file is really interesting to retrieve some small signals in the video and allow HDR with only 1 frame.
 
 
