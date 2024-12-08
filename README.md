@@ -1,5 +1,20 @@
 # JETSONSKY
 
+**** 2024-12-08 UPDATE : 
+
+I have uploaded a new version of JetsonSky : V51_01RC
+
+This version can now support 16 bits camera capture and 16 bits SER file video format reading for post treatment.
+
+I have also uploaded an up to date JETSONSKY_V51_01RC_INFOS.pdf file to explain changes in JetsonSky.
+
+If you want to make tests with 16 bits SER file, you can download a test video file uding this link :
+
+https://drive.google.com/file/d/1qPviaGZvQkVqvf6GS91-7f4pXqau4PD-/view?usp=sharing
+
+16 bits video file is really interesting to retrieve some small signals in the video and allow HDR with only 1 frame.
+
+
 **** 2024-11-09 UPDATE : 
 
 I have uploaded a new version of JetsonSky : V50_25RC
