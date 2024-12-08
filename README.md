@@ -4,7 +4,7 @@
 
 I have uploaded a new version of JetsonSky : V51_01RC
 
-This version absolutely needs Serfile library (thanks to Jean-Baptiste Butet who wrote this libray ; i made some small modifications for JetsonSky) to read SER file video. You will find it in the Serfile directory.
+This version absolutely needs Serfile library (thanks to Jean-Baptiste Butet who wrote this library ; i made some small modifications for JetsonSky) to read SER file video. You will find it in the Serfile directory.
 
 This version can now support 16 bits camera capture and 16 bits SER file video format reading for post treatment.
 
