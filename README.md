@@ -4,7 +4,7 @@
 
 I have uploaded a new version of JetsonSky : V52_01RC. The previous version V51_05RC is removed.
 
-I decided to use less threads (Python is not really approriate for threads) to get more stable ans simplier capture routine. This will improve JetsonSky.
+I decided to use less threads (Python is not really approriate for threads) to get more stable and simple capture routine. This will improve JetsonSky.
 
 **** 2024-12-28 UPDATE : 
 
