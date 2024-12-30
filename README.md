@@ -6,7 +6,9 @@ I have uploaded a new version of JetsonSky : V52_03RC. The previous version V52_
 
 Some bugs removed.
 
-Better HDR support for 16 bits captures or 16 bits SER files - Mertens (slow) or Mean (fast)
+Better HDR support for 16 bits captures or 16 bits SER files - Mertens (slow) or Mean (fast).
+
+I have added an update version of quick explain document : JETSONSKY_V52_03RC_INFOS.pdf
 
 **** 2024-12-28 UPDATE : 
 
