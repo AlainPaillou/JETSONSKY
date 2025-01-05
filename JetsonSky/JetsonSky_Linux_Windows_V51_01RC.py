@@ -659,8 +659,8 @@ conv_rad = Pi / 180
 conv_deg = 180 /Pi
 
 # Lieu observation Couternon
-lat_obs = 48.0175
-long_obs = -4.0340
+lat_obs = 45.0
+long_obs = -3.0
 alt_obs = 0
 Polaris_AD = 2.507
 Polaris_DEC = 89.25
