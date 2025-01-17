@@ -1,5 +1,12 @@
 # JETSONSKY
 
+**** 2025-01-17 UPDATE :
+
+I have uploaded a new version of JetsonSky : V52_08RC.
+
+- Some bugs removed.
+- added a new 3 frames noise removal filter (3FNR1 front & back). Previous 3FNR is now 3FNR2 (front & back). I will update de documentation later.
+
 **** 2025-01-01 UPDATE :
 
 I have uploaded a new version of JetsonSky : V52_05RC. The previous version V52_03RC is removed.
