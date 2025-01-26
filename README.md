@@ -1,5 +1,12 @@
 # JETSONSKY
 
+**** 2025-01-26 UPDATE :
+
+I have uploaded a new version of JetsonSky : V52_09RC.
+
+- Some bugs removed
+- Some small improvements (HDR with mono image, merging 2 sharpen filter)
+
 **** 2025-01-17 UPDATE :
 
 I have uploaded a new version of JetsonSky : V52_08RC.
