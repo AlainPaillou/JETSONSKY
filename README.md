@@ -1,5 +1,12 @@
 # JETSONSKY
 
+**** 2025-02-06 UPDATE :
+
+I have uploaded a new version of JetsonSky : V52_09bRC. Previous version V52_09RC has been removed.
+
+- Some bugs removed (thanks to svenk123)
+
+
 **** 2025-01-26 UPDATE :
 
 I have uploaded a new version of JetsonSky : V52_09RC.
