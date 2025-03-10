@@ -117,8 +117,10 @@ from tkinter import *
 from tkinter.messagebox import askyesno
 from tkinter import filedialog as fd
 from tkinter.font import nametofont
+import platform 
 
 my_os = sys.platform
+
 
 if my_os == "win32" :
     import keyboard
@@ -286,7 +288,13 @@ if Dev_system == "Linux" :
     video_path = os.path.join(os.getcwd(), 'Videos')
 
     # Path to librairies ZWO Jetson sbc
-    env_filename_camera = os.path.join(os.getcwd(), 'Lib','libASICamera2.so')
+    if platform.machine() == "aarch64" :
+        env_filename_camera = os.path.join(os.getcwd(), 'Lib','libASICamera2.so')
+    elif platform.machine() == "x86_64" :
+        env_filename_camera = os.path.join(os.getcwd(), 'x64_Lib','libASICamera2.so.1.37')
+        print("********************************************************************")
+
+
     env_filename_efw = os.path.join(os.getcwd(), 'Lib','libEFWFilter.so')
 
     USBCam = 70
