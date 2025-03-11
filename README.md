@@ -1,5 +1,16 @@
 # JETSONSKY
 
+**** 2025-03-11 UPDATE :
+
+I have uploaded a new version of JetsonSky : V53_03RC. Previous versions have been removed.
+
+I included a Giray Yillikci fix in the software (many thanks). It's a linux x86_64 fix and you can find from line 289 to 294.
+
+Import : in line 293 and 294, you must set the names of the ZWO SDK libraries you use !
+
+Also important : for Jeston SBC users, i recommand you to use V51_05RC version of JetsonSky
+
+
 **** 2025-02-22 UPDATE :
 
 I have uploaded a new version of JetsonSky : V53_01RC. Previous versions have been removed.
