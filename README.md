@@ -2,11 +2,11 @@
 
 **** 2025-03-13 UPDATE :
 
-It seems i have founded why Jetson SBC gets problem with V53_03RC. I have uploaded a new version of JetsonSky : V53_04RC. This version should work with All the platforms.
+It seems i have founded why Jetson SBC gets problem with V53_03RC. I have uploaded a new version of JetsonSky : V53_04RC. This version should work with all the platforms.
 
 Important : You will need to update the zwoasi_cupy init.py file (download the new version in the zwoasi repository and install it in your computer.
 
-Previous versions have been removed.
+Previous version have been removed.
 
 **** 2025-03-11 UPDATE :
 
