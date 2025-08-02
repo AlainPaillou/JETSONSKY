@@ -1,6 +1,13 @@
 # JETSONSKY
 
 **** 2025-03-13 UPDATE :
+New version : V53_06RC
+Some new ZWO camera support :
+- ASI290MM Mini
+- ASI183MC, ASI183MMM, ASI183MC Pro and ASI183MM Pro
+
+
+**** 2025-03-13 UPDATE :
 
 It seems i have founded why Jetson SBC gets problem with V53_03RC. I have uploaded a new version of JetsonSky : V53_04RC. This version should work with all the platforms.
 
