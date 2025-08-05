@@ -1,6 +1,13 @@
 # JETSONSKY
 
-**** 2025-03-13 UPDATE :
+**** 2025-08-05 UPDATE :
+
+New version : V53_07RC
+
+Some small bugs solved
+
+
+**** 2025-08-01 UPDATE :
 
 New version : V53_06RC
 
