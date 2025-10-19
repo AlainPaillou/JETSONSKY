@@ -1,5 +1,11 @@
 # JETSONSKY
 
+**** 2025-10-19 UPDATE :
+
+GraY-25 solved an issue with Serfile library. You will have to upload new init.py in the Serfile directory.
+
+Many thanks to GraY-25 !
+
 **** 2025-08-05 UPDATE :
 
 New version : V53_07RC
