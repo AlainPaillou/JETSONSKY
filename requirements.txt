@@ -1,0 +1,21 @@
+# JETSONSKY - Astronomy Imaging Application Requirements
+
+# Core dependencies
+numpy>=1.19.0
+opencv-python>=4.5.0
+
+# Optional GPU acceleration (recommended for real-time processing)
+# Uncomment if you have NVIDIA GPU with CUDA support:
+# cupy-cuda11x>=11.0.0  # For CUDA 11.x
+# cupy-cuda12x>=12.0.0  # For CUDA 12.x
+
+# Camera SDK (ZWO ASI cameras)
+# Note: Install from https://astronomy-imaging-camera.com/software-drivers
+# pip install zwoasi (if available)
+
+# GUI support (if using Tkinter demos - usually pre-installed with Python)
+# tkinter comes with Python, but on some Linux systems:
+# sudo apt-get install python3-tk
+
+# Development/Testing
+pytest>=6.0.0
