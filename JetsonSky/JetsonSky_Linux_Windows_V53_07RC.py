@@ -7893,39 +7893,8 @@ RBDEML.place(anchor="w",x=1840+delta_s, y=985)
 RBDEMR = Radiobutton(cadre,text="Right", variable=demo_side,command=choix_demo_right,value=1)
 RBDEMR.place(anchor="w",x=1840+delta_s, y=1010)
 
-# Choix filtrage ON
-CBF = Checkbutton(cadre,text="Filters ON", variable=choix_filtrage_ON,command=commande_filtrage_ON,onvalue = 1, offvalue = 0)
-CBF.place(anchor="w",x=1440+delta_s, y=50)
-
-# Fulres displaying
-CBMFR = Checkbutton(cadre,text="Full Res", variable=choix_mode_full_res,command=commande_mode_full_res,onvalue = 1, offvalue = 0)
-CBMFR.place(anchor="w",x=1510+delta_s, y=50)
-
-# Choix forcage N&B
-CBFNB = Checkbutton(cadre,text="Set B&W", variable=choix_noir_blanc,command=commande_noir_blanc,onvalue = 1, offvalue = 0)
-CBFNB.place(anchor="w",x=1570+delta_s, y=50)
-
-# Choix forcage N&B Estimate
-CBFNBE = Checkbutton(cadre,text="B&W Est", variable=choix_noir_blanc_estime,command=commande_noir_blanc,onvalue = 1, offvalue = 0)
-CBFNBE.place(anchor="w",x=1630+delta_s, y=50)
-
-# Choix forcage N&B Estimate
-CBRRB = Checkbutton(cadre,text="R-B Rev", variable=choix_reverse_RB,command=commande_reverse_RB,onvalue = 1, offvalue = 0)
-CBRRB.place(anchor="w",x=1695+delta_s, y=50)
-
-# Choix False colours
-CBFC = Checkbutton(cadre,text="False Col", variable=choix_false_colours,command=commande_false_colours,onvalue = 1, offvalue = 0)
-CBFC.place(anchor="w",x=1750+delta_s, y=50)
-
-# Stacking Mode
-RBSM1 = Radiobutton(cadre,text="MEAN", variable=choix_stacking,command=choix_mean_stacking,value=1)
-RBSM1.place(anchor="w",x=1610+delta_s, y=20)
-RBSM2 = Radiobutton(cadre,text="SUM", variable=choix_stacking,command=choix_sum_stacking,value=2)
-RBSM2.place(anchor="w",x=1660+delta_s, y=20)
-# Number frames stacked
-echelle20 = Scale (cadre, from_ = 1, to = 5, command= choix_FS, orient=HORIZONTAL, length = 80, width = 7, resolution = 1, label="",showvalue=1,tickinterval=1,sliderlength=20)
-echelle20.set(val_FS)
-echelle20.place(anchor="w", x=1720+delta_s,y=20)
+# Top row widgets - loaded from gui_widgets module
+exec(gui_widgets.create_top_row_widgets(), globals())
 
 
 ###########################
