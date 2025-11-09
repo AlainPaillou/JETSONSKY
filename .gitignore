@@ -1,0 +1,218 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# PyInstaller
+*.manifest
+*.spec
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+
+# Translations
+*.mo
+*.pot
+
+# Django stuff:
+*.log
+local_settings.py
+db.sqlite3
+db.sqlite3-journal
+
+# Flask stuff:
+instance/
+.webassets-cache
+
+# Scrapy stuff:
+.scrapy
+
+# Sphinx documentation
+docs/_build/
+
+# PyBuilder
+target/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# IPython
+profile_default/
+ipython_config.py
+
+# pyenv
+.python-version
+
+# pipenv
+Pipfile.lock
+
+# PEP 582
+__pypackages__/
+
+# Celery stuff
+celerybeat-schedule
+celerybeat.pid
+
+# SageMath parsed files
+*.sage.py
+
+# Environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Spyder project settings
+.spyderproject
+.spyproject
+
+# Rope project settings
+.ropeproject
+
+# mkdocs documentation
+/site
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Pyre type checker
+.pyre/
+
+# PyCharm
+.idea/
+
+# VSCode
+.vscode/
+*.code-workspace
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+*.cab
+*.msi
+*.msix
+*.msm
+*.msp
+*.lnk
+
+# Linux
+*~
+.directory
+.Trash-*
+
+# Project specific
+# Video files
+*.ser
+*.avi
+*.mp4
+*.mov
+*.mkv
+*.wmv
+JetsonSky/Videos/*.ser
+JetsonSky/Videos/*.avi
+JetsonSky/Videos/*.mp4
+
+# Image files (captured/processed)
+*.fit
+*.fits
+*.tif
+*.tiff
+JetsonSky/Images/*.jpg
+JetsonSky/Images/*.png
+JetsonSky/Images/*.bmp
+JetsonSky/Images/*.fit
+JetsonSky/Images/*.fits
+
+# AI model files (optional - large files)
+# Uncomment if you don't want to track model files
+# *.pt
+# *.pth
+# *.h5
+# *.pb
+# *.onnx
+# JetsonSky/AI_models/*.pt
+
+# Camera calibration files
+*_calibration.txt
+*_dark_frame.npy
+*_flat_frame.npy
+
+# Temporary files
+*.tmp
+*.temp
+*.bak
+*.swp
+*.swo
+*~
+
+# Log files
+*.log
+debug*.txt
+
+# Configuration files with sensitive data
+# *_config_local.py
+# credentials.txt
+
+# Build artifacts
+*.o
+*.a
+*.lib
+*.exe
+*.dll
+
+# Shared library files
+# Note: keeping .so files in Lib/ as they're required dependencies
+# But ignoring any newly built ones
+*.so.new
+*.so.bak
