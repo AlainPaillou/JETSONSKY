@@ -601,10 +601,11 @@ fenetre_principale = Tk ()
 screen_width = fenetre_principale.winfo_screenwidth()
 screen_height = fenetre_principale.winfo_screenheight()
 
-image_JetsonSky = cv2.imread('JetsonSky_Logo.jpg',cv2.IMREAD_COLOR)
-cv2.imshow(titre, image_JetsonSky)
-cv2.waitKey()
-cv2.destroyAllWindows()
+# Splash screen commented out - OpenCV GUI not available
+# image_JetsonSky = cv2.imread('JetsonSky_Logo.jpg',cv2.IMREAD_COLOR)
+# cv2.imshow(titre, image_JetsonSky)
+# cv2.waitKey()
+# cv2.destroyAllWindows()
 
 if screen_width > 2000 :
     if askyesno("Hires Window", "Choose Hires Window ?") :
