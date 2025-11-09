@@ -120,6 +120,7 @@ from tkinter.messagebox import askyesno
 from tkinter import filedialog as fd
 from tkinter.font import nametofont
 import platform
+import gui_widgets
 
 my_os = sys.platform
 
