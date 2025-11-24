@@ -596,16 +596,47 @@ def quitter() :
         fenetre_principale.quit()
 
 
+# Splash screen - Show before main window
+try:
+    from PIL import Image, ImageTk
+    splash_root = Tk()
+    splash_root.title("JetsonSky")
+    splash_root.overrideredirect(True)
+    
+    # Get screen dimensions
+    screen_width = splash_root.winfo_screenwidth()
+    screen_height = splash_root.winfo_screenheight()
+    
+    # Load and display splash image
+    splash_image = Image.open('JetsonSky_Logo.jpg')
+    splash_photo = ImageTk.PhotoImage(splash_image)
+    splash_label = Label(splash_root, image=splash_photo)
+    splash_label.image = splash_photo
+    splash_label.pack()
+    
+    # Center splash screen
+    splash_width = splash_image.width
+    splash_height = splash_image.height
+    x = (screen_width - splash_width) // 2
+    y = (screen_height - splash_height) // 2
+    splash_root.geometry(f"{splash_width}x{splash_height}+{x}+{y}")
+    
+    # Add instruction text
+    instruction_label = Label(splash_root, text="Press any key to continue...", 
+                             font=("Arial", 12), bg="white", fg="black")
+    instruction_label.pack(pady=10)
+    
+    # Wait for key press
+    splash_root.bind("<Key>", lambda e: splash_root.destroy())
+    splash_root.focus_force()
+    splash_root.mainloop()
+except:
+    pass  # Skip splash if image not found or PIL not available
+
 # Main Window
 fenetre_principale = Tk ()
 screen_width = fenetre_principale.winfo_screenwidth()
 screen_height = fenetre_principale.winfo_screenheight()
-
-# Splash screen commented out - OpenCV GUI not available
-# image_JetsonSky = cv2.imread('JetsonSky_Logo.jpg',cv2.IMREAD_COLOR)
-# cv2.imshow(titre, image_JetsonSky)
-# cv2.waitKey()
-# cv2.destroyAllWindows()
 
 if screen_width > 2000 :
     if askyesno("Hires Window", "Choose Hires Window ?") :
