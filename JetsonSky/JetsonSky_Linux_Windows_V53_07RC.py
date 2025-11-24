@@ -121,6 +121,7 @@ from tkinter import filedialog as fd
 from tkinter.font import nametofont
 import platform
 import gui_widgets
+import image_utils
 
 my_os = sys.platform
 
@@ -3540,87 +3541,21 @@ def reconstruction_image() :
             draw_satellite(sat_x[i],sat_y[i])
     
     
-def cupy_RGBImage_2_cupy_separateRGB(cupyImageRGB):
-    cupy_R = cp.ascontiguousarray(cupyImageRGB[:,:,0], dtype=cp.uint8)
-    cupy_G = cp.ascontiguousarray(cupyImageRGB[:,:,1], dtype=cp.uint8)
-    cupy_B = cp.ascontiguousarray(cupyImageRGB[:,:,2], dtype=cp.uint8)
-    
-    return cupy_B,cupy_G,cupy_R
+# Image conversion utilities moved to image_utils.py
+cupy_RGBImage_2_cupy_separateRGB = image_utils.cupy_RGBImage_2_cupy_separateRGB
+numpy_RGBImage_2_numpy_separateRGB = image_utils.numpy_RGBImage_2_numpy_separateRGB
+numpy_RGBImage_2_cupy_separateRGB = image_utils.numpy_RGBImage_2_cupy_separateRGB
+cupy_RGBImage_2_numpy_separateRGB = image_utils.cupy_RGBImage_2_numpy_separateRGB
+cupy_separateRGB_2_numpy_RGBimage = image_utils.cupy_separateRGB_2_numpy_RGBimage
+cupy_separateRGB_2_cupy_RGBimage = image_utils.cupy_separateRGB_2_cupy_RGBimage
+numpy_separateRGB_2_numpy_RGBimage = image_utils.numpy_separateRGB_2_numpy_RGBimage
+gaussianblur_mono = image_utils.gaussianblur_mono
+gaussianblur_colour = image_utils.gaussianblur_colour
+image_negative_colour = image_utils.image_negative_colour
+Image_Quality = image_utils.Image_Quality
 
 
-def numpy_RGBImage_2_numpy_separateRGB(numpyImageRGB):
-    numpy_R = np.ascontiguousarray(numpyImageRGB[:,:,0], dtype=np.uint8)
-    numpy_G = np.ascontiguousarray(numpyImageRGB[:,:,1], dtype=np.uint8)
-    numpy_B = np.ascontiguousarray(numpyImageRGB[:,:,2], dtype=np.uint8)
-    
-    return numpy_R,numpy_G,numpy_B
-
-
-def numpy_RGBImage_2_cupy_separateRGB(numpyImageRGB):
-    cupyImageRGB = cp.asarray(numpyImageRGB)
-    cupy_R = cp.ascontiguousarray(cupyImageRGB[:,:,0], dtype=cp.uint8)
-    cupy_G = cp.ascontiguousarray(cupyImageRGB[:,:,1], dtype=cp.uint8)
-    cupy_B = cp.ascontiguousarray(cupyImageRGB[:,:,2], dtype=cp.uint8)
-    
-    return cupy_R,cupy_G,cupy_B
-
-
-def cupy_RGBImage_2_numpy_separateRGB(cupyImageRGB):
-    cupy_R = cp.ascontiguousarray(cupyImageRGB[:,:,0], dtype=cp.uint8)
-    cupy_G = cp.ascontiguousarray(cupyImageRGB[:,:,1], dtype=cp.uint8)
-    cupy_B = cp.ascontiguousarray(cupyImageRGB[:,:,2], dtype=cp.uint8)
-    numpy_R = cupy_R.get()
-    numpy_G = cupy_G.get()
-    numpy_B = cupy_B.get()
-    
-    return numpy_R,numpy_G,numpy_B
-
-
-def cupy_separateRGB_2_numpy_RGBimage(cupyR,cupyG,cupyB):
-    rgb = (cupyR[..., cp.newaxis], cupyG[..., cp.newaxis], cupyB[..., cp.newaxis])
-    cupyRGB = cp.concatenate(rgb, axis=-1, dtype=cp.uint8)
-    numpyRGB = cupyRGB.get()
-    
-    return numpyRGB
-
-
-def cupy_separateRGB_2_cupy_RGBimage(cupyR,cupyG,cupyB):
-    rgb = (cupyR[..., cp.newaxis], cupyG[..., cp.newaxis], cupyB[..., cp.newaxis])
-    cupyRGB = cp.concatenate(rgb, axis=-1, dtype=cp.uint8)
-    
-    return cupyRGB
-
-
-def numpy_separateRGB_2_numpy_RGBimage(npR,npG,npB):
-    rgb = (npR[..., np.newaxis], npG[..., np.newaxis], np[..., np.newaxis])
-    numpyRGB = np.concatenate(rgb, axis=-1, dtype=np.uint8)
-    
-    return numpyRGB
-
-
-def gaussianblur_mono(image_mono,niveau_blur):
-    image_gaussian_blur_mono = ndimage.gaussian_filter(image_mono, sigma = niveau_blur)
-    
-    return image_gaussian_blur_mono
-
-
-def gaussianblur_colour(im_r,im_g,im_b,niveau_blur):
-    im_GB_r = ndimage.gaussian_filter(im_r, sigma = niveau_blur)
-    im_GB_g = ndimage.gaussian_filter(im_g, sigma = niveau_blur)
-    im_GB_b = ndimage.gaussian_filter(im_b, sigma = niveau_blur)
-    
-    return im_GB_r,im_GB_g,im_GB_b
-
-
-def image_negative_colour (red,green,blue):
-    blue = cp.invert(blue,dtype=cp.uint8)
-    green = cp.invert(green,dtype=cp.uint8)
-    red = cp.invert(red,dtype=cp.uint8)
-    
-    return red,green,blue
-
-
-def Image_Quality(image,IQ_Method):
+def Template_tracking(image,dim) :
     if IQ_Method == "Laplacian" :
         image = cv2.GaussianBlur(image,(3,3), 0)
         Image_Qual = cv2.Laplacian(image, cv2.CV_64F, ksize=laplacianksize).var()
