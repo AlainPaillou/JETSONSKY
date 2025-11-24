@@ -1,5 +1,15 @@
 # JETSONSKY
 
+**** 2025-11-24 UPDATE :
+
+Hello,
+
+Giray Yillikci alias gyillikci has started a huge work with JetsonSky : writing a better and cleaner code.
+
+THis will be very useful and interesting, considering my code is really bad and very hard to read.
+
+Many thanks Giray for your help. It will be really ... helpful.
+
 **** 2025-10-19 UPDATE :
 
 GraY-25 solved an issue with Serfile library. You will have to upload new __init__.py in the Serfile directory.
