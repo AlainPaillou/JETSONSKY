@@ -122,6 +122,7 @@ from tkinter.font import nametofont
 import platform
 import gui_widgets
 import image_utils
+import astronomy_utils
 
 my_os = sys.platform
 
@@ -561,6 +562,16 @@ azimut_cible = 0.0
 hauteur_cible = 0.0
 delta_azimut = 0.0
 delta_hauteur = 0.0
+
+# Initialize astronomy calculator with observer location
+astro_calc = astronomy_utils.AstronomyCalculator(
+    lat_obs=lat_obs,
+    long_obs=long_obs,
+    alt_obs=alt_obs,
+    zone=zone,
+    polaris_ad=Polaris_AD,
+    polaris_dec=Polaris_DEC
+)
 
 cv2.setUseOptimized(True)
 
@@ -1201,14 +1212,6 @@ def init_efw():
         fw_position_.set(0)
         presence_FW.set(1)  # Initialisation présence FW
 
-
-def angle2degminsec(angle) :
-
-    deg = int(angle)
-    minute = int((angle - int(angle)) * 60)
-    sec = int((angle - (deg + minute / 60)) * 3600)
-    result = str(deg) + "d "+str(abs(minute))+"' " + str(abs(sec)) + "''"
-    return result
 
 def on_press(key):
     global key_pressed
@@ -2192,9 +2195,9 @@ def refresh() :
                             posAY = height - 15
                             posHX = width - 80
                             posHY = height // 2
-                        texte_mount = angle2degminsec(azimut)
+                        texte_mount = astro_calc.angle2degminsec(azimut)
                         cv2.putText(image_traitee, texte_mount, (posAX,posAY), font, size, (255, 255, 255), 1, cv2.LINE_AA)
-                        texte_mount = angle2degminsec(hauteur)
+                        texte_mount = astro_calc.angle2degminsec(hauteur)
                         cv2.putText(image_traitee, texte_mount, (posHX,posHY), font, size, (255, 255, 255), 1, cv2.LINE_AA)
                     labelInfo2.config(text = str(curTT) + " ms   FPS : " + str(int(curFPS*10)/10) + "    ")
                     total_start = cv2.getTickCount()
@@ -7454,125 +7457,6 @@ def stop_tracking() :
     flag_nouvelle_resolution = True
     choix_DETECT_STARS.set(0)
     choix_TRKSAT.set(0)
-
-
-def calc_jour_julien (jours, mois, annee):
-    global jour_julien
-    
-    if mois < 3 :
-        mois = mois + 12
-        annee = annee - 1
-    coef_a = annee // 100
-    coef_b = 2 - coef_a + (coef_a // 4)
-    coef_c = int(365.25 * annee)
-    coef_d = int(30.6001 * (mois + 1))
-    jour_julien = coef_b + coef_c + coef_d + jours + 1720994.5
-
-
-def calc_heure_siderale(jrs_jul,heure_obs, min_obs, zone):
-    global HS
-    
-    TT = (jrs_jul - 2451545) / 36525
-    H1 = 24110.54841 + (8640184.812866 * TT) + (0.093104 * (TT * TT)) - (0.0000062 * (TT * TT * TT))
-    HSH = H1 / 3600
-    HS = ((HSH / 24) - int(HSH / 24)) * 24
-
-
-# Calcul azimut et hauteur cible - coordonnÃ©es altaz - a partir donnÃ©es cible, lieu observation et date
-def calcul_AZ_HT_cible(jours_obs, mois_obs, annee_obs, heure_obs, min_obs, second_obs, lat_obs, long_obs, cible_ASD, cible_DEC):
-    global azimut_cible, hauteur_cible, HS
-    
-    calc_jour_julien(jours_obs, mois_obs, annee_obs)
-    calc_heure_siderale(jour_julien,heure_obs, min_obs, zone)
-
-    angleH =  (2 * Pi * HS / (23 + 56 / 60 + 4 / 3600)) * 180 / Pi
-    angleT = ((heure_obs - 12 + min_obs / 60 - zone + second_obs / 3600) * 2 * Pi / (23 + 56 / 60 + 4 / 3600)) * 180 / Pi
-
-    H = angleH + angleT - 15*(cible_ASD) + (long_obs)
-    
-    sinushauteur = math.sin(cible_DEC * conv_rad) * math.sin(lat_obs * conv_rad) - math.cos(cible_DEC * conv_rad) * math.cos(lat_obs * conv_rad) * math.cos(H * conv_rad)
-    hauteur_cible = math.asin(sinushauteur)
-
-    cosazimut = (math.sin(cible_DEC * conv_rad) - math.sin(lat_obs * conv_rad) * math.sin(hauteur_cible)) / (math.cos(lat_obs*conv_rad) * math.cos(hauteur_cible))
-    sinazimut = (math.cos(cible_DEC * conv_rad) * math.sin(H* conv_rad)) / math.cos(hauteur_cible)
-
-    if sinazimut > 0 :
-        azimut_cible = math.acos(cosazimut)
-    else :
-        azimut_cible = - math.acos(cosazimut)
-
-
-# Calcul ascension droite et declinaison d'un astre de l'azimut et la hauteur observees d'un astre, du lieu d'observation et de la date
-def calcul_ASD_DEC_cible(jours_obs, mois_obs, annee_obs, heure_obs, min_obs, second_obs, lat_obs, long_obs, azimut_cible, hauteur_cible):
-    global ASD_calculee, DEC_calculee,HS
-    
-    calc_jour_julien(jours_obs, mois_obs, annee_obs)
-    calc_heure_siderale(jour_julien,heure_obs, min_obs, zone)
-
-    angleH =  (2 * Pi * HS / (23 + 56 / 60 + 4 / 3600)) * 180 / Pi
-    angleT = ((heure_obs - 12 + min_obs / 60 - zone + second_obs / 3600) * 2 * Pi / (23 + 56 / 60 + 4 / 3600)) * 180 / Pi
-
-    DEC_calculee = math.asin(math.cos(azimut_cible) * math.cos(lat_obs * conv_rad) * math.cos(hauteur_cible) + math.sin(lat_obs * conv_rad) * math.sin(hauteur_cible))
-
-    if azimut_cible > 0 :
-        H = math.acos((math.sin(DEC_calculee) * math.sin(lat_obs * conv_rad) - math.sin(hauteur_cible))/(math.cos(DEC_calculee) * math.cos(lat_obs * conv_rad)))
-    else :
-        H = - math.asin(math.sin(azimut_cible)*math.cos(hauteur_cible)/math.cos(DEC_calculee)) + Pi
-
-    ASD_calculee = (angleH + angleT + long_obs - H * conv_deg)/15
-
-    DEC_calculee = DEC_calculee
-
-
-def Mount_calibration() :
-    global azimut_moteur,hauteur_moteur,lat_obs,long_obs,Polaris_AD, Polaris_DEC,jour_julien,zone,azimut_monture,hauteur_monture,delta_azimut,delta_hauteur,labelInfo1
-
-    date = datetime.now()
-    annee_obs = date.year
-    mois_obs = date.month
-    jours_obs = date.day
-    heure_obs = date.hour
-    min_obs = date.minute
-    second_obs = date.second
-
-    cible_polaire_ASD = Polaris_AD
-    cible_polaire_DEC = Polaris_DEC
-
-    calc_jour_julien(jours_obs, mois_obs, annee_obs)
-    calc_heure_siderale(jour_julien,heure_obs, min_obs, zone)
-
-    angleH =  (2 * Pi * HS / (23 + 56 / 60 + 4 / 3600)) * 180 / Pi
-    angleT = ((heure_obs - 12 + min_obs / 60 - zone + second_obs / 3600) * 2 * Pi / (23 + 56 / 60 + 4 / 3600)) * 180 / Pi
-
-    H = angleH + angleT - 15*(cible_polaire_ASD) + (long_obs)
-    
-    sinushauteur = math.sin(cible_polaire_DEC * conv_rad) * math.sin(lat_obs * conv_rad) - math.cos(cible_polaire_DEC * conv_rad) * math.cos(lat_obs * conv_rad) * math.cos(H * conv_rad)
-    hauteurcible = math.asin(sinushauteur)
-
-    cosazimut = (math.sin(cible_polaire_DEC * conv_rad) - math.sin(lat_obs * conv_rad) * math.sin(hauteurcible)) / (math.cos(lat_obs*conv_rad) * math.cos(hauteurcible))
-    sinazimut = (math.cos(cible_polaire_DEC * conv_rad) * math.sin(H* conv_rad)) / math.cos(hauteurcible)
-
-    if sinazimut > 0 :
-        azimut_polaris = math.acos(cosazimut) * conv_deg # compris entre -180 et +180
-    else :
-        azimut_polaris = - math.acos(cosazimut) * conv_deg # compris entre -180 et +180
-
-    if azimut_polaris < 0 :
-        azimut_polaris = 360 + azimut_polaris
-        
-    hauteur_polaris = hauteurcible * conv_deg # compris entre 0 et 90
-           
-    texte = "Azimut : %6.2f" %azimut_polaris
-    texte = texte + "  "            
-    print(texte)
-    texte = "Hauteur : %6.2f" %hauteur_polaris
-    texte = texte + "  "
-    print(texte)
-    print(azimut," ",hauteur)
-    delta_azimut = azimut_polaris - azimut_monture
-    delta_hauteur = hauteur_polaris - hauteur_monture
-    print(delta_azimut,delta_hauteur)
-    labelInfo1.config(text = " Mount aligned on Polaris     ")
 
 
 def commande_false_colours() :
