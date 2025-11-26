@@ -1,5 +1,10 @@
 # JETSONSKY
 
+**** 2025-11-26 UPDATE :
+
+In main program, at the very beginning (comments), i have added Giray Yillikci for code optimization and cleaning.
+
+
 **** 2025-11-24 UPDATE :
 
 Hello,
