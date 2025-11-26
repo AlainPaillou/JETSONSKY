@@ -11,6 +11,8 @@
 #                                                                                                          #
 #                                   Copyright Alain Paillou 2018-2025                                      #
 #                                                                                                          #
+#                             Code optimization and cleaning : Giray Yillikci                              #
+#                                                                                                          #
 #                  Free of use for personal and non commercial or professional use                         #
 #                                                                                                          #
 #       This software or part of this software is NOT free of use for commercial or professional use       #
@@ -8313,3 +8315,4 @@ else :
 
 
 fenetre_principale.destroy()
+
