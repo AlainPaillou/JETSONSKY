@@ -121,11 +121,15 @@ from tkinter import filedialog as fd
 from tkinter.font import nametofont
 import platform
 import gui_widgets
-import gui_callbacks
+# Note: gui_callbacks module (exec pattern) replaced by gui_callbacks_class (class-based pattern)
+from gui_callbacks_class import GUICallbacks
 import image_utils
 import astronomy_utils
 import filter_pipeline
-import refresh_loop
+from filter_pipeline import application_filtrage_color, application_filtrage_mono
+# Note: refresh_loop module (exec pattern) replaced by refresh_loop_class (class-based pattern)
+from refresh_loop_class import RefreshLoop
+from state import ApplicationState
 
 my_os = sys.platform
 
@@ -576,6 +580,14 @@ astro_calc = astronomy_utils.AstronomyCalculator(
     polaris_dec=Polaris_DEC
 )
 
+# Initialize application state (new state management system)
+# This will gradually replace global variables
+app_state = ApplicationState()
+app_state.astronomy = astro_calc
+app_state.Dev_system = Dev_system if 'Dev_system' in dir() else "Windows"
+app_state.keyboard_layout = keyboard_layout
+app_state.init_filter_state()  # Initialize filter_state and filter_params from filter_pipeline
+
 cv2.setUseOptimized(True)
 
 def quitter() :
@@ -609,6 +621,30 @@ def quitter() :
             thread_3.stop()
         time.sleep(0.5)
         fenetre_principale.quit()
+
+
+def Mount_calibration():
+    """Calibrate telescope mount using Polaris position."""
+    global azimut_monture, hauteur_monture, delta_azimut, delta_hauteur, labelInfo1
+    global azimut, hauteur
+
+    # Use the astronomy calculator for coordinate calculations
+    if astro_calc is not None:
+        # Get current Polaris position in AltAz coordinates
+        azimut_polaris, hauteur_polaris = astro_calc.polaris_altaz()
+
+        texte = "Azimut : %6.2f" % azimut_polaris
+        print(texte)
+        texte = "Hauteur : %6.2f" % hauteur_polaris
+        print(texte)
+        print(azimut, " ", hauteur)
+
+        delta_azimut = azimut_polaris - azimut_monture
+        delta_hauteur = hauteur_polaris - hauteur_monture
+        print(delta_azimut, delta_hauteur)
+        labelInfo1.config(text=" Mount aligned on Polaris     ")
+    else:
+        labelInfo1.config(text=" Astronomy calculator not initialized ")
 
 
 # Splash screen - Show before main window
@@ -1058,6 +1094,7 @@ flag_GaussBlur = False
 # Import CUDA kernels from separate module
 from cuda_kernels import *
 
+# NOTE: filter pipeline initialization moved after image utility functions are defined (around line 2120)
 
 
 # Keyboard configuration setup, depending of your keyboard layout and country
@@ -2116,6 +2153,12 @@ gaussianblur_colour = image_utils.gaussianblur_colour
 image_negative_colour = image_utils.image_negative_colour
 Image_Quality = image_utils.Image_Quality
 
+# Initialize the filter pipeline with globals and app_state (must be after CUDA kernels and image utility functions are loaded)
+filter_pipeline.init_filter_pipeline(globals(), app_state)
+
+# Sync display state from globals (one-time init, then callbacks maintain it)
+app_state.sync_display_from_globals(globals())
+
 
 def Template_tracking(image,dim) :
     if IQ_Method == "Laplacian" :
@@ -2646,45 +2689,38 @@ yS3=80
 xS1=1490
 yS1=270
 
-# Filter Pipeline - loaded from filter_pipeline module
-exec(filter_pipeline.create_filter_pipeline_color(), globals())
-exec(filter_pipeline.create_filter_pipeline_mono(), globals())
+# Filter Pipeline - now using filter_pipeline module with proper OOP design
+# Functions application_filtrage_color() and application_filtrage_mono() are imported directly
+# and initialized via filter_pipeline.init_filter_pipeline(globals(), app_state) after CUDA kernels
 
-# Refresh Loop - loaded from refresh_loop module
-exec(refresh_loop.create_refresh_loop(), globals())
+# Refresh Loop - using class-based pattern (registers refresh() into globals namespace)
+# This replaces the old exec() pattern with proper Python class methods
+refresh_loop_obj = RefreshLoop(globals(), app_state)
+refresh_loop_obj.register()
 
-# GUI Callbacks - loaded from gui_callbacks module (BEFORE widgets since widgets reference callbacks in command= params)
-exec(gui_callbacks.create_mode_callbacks(), globals())
-exec(gui_callbacks.create_acquisition_mode_callbacks(), globals())
-exec(gui_callbacks.create_camera_control_callbacks(), globals())
-exec(gui_callbacks.create_flip_callbacks(), globals())
-exec(gui_callbacks.create_filter_toggle_callbacks(), globals())
-exec(gui_callbacks.create_slider_callbacks(), globals())
-exec(gui_callbacks.create_stacking_callbacks(), globals())
-exec(gui_callbacks.create_sensor_ratio_callbacks(), globals())
-exec(gui_callbacks.create_bayer_callbacks(), globals())
-exec(gui_callbacks.create_filter_wheel_callbacks(), globals())
-exec(gui_callbacks.create_tracking_callbacks(), globals())
-exec(gui_callbacks.create_misc_callbacks(), globals())
-exec(gui_callbacks.create_reset_general_fs(), globals())
+# GUI Callbacks - using class-based pattern (BEFORE widgets since widgets reference callbacks in command= params)
+# Initialize GUICallbacks class which registers all callbacks into globals namespace
+# This replaces the old exec() pattern with proper Python class methods
+gui_callbacks_obj = GUICallbacks(globals(), app_state)
+gui_callbacks_obj.register_all()
 
-# Various widgets - loaded from gui_widgets module
-exec(gui_widgets.create_various_widgets(), globals())
+# Various widgets - loaded from gui_widgets module (direct function call, no exec)
+gui_widgets.create_various_widgets(globals())
 
-# Top row widgets - loaded from gui_widgets module
-exec(gui_widgets.create_top_row_widgets(), globals())
+# Top row widgets - loaded from gui_widgets module (direct function call, no exec)
+gui_widgets.create_top_row_widgets(globals())
 
-# Exposition settings widgets - loaded from gui_widgets module
-exec(gui_widgets.create_exposition_widgets(), globals())
+# Exposition settings widgets - loaded from gui_widgets module (direct function call, no exec)
+gui_widgets.create_exposition_widgets(globals())
 
-# Sharpen/Denoise widgets - loaded from gui_widgets module
-exec(gui_widgets.create_sharpen_denoise_widgets(), globals())
+# Sharpen/Denoise widgets - loaded from gui_widgets module (direct function call, no exec)
+gui_widgets.create_sharpen_denoise_widgets(globals())
 
-# Histogram widgets - loaded from gui_widgets module
-exec(gui_widgets.create_histogram_widgets(), globals())
+# Histogram widgets - loaded from gui_widgets module (direct function call, no exec)
+gui_widgets.create_histogram_widgets(globals())
 
-# Capture widgets and buttons - loaded from gui_widgets module
-exec(gui_widgets.create_capture_widgets(), globals())
+# Capture widgets and buttons - loaded from gui_widgets module (direct function call, no exec)
+gui_widgets.create_capture_widgets(globals())
 
 
 def init_camera() :

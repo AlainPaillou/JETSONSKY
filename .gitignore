@@ -216,3 +216,4 @@ debug*.txt
 # But ignoring any newly built ones
 *.so.new
 *.so.bak
+nul
