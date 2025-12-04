@@ -601,8 +601,11 @@ def quitter() :
         flag_quitter = True
         flag_acquisition_mount = False
         time.sleep(0.5)
-        if Dev_system == "Windows" :
-            thread_3.stop()
+        if Dev_system == "Windows":
+            try:
+                thread_3.stop()
+            except NameError:
+                pass
         time.sleep(0.5)
         if flag_filter_wheel == True :
             filter_wheel.close()
@@ -617,8 +620,11 @@ def quitter() :
         flag_autorise_acquisition = False
         flag_image_disponible = False
         flag_keyboard_management = False
-        if Dev_system == "Windows" :
-            thread_3.stop()
+        if Dev_system == "Windows":
+            try:
+                thread_3.stop()
+            except NameError:
+                pass
         time.sleep(0.5)
         fenetre_principale.quit()
 
@@ -2158,20 +2164,6 @@ filter_pipeline.init_filter_pipeline(globals(), app_state)
 
 # Sync display state from globals (one-time init, then callbacks maintain it)
 app_state.sync_display_from_globals(globals())
-
-
-def Template_tracking(image,dim) :
-    if IQ_Method == "Laplacian" :
-        image = cv2.GaussianBlur(image,(3,3), 0)
-        Image_Qual = cv2.Laplacian(image, cv2.CV_64F, ksize=laplacianksize).var()
-    elif IQ_Method == "Sobel" :
-        image = cv2.GaussianBlur(image,(3,3), 0)
-        Image_Qual = cv2.Sobel(image, cv2.CV_64F, 1, 1, ksize=SobelSize).var()
-    else :
-        image = cv2.GaussianBlur(image,(3,3), 0)
-        Image_Qual = cv2.Laplacian(image, cv2.CV_64F, ksize=laplacianksize).var()
-        
-    return Image_Qual
 
 
 def Template_tracking(image,dim) :

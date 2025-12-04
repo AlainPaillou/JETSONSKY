@@ -198,6 +198,93 @@ class RefreshLoop:
         if start_keyboard:
             start_keyboard()
 
+    def _open_video_or_image(self) -> None:
+        """Open video or image file for video treatment mode."""
+        g = self.g
+        Video_Test = g.get('Video_Test', '')
+        
+        if not Video_Test:
+            return
+            
+        if g.get('flag_image_mode', False):
+            # Load image file
+            image_brut_read = cv2.imread(Video_Test, cv2.IMREAD_COLOR)
+            if image_brut_read is not None:
+                g['image_brute'] = image_brut_read
+                g['flag_image_disponible'] = True
+                res_cam_y, res_cam_x = image_brut_read.shape[:2]
+                g['res_cam_y'] = res_cam_y
+                g['res_cam_x'] = res_cam_x
+                g['flag_image_video_loaded'] = True
+                
+                # Convert to CuPy for filter pipeline
+                cp = self._get_cupy()
+                if image_brut_read.ndim == 3:
+                    g['flag_IsColor'] = True
+                    res_bb1, res_gg1, res_rr1 = self._numpy_rgb_to_cupy_separate(image_brut_read)
+                    g['res_rr1'] = res_rr1
+                    g['res_gg1'] = res_gg1
+                    g['res_bb1'] = res_bb1
+                else:
+                    g['flag_IsColor'] = False
+                    g['res_bb1'] = cp.asarray(image_brut_read)
+        else:
+            # Load video file
+            g['video_frame_position'] = 1
+            
+            if g.get('flag_SER_file', False):
+                # SER file
+                Serfile = g.get('Serfile')
+                if Serfile:
+                    video = Serfile.Serfile(Video_Test, NEW=False)
+                    g['video'] = video
+                    g['res_cam_x_base'] = video.getWidth()
+                    g['res_cam_y_base'] = video.getHeight()
+                    g['res_cam_x'] = video.getWidth()
+                    g['res_cam_y'] = video.getHeight()
+                    g['video_frame_number'] = video.getLength()
+                    g['SER_depth'] = video.getpixeldepth()
+                    g['flag_image_video_loaded'] = True
+            else:
+                # Regular video file (MP4, AVI, MOV)
+                video = cv2.VideoCapture(Video_Test, cv2.CAP_FFMPEG)
+                g['video'] = video
+                g['res_cam_x_base'] = int(video.get(cv2.CAP_PROP_FRAME_WIDTH))
+                g['res_cam_y_base'] = int(video.get(cv2.CAP_PROP_FRAME_HEIGHT))
+                g['res_cam_x'] = int(video.get(cv2.CAP_PROP_FRAME_WIDTH))
+                g['res_cam_y'] = int(video.get(cv2.CAP_PROP_FRAME_HEIGHT))
+                g['video_frame_number'] = int(video.get(cv2.CAP_PROP_FRAME_COUNT))
+                g['flag_image_video_loaded'] = True
+            
+            # Create video position slider
+            self._create_video_slider()
+
+    def _create_video_slider(self) -> None:
+        """Create video position slider widget."""
+        g = self.g
+        from tkinter import Scale, HORIZONTAL
+        
+        cadre = g.get('cadre')
+        fact_s = g.get('fact_s', 1.0)
+        h = g.get('h', 1060)
+        video_frame_number = g.get('video_frame_number', 100)
+        video_frame_position = g.get('video_frame_position', 1)
+        choix_position_frame = g.get('choix_position_frame')
+        
+        if cadre and choix_position_frame:
+            echelle210 = Scale(cadre, from_=0, to=video_frame_number,
+                              command=choix_position_frame, orient=HORIZONTAL,
+                              length=int(1350*fact_s), width=7, resolution=1,
+                              label="", showvalue=1, tickinterval=100, sliderlength=20)
+            echelle210.set(video_frame_position)
+            echelle210.place(anchor="w", x=70, y=h-30)
+            g['echelle210'] = echelle210
+            
+            # Bind mouse events to detect user dragging
+            echelle210.bind('<Button-1>', lambda e: g.__setitem__('slider_dragging', True))
+            echelle210.bind('<ButtonRelease-1>', lambda e: g.__setitem__('slider_dragging', False))
+            g['slider_dragging'] = False
+
     # =========================================================================
     # Main Refresh Method
     # =========================================================================
@@ -273,6 +360,23 @@ class RefreshLoop:
                     g['res_rr1'] = res_rr1
                     g['res_gg1'] = res_gg1
                     g['res_bb1'] = res_bb1
+                    
+                    # Stabilization in non-HDR mode
+                    if g.get('flag_STAB', False) and g.get('flag_filtrage_ON', False):
+                        cp = self._get_cupy()
+                        if g.get('flag_IsColor', True):
+                            # Color mode: convert to numpy, stabilize, convert back
+                            image_brute = self._cupy_separate_to_numpy_rgb(res_bb1, res_gg1, res_rr1)
+                            image_brute = self._template_tracking(image_brute, 3)
+                            res_bb1, res_gg1, res_rr1 = self._numpy_rgb_to_cupy_separate(image_brute)
+                            g['res_rr1'] = res_rr1
+                            g['res_gg1'] = res_gg1
+                            g['res_bb1'] = res_bb1
+                        else:
+                            # Mono mode
+                            image_brute = res_bb1.get()
+                            image_brute = self._template_tracking(image_brute, 1)
+                            g['res_bb1'] = cp.asarray(image_brute, dtype=cp.uint8)
 
             self._update_timestamp()
 
@@ -353,9 +457,10 @@ class RefreshLoop:
         cp = self._get_cupy()
         PIL = self._get_pil()
 
-        # First start in video mode
+        # First start in video mode - open video/image file
         if g.get('flag_premier_demarrage', True):
             g['flag_premier_demarrage'] = False
+            self._open_video_or_image()
 
         video = g.get('video')
         if video is None or not g.get('flag_image_video_loaded', False):
@@ -379,6 +484,27 @@ class RefreshLoop:
 
         if ret_img:
             g['frame_number'] = g.get('frame_number', 0) + 1
+            
+            # Stabilization in video mode
+            if g.get('flag_STAB', False) and g.get('flag_filtrage_ON', False):
+                cp = self._get_cupy()
+                if g.get('flag_IsColor', True):
+                    # Color mode: convert to numpy, stabilize, convert back
+                    res_bb1 = g.get('res_bb1')
+                    res_gg1 = g.get('res_gg1')
+                    res_rr1 = g.get('res_rr1')
+                    image_brute = self._cupy_separate_to_numpy_rgb(res_bb1, res_gg1, res_rr1)
+                    image_brute = self._template_tracking(image_brute, 3)
+                    res_bb1, res_gg1, res_rr1 = self._numpy_rgb_to_cupy_separate(image_brute)
+                    g['res_rr1'] = res_rr1
+                    g['res_gg1'] = res_gg1
+                    g['res_bb1'] = res_bb1
+                else:
+                    # Mono mode
+                    res_bb1 = g.get('res_bb1')
+                    image_brute = res_bb1.get()
+                    image_brute = self._template_tracking(image_brute, 1)
+                    g['res_bb1'] = cp.asarray(image_brute, dtype=cp.uint8)
 
             # Apply filter pipeline
             if g.get('flag_filtrage_ON', False):
@@ -916,10 +1042,19 @@ class RefreshLoop:
         if g.get('flag_IQE', False):
             quality = g.get('quality', {})
             max_quality = g.get('max_quality', 1)
+            if max_quality == 0:
+                max_quality = 1  # Avoid division by zero
             transform = PIL.ImageDraw.Draw(cadre_image.im)
             for x in range(2, 256):
-                y2 = int((quality.get(x, 0) / max_quality) * 400)
-                y1 = int((quality.get(x-1, 0) / max_quality) * 400)
+                # Handle both dict and array/list types
+                if hasattr(quality, 'get'):
+                    y2 = int((quality.get(x, 0) / max_quality) * 400)
+                    y1 = int((quality.get(x-1, 0) / max_quality) * 400)
+                elif hasattr(quality, '__getitem__') and len(quality) > x:
+                    y2 = int((quality[x] / max_quality) * 400)
+                    y1 = int((quality[x-1] / max_quality) * 400)
+                else:
+                    y2 = y1 = 0
                 transform.line((((x-1)*3, cam_displ_y - y1), (x*3, cam_displ_y - y2)),
                               fill="red", width=2)
             transform.line(((256*3, cam_displ_y), (256*3, cam_displ_y - 256*3)), fill="blue", width=3)
@@ -1042,6 +1177,13 @@ class RefreshLoop:
                     g['res_bb1'] = cp.asarray(frame)
 
                 g['video_frame_position'] = frame_position + 1
+                
+                # Update slider position only when user is not dragging it
+                if not g.get('slider_dragging', False):
+                    echelle210 = g.get('echelle210')
+                    if echelle210 is not None:
+                        echelle210.set(g['video_frame_position'])
+                
                 return True
         except Exception as e:
             print(f"SER read error: {e}")
@@ -1079,6 +1221,13 @@ class RefreshLoop:
             g['res_bb1'] = cp.asarray(frame)
 
         g['video_frame_position'] = int(video.get(cv2.CAP_PROP_POS_FRAMES))
+        
+        # Update slider position only when user is not dragging it
+        if not g.get('slider_dragging', False):
+            echelle210 = g.get('echelle210')
+            if echelle210 is not None:
+                echelle210.set(g['video_frame_position'])
+        
         return True
 
 

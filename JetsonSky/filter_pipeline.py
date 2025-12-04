@@ -2843,6 +2843,8 @@ def _sync_state_to_globals():
 def _sync_globals_to_state():
     """
     Sync main globals to filter state before processing.
+    This includes re-syncing filter params from globals to ensure
+    checkbox changes are reflected in the filter pipeline.
     """
     g = _main_globals
     s = _filter_state
@@ -2850,6 +2852,9 @@ def _sync_globals_to_state():
     # Best frame reference (read from globals)
     s.BFREF_image = g.get('BFREF_image')
     s.flag_BFREF_image = g.get('flag_BFREF_image', False)
+    
+    # Re-sync filter params from globals (critical for checkbox changes)
+    sync_filter_params_from_globals(_main_globals, _app_state)
 
 
 def application_filtrage_color(res_b1, res_g1, res_r1):

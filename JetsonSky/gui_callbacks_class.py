@@ -162,7 +162,7 @@ class GUICallbacks:
     # Helper Methods for Reducing Repetition
     # =========================================================================
 
-    def _toggle_flag(self, choix_key: str, flag_key: str, state_attr: str = None) -> None:
+    def _toggle_flag(self, choix_key: str, flag_key: str, state_attr: str = None, use_int: bool = False) -> None:
         """
         Generic toggle handler for checkbox callbacks.
         
@@ -170,13 +170,21 @@ class GUICallbacks:
             choix_key: The key for the IntVar checkbox in globals (e.g., 'choix_GR')
             flag_key: The key for the flag in globals (e.g., 'flag_GR')
             state_attr: Optional attribute name on state.filter_params to sync
+            use_int: If True, store as int (0/1) instead of bool
         """
         choix_val = self._get_var(choix_key)
         if choix_val is not None:
-            self.g[flag_key] = choix_val != 0
+            if use_int:
+                self.g[flag_key] = 1 if choix_val != 0 else 0
+            else:
+                self.g[flag_key] = choix_val != 0
         else:
             # Fallback: toggle current value
-            self.g[flag_key] = not self.g.get(flag_key, False)
+            current = self.g.get(flag_key, False)
+            if use_int:
+                self.g[flag_key] = 0 if current else 1
+            else:
+                self.g[flag_key] = not current
             logger.debug(f"Toggle fallback for '{choix_key}' -> '{flag_key}'")
         
         # Sync to app_state
@@ -820,7 +828,7 @@ class GUICallbacks:
 
     def commande_img_Neg(self):
         """Toggle image negative."""
-        self._toggle_flag('choix_img_Neg', 'ImageNeg')
+        self._toggle_flag('choix_img_Neg', 'ImageNeg', use_int=True)
 
     def commande_TIP(self):
         """Toggle TIP mode."""
@@ -861,11 +869,11 @@ class GUICallbacks:
 
     def commande_sharpen_soft1(self):
         """Toggle sharpen 1."""
-        self._toggle_flag('choix_sharpen_soft1', 'flag_sharpen_soft1', 'flag_sharpen_soft1')
+        self._toggle_flag('choix_sharpen_soft1', 'flag_sharpen_soft1', 'flag_sharpen_soft1', use_int=True)
 
     def commande_sharpen_soft2(self):
         """Toggle sharpen 2."""
-        self._toggle_flag('choix_sharpen_soft2', 'flag_sharpen_soft2', 'flag_sharpen_soft2')
+        self._toggle_flag('choix_sharpen_soft2', 'flag_sharpen_soft2', 'flag_sharpen_soft2', use_int=True)
 
     def commande_NLM2(self):
         """Toggle NLM2 denoising."""
@@ -893,23 +901,23 @@ class GUICallbacks:
 
     def commande_HST(self):
         """Toggle histogram display."""
-        self._toggle_flag('choix_HST', 'flag_HST')
+        self._toggle_flag('choix_HST', 'flag_HST', use_int=True)
 
     def commande_TRSF(self):
         """Toggle TRSF display."""
-        self._toggle_flag('choix_TRSF', 'flag_TRSF')
+        self._toggle_flag('choix_TRSF', 'flag_TRSF', use_int=True)
 
     def commande_TRGS(self):
         """Toggle TRGS display."""
-        self._toggle_flag('choix_TRGS', 'flag_TRGS')
+        self._toggle_flag('choix_TRGS', 'flag_TRGS', use_int=True)
 
     def commande_TRCLL(self):
         """Toggle TRCLL display."""
-        self._toggle_flag('choix_TRCLL', 'flag_TRCLL')
+        self._toggle_flag('choix_TRCLL', 'flag_TRCLL', use_int=True)
 
     def commande_DEMO(self):
         """Toggle demo mode."""
-        self._toggle_flag('choix_DEMO', 'flag_DEMO')
+        self._toggle_flag('choix_DEMO', 'flag_DEMO', use_int=True)
 
     def commande_STAB(self):
         """Toggle stabilization."""
@@ -1071,16 +1079,16 @@ class GUICallbacks:
         self._toggle_flag('choix_reduce_variation', 'flag_reduce_variation', 'flag_reduce_variation')
 
     def commande_histo_equalize(self):
-        """Toggle histogram equalization."""
-        self._toggle_flag('choix_histo_equalize', 'flag_histogram_equalize', 'flag_histogram_equalize')
+        """Toggle histogram equalization (Gamma)."""
+        self._toggle_flag('choix_histogram_equalize2', 'flag_histogram_equalize2', 'flag_histogram_equalize2', use_int=True)
 
     def commande_histo_stretch(self):
         """Toggle histogram stretch."""
-        self._toggle_flag('choix_histogram_stretch', 'flag_histogram_stretch', 'flag_histogram_stretch')
+        self._toggle_flag('choix_histogram_stretch', 'flag_histogram_stretch', 'flag_histogram_stretch', use_int=True)
 
     def commande_histo_phitheta(self):
         """Toggle histogram phi-theta correction."""
-        self._toggle_flag('choix_histogram_phitheta', 'flag_histogram_phitheta', 'flag_histogram_phitheta')
+        self._toggle_flag('choix_histogram_phitheta', 'flag_histogram_phitheta', 'flag_histogram_phitheta', use_int=True)
 
     def commande_contrast_CLAHE(self):
         """Toggle CLAHE contrast enhancement."""
