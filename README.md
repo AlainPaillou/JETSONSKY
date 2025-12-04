@@ -1,5 +1,13 @@
 # JETSONSKY
 
+**** 2025-12-04 UPDATE :
+
+I have uploaded JetsonSky_Old_Way_V53_07RC.py which is the original 53_07RC version (standalone with the entire code).
+
+Giray is working on the new JetsonSky_Linux_Windows_V53_07RC.py which gets much cleaner code but there are still some bugs and issues.
+
+Old fashion JetsonSky_Old_Way_V53_07RC.py will be the suitable version until new version will be stable enough for classical use.
+
 **** 2025-11-26 UPDATE :
 
 In main program, at the very beginning (comments), i have added Giray Yillikci for code optimization and cleaning.
