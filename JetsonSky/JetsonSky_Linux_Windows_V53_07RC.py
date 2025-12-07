@@ -11,8 +11,6 @@
 #                                                                                                          #
 #                                   Copyright Alain Paillou 2018-2025                                      #
 #                                                                                                          #
-#                             Code optimization and cleaning : Giray Yillikci                              #
-#                                                                                                          #
 #                  Free of use for personal and non commercial or professional use                         #
 #                                                                                                          #
 #       This software or part of this software is NOT free of use for commercial or professional use       #
@@ -122,16 +120,6 @@ from tkinter.messagebox import askyesno
 from tkinter import filedialog as fd
 from tkinter.font import nametofont
 import platform
-import gui_widgets
-# Note: gui_callbacks module (exec pattern) replaced by gui_callbacks_class (class-based pattern)
-from gui_callbacks_class import GUICallbacks
-import image_utils
-import astronomy_utils
-import filter_pipeline
-from filter_pipeline import application_filtrage_color, application_filtrage_mono
-# Note: refresh_loop module (exec pattern) replaced by refresh_loop_class (class-based pattern)
-from refresh_loop_class import RefreshLoop
-from state import ApplicationState
 
 my_os = sys.platform
 
@@ -217,7 +205,6 @@ else :
 
 
 import cv2
-
 try :
     CudaEnable = cv2.cuda.getCudaEnabledDeviceCount()
     if CudaEnable == 1 :
@@ -294,32 +281,29 @@ except :
 # Choose the size of the fonts in the Main Window - It depends of your system - can be set from 5 to 7
 MainWindowFontSize = 6
 
-# Get script directory for proper path resolution (allows running from any directory)
-SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-
 if Dev_system == "Linux" :
     # Choose your directories for images and videos
-    image_path = os.path.join(SCRIPT_DIR, 'Images')
-    video_path = os.path.join(SCRIPT_DIR, 'Videos')
+    image_path = os.path.join(os.getcwd(), 'Images')
+    video_path = os.path.join(os.getcwd(), 'Videos')
 
     # Path to librairies ZWO Jetson sbc
     if platform.machine() == "aarch64" :
-        env_filename_camera = os.path.join(SCRIPT_DIR, 'Lib','libASICamera2.so')
-        env_filename_efw = os.path.join(SCRIPT_DIR, 'Lib','libEFWFilter.so')
+        env_filename_camera = os.path.join(os.getcwd(), 'Lib','libASICamera2.so')
+        env_filename_efw = os.path.join(os.getcwd(), 'Lib','libEFWFilter.so')
     elif platform.machine() == "x86_64" :
-        env_filename_camera = os.path.join(SCRIPT_DIR, 'x64_Lib','libASICamera2.so.1.27')
-        env_filename_efw = os.path.join(SCRIPT_DIR, 'Lib','libEFWFilter.so.1.7')
+        env_filename_camera = os.path.join(os.getcwd(), 'x64_Lib','libASICamera2.so.1.27')
+        env_filename_efw = os.path.join(os.getcwd(), 'Lib','libEFWFilter.so.1.7')
 
     USBCam = 70
     
 else :
     # Choose your directories for images and videos
-    image_path = os.path.join(SCRIPT_DIR, 'Images')
-    video_path = os.path.join(SCRIPT_DIR, 'Videos')
+    image_path = os.path.join(os.getcwd(), 'Images')
+    video_path = os.path.join(os.getcwd(), 'Videos')
     
     # Path to librairies ZWO Windows
-    env_filename_camera = os.path.join(SCRIPT_DIR, 'Lib','ASICamera2.dll')
-    env_filename_efw = os.path.join(SCRIPT_DIR, 'Lib','EFW_filter.dll')
+    env_filename_camera = os.path.join(os.getcwd(), 'Lib','ASICamera2.dll')
+    env_filename_efw = os.path.join(os.getcwd(), 'Lib','EFW_filter.dll')
 
     USBCam = 95
 
@@ -576,24 +560,6 @@ hauteur_cible = 0.0
 delta_azimut = 0.0
 delta_hauteur = 0.0
 
-# Initialize astronomy calculator with observer location
-astro_calc = astronomy_utils.AstronomyCalculator(
-    lat_obs=lat_obs,
-    long_obs=long_obs,
-    alt_obs=alt_obs,
-    zone=zone,
-    polaris_ad=Polaris_AD,
-    polaris_dec=Polaris_DEC
-)
-
-# Initialize application state (new state management system)
-# This will gradually replace global variables
-app_state = ApplicationState()
-app_state.astronomy = astro_calc
-app_state.Dev_system = Dev_system if 'Dev_system' in dir() else "Windows"
-app_state.keyboard_layout = keyboard_layout
-app_state.init_filter_state()  # Initialize filter_state and filter_params from filter_pipeline
-
 cv2.setUseOptimized(True)
 
 def quitter() :
@@ -607,11 +573,8 @@ def quitter() :
         flag_quitter = True
         flag_acquisition_mount = False
         time.sleep(0.5)
-        if Dev_system == "Windows":
-            try:
-                thread_3.stop()
-            except NameError:
-                pass
+        if Dev_system == "Windows" :
+            thread_3.stop()
         time.sleep(0.5)
         if flag_filter_wheel == True :
             filter_wheel.close()
@@ -626,37 +589,10 @@ def quitter() :
         flag_autorise_acquisition = False
         flag_image_disponible = False
         flag_keyboard_management = False
-        if Dev_system == "Windows":
-            try:
-                thread_3.stop()
-            except NameError:
-                pass
+        if Dev_system == "Windows" :
+            thread_3.stop()
         time.sleep(0.5)
         fenetre_principale.quit()
-
-
-def Mount_calibration():
-    """Calibrate telescope mount using Polaris position."""
-    global azimut_monture, hauteur_monture, delta_azimut, delta_hauteur, labelInfo1
-    global azimut, hauteur
-
-    # Use the astronomy calculator for coordinate calculations
-    if astro_calc is not None:
-        # Get current Polaris position in AltAz coordinates
-        azimut_polaris, hauteur_polaris = astro_calc.polaris_altaz()
-
-        texte = "Azimut : %6.2f" % azimut_polaris
-        print(texte)
-        texte = "Hauteur : %6.2f" % hauteur_polaris
-        print(texte)
-        print(azimut, " ", hauteur)
-
-        delta_azimut = azimut_polaris - azimut_monture
-        delta_hauteur = hauteur_polaris - hauteur_monture
-        print(delta_azimut, delta_hauteur)
-        labelInfo1.config(text=" Mount aligned on Polaris     ")
-    else:
-        labelInfo1.config(text=" Astronomy calculator not initialized ")
 
 
 # Main Window
@@ -664,8 +600,7 @@ fenetre_principale = Tk ()
 screen_width = fenetre_principale.winfo_screenwidth()
 screen_height = fenetre_principale.winfo_screenheight()
 
-# Splash screen using OpenCV
-image_JetsonSky = cv2.imread(os.path.join(SCRIPT_DIR, 'JetsonSky_Logo.jpg'), cv2.IMREAD_COLOR)
+image_JetsonSky = cv2.imread('JetsonSky_Logo.jpg',cv2.IMREAD_COLOR)
 cv2.imshow(titre, image_JetsonSky)
 cv2.waitKey()
 cv2.destroyAllWindows()
@@ -1071,11 +1006,12 @@ flag_acquisition_thread_OK = False
 flag_GaussBlur = False
 
 
+##########################################
+#           CUDA & CUPY Kernels          #
+##########################################
 
 # Import CUDA kernels from separate module
 from cuda_kernels import *
-
-# NOTE: filter pipeline initialization moved after image utility functions are defined (around line 2120)
 
 
 # Keyboard configuration setup, depending of your keyboard layout and country
@@ -1096,11 +1032,11 @@ if Dev_system == "Windows" :
         blue_reset = ';'
 
         # Zoom displacement
-        zoom_up = 'up' # UP ARROW
-        zoom_down = 'down' # DOWN ARROW
-        zoom_right = 'right' # RIGHT ARROW
-        zoom_left = 'left' # LEFT ARROW
-        zoom_reset = 'space' # SPACE KEY
+        zoom_up = 'haut' # UP ARROW
+        zoom_down = 'bas' # DOWN ARROW
+        zoom_right = 'droite' # RIGHT ARROW
+        zoom_left = 'gauche' # LEFT ARROW
+        zoom_reset = 'espace' # SPACE KEY
 
         # hock stabilization window displacement
         stab_up = 'z'
@@ -1233,6 +1169,14 @@ def init_efw():
         fw_position_.set(0)
         presence_FW.set(1)  # Initialisation présence FW
 
+
+def angle2degminsec(angle) :
+
+    deg = int(angle)
+    minute = int((angle - int(angle)) * 60)
+    sec = int((angle - (deg + minute / 60)) * 3600)
+    result = str(deg) + "d "+str(abs(minute))+"' " + str(abs(sec)) + "''"
+    return result
 
 def on_press(key):
     global key_pressed
@@ -1768,6 +1712,1450 @@ def camera_acquisition() :
             res_gg = 0
             res_bb = 0
     return ret,res_rr,res_gg,res_bb
+     
+
+def refresh() :
+    global video,flag_cap_video,camera,traitement,cadre_image,image_brute,flag_image_disponible,flag_quitter,timeoutexp,curFPS,fpsQueue,image_brut_read,delta_zx,delta_zy,flag_new_stab_window,\
+           flag_autorise_acquisition,flag_premier_demarrage,flag_BIN2,image_traitee,val_SAT,exposition,total_start,total_stop,flag_image_video_loaded,flag_BFReference,\
+           val_gain, echelle2,val_exposition,echelle1,imggrey1,imggrey2,flag_DETECT_STARS,flag_TRKSAT,flag_REMSAT,flag_CONST,labelInfo2,Date_hour_image,val_nb_capt_video,flag_image_mode,\
+           calque_stars,calque_satellites,calque_TIP,flag_nouvelle_resolution,nb_sat,sat_x,sat_y,sat_s,res_bb1,res_gg1,res_rr1,cupy_context,flag_TRIGGER,flag_filtrage_ON,\
+           nb_erreur,image_brute_grey,flag_sat_detected,start_time_video,stop_time_video,time_exec_test,total_time,font,flag_colour_camera,flag_iscolor,\
+           res_cam_x,res_cam_y,flag_premier_demarrage,Video_Test,TTQueue,curTT,max_sat,video_frame_number,video_frame_position,image_reconstructed,stars_x,strs_y,stars_s,nb_stars,\
+           quality,max_quality,quality_pos,tmp_qual,flag_IsColor,mean_quality,SFN,min_qual,max_qual,val_BFR,SFN,frame_number,delta_tx,delta_ty,labelInfo10,flag_GO,BFREF_image,flag_BFREF_image,\
+           delta_RX,delta_RY,delta_BX,delta_BY,track,track_crater_history,track_sat_history,track_sat,track_crater,key_pressed,DSW,echelle210,frame_position,h,flag_new_frame_position,\
+           curFPS,SER_depth,flag_SER_file,res_cam_x_base,res_cam_y_base,flag_capture_image_reference,Image_Reference,flag_image_reference_OK,previous_frame_number,flag_blur_image_ref_sub
+
+    with cupy_context :
+    
+        if flag_camera_ok == True :
+        
+            if flag_premier_demarrage == True :
+                flag_premier_demarrage = False
+                start_mount()
+                if Dev_system == "Windows" :
+                    start_keyboard()
+            if flag_autoexposure_gain == True :
+                val_gain = (int)(camera.get_control_value(asi.ASI_GAIN)[0])
+                echelle2.set(val_gain)        
+            if flag_autoexposure_exposition == True :
+                val_exposition = (int)(camera.get_control_value(asi.ASI_EXPOSURE)[0]) // 1000
+                echelle1.set(val_exposition)        
+            if flag_stop_acquisition == False :
+                if flag_HDR == True and flag_filtrage_ON == True :
+                    try :
+                        if flag_16b == False :
+                            image_brute1=camera.capture_video_frame_RAW8_NUMPY(filename=None,timeout=timeoutexp)
+                            val_exposition = echelle1.get()
+                            if flag_acq_rapide == "Fast" :
+                                exposition = val_exposition // 2
+                            else :
+                                exposition = val_exposition*1000 // 2
+                            camera.set_control_value(asi.ASI_EXPOSURE, exposition)
+                            timeoutHDR = timeoutexp // 2
+                            time.sleep(0.1)
+                            camera.start_video_capture()
+                            image_brute2=camera.capture_video_frame_RAW8_NUMPY(filename=None,timeout=timeoutexp)
+                            if flag_acq_rapide == "Fast" :
+                                exposition = val_exposition // 4
+                            else :
+                                exposition = val_exposition*1000 // 4
+                            camera.set_control_value(asi.ASI_EXPOSURE, exposition)
+                            timeoutHDR = timeoutexp // 4
+                            time.sleep(0.1)
+                            camera.start_video_capture()
+                            image_brute3=camera.capture_video_frame_RAW8_NUMPY(filename=None,timeout=timeoutexp)
+                            if flag_acq_rapide == "Fast" :
+                                exposition = val_exposition // 6
+                            else :
+                                exposition = val_exposition*1000 // 6
+                            camera.set_control_value(asi.ASI_EXPOSURE, exposition)
+                            timeoutHDR = timeoutexp // 6
+                            time.sleep(0.1)
+                            camera.start_video_capture()
+                            image_brute4=camera.capture_video_frame_RAW8_NUMPY(filename=None,timeout=timeoutexp)
+                            val_exposition = echelle1.get()
+                            if flag_acq_rapide == "Fast" :
+                                exposition = val_exposition
+                            else :
+                                exposition = val_exposition*1000
+                            camera.set_control_value(asi.ASI_EXPOSURE, exposition)
+                            img_list = [image_brute1,image_brute2,image_brute3,image_brute4]                       
+                            Date_hour_image = datetime.now().strftime('Date %Y/%m/%d  Time %H:%M:%S.%f')[:-3]
+                            merge_mertens = cv2.createMergeMertens()
+                            res_mertens = merge_mertens.process(img_list)
+                            image_brute = np.clip(res_mertens*255, 0, 255).astype('uint8')
+                            image_brute = opencv_color_debayer(image_brute,type_debayer,flag_OpenCvCuda)
+                        else :
+                            if type_debayer != 0 and flag_IsColor == True:
+                                mono_colour = "Colour"
+                            else :
+                                mono_colour = "Mono"
+                            image_camera_base = camera.capture_video_frame_RAW16_CUPY(filename=None,timeout=timeoutexp)
+                            if mode_HDR == "Mean" :
+                                res_r = cp.asarray(image_camera_base,dtype=cp.uint8)
+                                height,width = image_camera_base.shape
+                                nb_blocksX = (width // nb_ThreadsX) + 1
+                                nb_blocksY = (height // nb_ThreadsY) + 1
+                                type_method = 0
+                                if flag_HB == True :
+                                    Hard_BIN = 1
+                                else :
+                                    Hard_BIN = 0
+                                HDR_compute_GPU((nb_blocksX,nb_blocksY),(nb_ThreadsX,nb_ThreadsY),(res_r, image_camera_base,  np.intc(width), np.intc(height), np.float32(TH_16B), \
+                                            np.intc(type_method), np.intc(mode_BIN), np.intc(Hard_BIN)))
+                                image_brute = res_r.get()
+                                image_brute = cv2.cvtColor(image_brute,type_debayer)
+                            else :
+                                image_brute = HDR_compute(mono_colour,image_camera_base,mode_HDR,TH_16B,mode_BIN,flag_HB,type_debayer)
+                            if flag_noir_blanc == 1 and flag_colour_camera == True :
+                                if image_brute.ndim == 3 :
+                                    image_brute = cv2.cvtColor(image_brute, cv2.COLOR_BGR2GRAY)
+                                    Dim = 1
+                        Date_hour_image = datetime.now().strftime('Date %Y/%m/%d  Time %H:%M:%S.%f')[:-3]
+                        if flag_STAB == True and flag_HDR == True and flag_filtrage_ON == True :
+                            if image_brute.ndim == 3 :
+                                flag_IsColor = True
+                                Dim = 3
+                            else :
+                                flag_IsColor = False
+                                Dim = 1
+                            image_brute = Template_tracking(image_brute,Dim)
+                        if image_brute.ndim == 3 :
+                            flag_IsColor = True
+                            res_bb1,res_gg1,res_rr1 = numpy_RGBImage_2_cupy_separateRGB(image_brute)
+                        else :
+                            flag_IsColor = False
+                            res_bb1 = cp.asarray(image_brute)
+                        flag_image_disponible = True
+                        ret_img = True
+                    except Exception as error :
+                        nb_erreur += 1
+                        print("An error occurred : ", error)
+                        print("Capture error : ",nb_erreur)
+                        time.sleep(0.01)
+                        ret_img = False
+                else :
+                    ret_img,res_rr1,res_gg1,res_bb1 = camera_acquisition()
+                Date_hour_image = datetime.now().strftime('Date %Y/%m/%d  Time %H:%M:%S.%f')[:-3]
+                if ret_img == True :
+                    frame_number = frame_number + 1
+                    flag_GO = True
+                    if flag_BFR == True and flag_image_mode == False :
+                        if flag_IsColor == True :
+                            rs = res_cam_y // 2 - res_cam_y // 8 + delta_ty
+                            re = res_cam_y // 2 + res_cam_y // 8 + delta_ty
+                            cs = res_cam_x // 2 - res_cam_x // 8 + delta_tx
+                            ce = res_cam_x // 2 + res_cam_x // 8 + delta_tx
+                            img_numpy_crop = cupy_separateRGB_2_numpy_RGBimage(res_rr1,res_gg1,res_bb1)
+                            crop_im_grey = cv2.cvtColor(img_numpy_crop, cv2.COLOR_BGR2GRAY)
+                            img_qual = Image_Quality(crop_im_grey,IQ_Method)
+                            if img_qual > max_qual :
+                                max_qual = img_qual
+                            if img_qual < min_qual :
+                                min_qual = img_qual
+                            quality_threshold = min_qual + (max_qual - min_qual) * (val_BFR / 100)
+                            if img_qual < quality_threshold :
+                                flag_GO = False
+                                SFN = SFN + 1
+                            ratio = int((SFN / frame_number) * 1000) / 10
+                            texte = "SFN : " + str(SFN) + "   B/T : "+str(ratio) + "  Thres : " + str(int(quality_threshold*10)/10) + "  Qual : " + str(int(img_qual*10)/10) + "             "
+                            labelInfo10.config(text = texte)
+                        else :
+                            rs = res_cam_y // 2 - res_cam_y // 8 + delta_ty
+                            re = res_cam_y // 2 + res_cam_y // 8 + delta_ty
+                            cs = res_cam_x // 2 - res_cam_x // 8 + delta_tx
+                            ce = res_cam_x // 2 + res_cam_x // 8 + delta_tx
+                            img_numpy_crop = res_bb1.get()
+                            crop_Im = img_numpy_crop[rs:re,cs:ce]
+                            img_qual = Image_Quality(crop_Im,IQ_Method)
+                            if img_qual > max_qual :
+                                max_qual = img_qual
+                            if img_qual < min_qual :
+                                 min_qual = img_qual
+                            quality_threshold = min_qual + (max_qual - min_qual) * (val_BFR / 100)
+                            if img_qual < quality_threshold :
+                                flag_GO = False
+                                SFN = SFN + 1
+                            ratio = int((SFN / frame_number) * 1000) / 10 
+                            texte = "SFN : " + str(SFN) + "   B/T : "+str(ratio) + "  Thres : " + str(int(quality_threshold*10)/10) + "  Qual : " + str(int(img_qual*10)/10) + "             "
+                            labelInfo10.config(text = texte)
+
+                    if flag_BFR == False and flag_BFREF == True and flag_BFReference == "BestFrame" and flag_image_mode == False :
+                        if flag_IsColor == True :
+                            rs = res_cam_y // 2 - res_cam_y // 8 + delta_ty
+                            re = res_cam_y // 2 + res_cam_y // 8 + delta_ty
+                            cs = res_cam_x // 2 - res_cam_x // 8 + delta_tx
+                            ce = res_cam_x // 2 + res_cam_x // 8 + delta_tx
+                            img_numpy_crop = cupy_separateRGB_2_numpy_RGBimage(res_rr1,res_gg1,res_bb1)
+                            crop_Im = img_numpy_crop[rs:re,cs:ce]
+                            crop_im_grey = cv2.cvtColor(crop_Im, cv2.COLOR_BGR2GRAY)
+                            img_qual = Image_Quality(crop_im_grey,IQ_Method)
+                            if img_qual > max_qual :
+                                max_qual = img_qual
+                                BFREF_image = cupy_separateRGB_2_numpy_RGBimage(res_bb1,res_gg1,res_rr1)
+                                flag_BFREF_image = True
+                        else :
+                            rs = res_cam_y // 2 - res_cam_y // 8 + delta_ty
+                            re = res_cam_y // 2 + res_cam_y // 8 + delta_ty
+                            cs = res_cam_x // 2 - res_cam_x // 8 + delta_tx
+                            ce = res_cam_x // 2 + res_cam_x // 8 + delta_tx
+                            img_numpy_crop = res_bb1.get()
+                            crop_Im = img_numpy_crop[rs:re,cs:ce]
+                            img_qual = Image_Quality(crop_Im,IQ_Method)
+                            if img_qual > max_qual :
+                                max_qual = img_qual
+                                BFREF_image = res_bb1.get()
+                                flag_BFREF_image = True
+                                
+                    if flag_filtrage_ON == True :
+                        if flag_IsColor == True :
+                            application_filtrage_color(res_rr1,res_gg1,res_bb1)
+                        else :
+                            application_filtrage_mono(res_bb1)
+                    else :
+                        image_traitee = res_bb1.get()
+                        curTT = 0             
+                    if flag_IQE == True :
+                        if flag_IsColor == True :
+                            rs = res_cam_y // 2 - res_cam_y // 8
+                            re = res_cam_y // 2 + res_cam_y // 8
+                            cs = res_cam_x // 2 - res_cam_x // 8
+                            ce = res_cam_x // 2 + res_cam_x // 8
+                            crop_Im = image_traitee[rs:re,cs:ce]
+                            crop_im_grey = cv2.cvtColor(crop_Im, cv2.COLOR_BGR2GRAY)
+                            quality[quality_pos] = Image_Quality(crop_im_grey,IQ_Method)
+                            if quality[quality_pos] > max_quality :
+                                max_quality = quality[quality_pos]
+                            quality_pos = quality_pos + 1
+                            if quality_pos > 255 :
+                                quality_pos = 1
+                        else :
+                            rs = res_cam_y // 2 - res_cam_y // 8
+                            re = res_cam_y // 2 + res_cam_y // 8
+                            cs = res_cam_x // 2 - res_cam_x // 8
+                            ce = res_cam_x // 2 + res_cam_x // 8
+                            crop_Im = image_traitee[rs:re,cs:ce]
+                            quality[quality_pos] = Image_Quality(crop_Im,IQ_Method)
+                            if quality[quality_pos] > max_quality :
+                                max_quality = quality[quality_pos]
+                            quality_pos = quality_pos + 1
+                            if quality_pos > 255 :
+                                quality_pos = 1
+                    if flag_AI_Craters == True and flag_crater_model_loaded == True:
+                        if flag_IsColor == True :
+                            image_model = image_traitee
+                        else :
+                            image_model = cv2.merge((image_traitee,image_traitee,image_traitee))
+                        if flag_AI_Trace == True :
+                            result_craters = model_craters_track.track(image_model, device = 0, half=True, conf = 0.05, persist = True, verbose=False)
+                            result_craters2 = model_craters_track(image_model, conf = 0.05)[0]
+                        else :
+                            result_craters = model_craters_predict.predict(image_model, device = 0,max_det = 100, half=True, verbose=False)
+                            result_craters2 = model_craters_predict(image_model, conf = 0.05)[0]
+                        boxes_crater = result_craters2.boxes.xywh.cpu()
+                        bboxes_crater = np.array(result_craters2.boxes.xyxy.cpu(), dtype="int")
+                        classes_crater = np.array(result_craters2.boxes.cls.cpu(), dtype="int")
+                        confidence_crater = result_craters2.boxes.conf.cpu()
+                        if flag_AI_Trace == True :
+                            track_crater_ids = (result_craters2.boxes.id.int().cpu().tolist() if result_craters2.boxes.id is not None else None)
+                        else :
+                            track_crater_ids = None
+                        if track_crater_ids :
+                            for cls, box, track_crater_id in zip(classes_crater, boxes_crater, track_crater_ids):
+                                x, y, w1, h1 = box
+                                object_name = model_craters_track.names[cls]
+                                if object_name == "Small crater":
+                                    BOX_COLOUR = (0, 255, 255)
+                                if object_name == "Crater":
+                                    BOX_COLOUR = (0, 255, 0)
+                                if object_name == "Large crater":
+                                    BOX_COLOUR = (255, 150, 30)
+                                if flag_IsColor == False :
+                                    BOX_COLOUR = (255, 255, 255)
+                                track_crater = track_crater_history[track_crater_id]
+                                track_crater.append((float(x), float(y)))  # x, y center point
+                                if len(track_crater) > 30:  # retain 90 tracks for 90 frames
+                                    track_crater.pop(0)
+                                points = np.hstack(track_crater).astype(np.int32).reshape((-1, 1, 2))
+                                if flag_AI_Trace == True :
+                                    cv2.polylines(image_traitee, [points], isClosed=False, color=BOX_COLOUR, thickness=1)
+                        for cls, bbox in zip(classes_crater, bboxes_crater):
+                            (x, y, x2, y2) = bbox
+                            if flag_AI_Trace == True :
+                                object_name = model_craters_track.names[cls]
+                            else :
+                                object_name = model_craters_predict.names[cls]
+                            if object_name == "Small crater":
+                                BOX_COLOUR = (0, 255, 255)
+                            if object_name == "Crater":
+                                BOX_COLOUR = (0, 255, 0)
+                            if object_name == "Large crater":
+                                BOX_COLOUR = (255, 150, 30)
+                            if flag_IsColor == False :
+                                BOX_COLOUR = (255, 255, 255)
+                            cv2.rectangle(image_traitee, (x, y), (x2, y2), BOX_COLOUR, 1)
+                            cv2.putText(image_traitee, f"{object_name}", (x, y - 5), cv2.FONT_HERSHEY_PLAIN, 1, BOX_COLOUR, 1)
+#                            cv2.putText(image_traitee, f"{object_name}: {conf:.2f}", (x, y - 5), cv2.FONT_HERSHEY_PLAIN, 2, BOX_COLOUR, 2)
+                    if flag_AI_Satellites == True and flag_satellites_model_loaded == True :
+                        flag_sat_OK,image_model = satellites_tracking_AI()
+                        calque_satellites_AI = np.zeros_like(image_traitee)
+                        if flag_sat_OK == True :
+                            try :
+                                if flag_AI_Trace == True :
+                                    result_sat = model_satellites_track.track(image_model, tracker = Custom_satellites_model_tracker, device = 0, half=False, conf = 0.01, persist = True, verbose=False)
+                                    result_sat2 = model_satellites_track(image_model, conf = 0.01)[0]
+                                else :
+                                    result_sat = model_satellites_predict.predict(image_model, device = 0,max_det = 100, half=True, verbose=False)
+                                    result_sat2 = model_satellites_predict(image_model, conf = 0.1)[0]
+                                model_OK = True
+                            except :
+                                model_OK = False
+                            if model_OK == True :
+                                boxes_sat = result_sat2.boxes.xywh.cpu()
+                                bboxes_sat = np.array(result_sat2.boxes.xyxy.cpu(), dtype="int")
+                                classes_sat = np.array(result_sat2.boxes.cls.cpu(), dtype="int")
+                                confidence_sat = result_sat2.boxes.conf.cpu()
+                                if flag_AI_Trace == True :
+                                    track_sat_ids = (result_sat2.boxes.id.int().cpu().tolist() if result_sat2.boxes.id is not None else None)
+                                else :
+                                    track_sat_ids = None
+                                if track_sat_ids :
+                                    for cls, box, track_sat_id in zip(classes_sat, boxes_sat, track_sat_ids):
+                                        x, y, w1, h1 = box
+                                        object_name = model_satellites_track.names[cls]
+                                        if object_name == "Shooting star":
+                                            BOX_COLOUR = (255, 0, 0)
+                                        if object_name == "Plane":
+                                            BOX_COLOUR = (255, 255, 0)
+                                            ep = 2
+                                        if object_name == "Satellite":
+                                            BOX_COLOUR = (0, 255, 0)
+                                            ep = 1
+                                        if flag_IsColor == False :
+                                            BOX_COLOUR = (255, 255, 255)
+                                        track_sat = track_satellite_history[track_sat_id]
+                                        track_sat.append((float(x), float(y)))  # x, y center point
+                                        if len(track_sat) > 30:  # retain 90 tracks for 90 frames
+                                            track_sat.pop(0)
+                                        points = np.hstack(track_sat).astype(np.int32).reshape((-1, 1, 2))
+                                        if flag_AI_Trace == True :
+                                            cv2.polylines(calque_satellites_AI, [points], isClosed=False, color=BOX_COLOUR, thickness=1)
+                                for cls, bbox,conf in zip(classes_sat, bboxes_sat, confidence_sat):
+                                    (x, y, x2, y2) = bbox
+                                    if flag_AI_Trace == True :
+                                        object_name = model_satellites_track.names[cls]
+                                    else :
+                                        object_name = model_satellites_predict.names[cls]
+                                    if object_name == "Shooting star":
+                                        box_text = "Sht Star"
+                                        ep = 2
+                                        BOX_COLOUR = (255, 0, 0)
+                                    if object_name == "Plane":
+                                        box_text = "Plane"
+                                        ep = 2
+                                        BOX_COLOUR = (255, 255, 0)
+                                    if object_name == "Satellite":
+                                        box_text = "Sat"
+                                        ep = 1
+                                        BOX_COLOUR = (0, 255, 0)
+                                    if flag_IsColor == False :
+                                        ep = 1
+                                        BOX_COLOUR = (255, 255, 255)
+                                    cv2.rectangle(calque_satellites_AI, (x, y), (x2, y2), BOX_COLOUR, 1)
+                                    cv2.putText(calque_satellites_AI, f"{box_text}", (x, y - 5), cv2.FONT_HERSHEY_PLAIN, 1, BOX_COLOUR, ep)                         
+#                                    cv2.putText(calque_satellites_AI, f"{object_name}: {conf:.2f}", (x, y - 5), cv2.FONT_HERSHEY_PLAIN, 1, BOX_COLOUR, ep)
+                    if flag_filtrage_ON == True :
+                        if flag_CONST == 0 :
+                            if (flag_TRKSAT == 1 and flag_image_mode == False) and flag_REMSAT == 0 :
+                                satellites_tracking()
+                            if (flag_REMSAT == 1 and flag_image_mode == False) :
+                                remove_satellites()
+                            flag_sat_detected = False
+                            if flag_DETECT_STARS == 1 and flag_image_mode == False :
+                                stars_detection(True)
+                            if flag_false_colours == True :
+                                if flag_IsColor == True :
+                                    tmp_grey = cv2.cvtColor(image_traitee, cv2.COLOR_BGR2GRAY)
+                                    image_traitee = cv2.applyColorMap(tmp_grey, cv2.COLORMAP_JET)
+                                else:
+                                    image_traitee = cv2.applyColorMap(image_traitee, cv2.COLORMAP_JET)
+                            if (flag_TRKSAT == 1  and nb_sat >= 0 and nb_sat < max_sat and flag_image_mode == False) and flag_REMSAT == 0 :
+                                font = cv2.FONT_HERSHEY_SIMPLEX
+                                size = 0.5
+                                for i in range(nb_sat+1):
+                                    if correspondance[i] >=0:
+                                        centercircle = (sat_x[i],sat_y[i])
+                                        center_texte = (sat_x[i]+10,sat_y[i]+10)
+                                        texte = "Sat"
+                                        if flag_IsColor == True :
+                                            cv2.circle(calque_direction_satellites, centercircle, 7, (0,255,0), 1, cv2.LINE_AA)
+                                            cv2.putText(calque_direction_satellites, texte,center_texte, font, size, (0, 255, 0), 1, cv2.LINE_AA)
+                                            center_texte = (sat_x[i]+10,sat_y[i]+25)
+                                            texte = "Rel Speed " + str(sat_speed[i])
+                                            cv2.putText(calque_direction_satellites, texte,center_texte, font, size, (255, 255, 0), 1, cv2.LINE_AA)
+                                        else :
+                                            cv2.circle(calque_direction_satellites, centercircle, 7, (255,255,255), 1, cv2.LINE_AA)
+                                            cv2.putText(calque_direction_satellites, texte,center_texte, font, size, (255, 255, 255), 1, cv2.LINE_AA)
+                                            center_texte = (sat_x[i]+10,sat_y[i]+25)
+                                            texte = "Rel Speed " + str(sat_speed[i])
+                                            cv2.putText(calque_direction_satellites, texte,center_texte, font, size, (255, 255, 255), 1, cv2.LINE_AA)
+                                image_traitee = cv2.addWeighted(image_traitee, 1, calque_direction_satellites, 1, 0)     
+                            if flag_DETECT_STARS == 1 and flag_image_mode == False :
+                                image_traitee = cv2.addWeighted(image_traitee, 1, calque_stars, 1, 0)
+                            if flag_AI_Satellites and flag_satellites_model_loaded == True :
+                                image_traitee = cv2.addWeighted(image_traitee, 1, calque_satellites_AI, 1, 0)
+                        else :
+                            reconstruction_image()
+                            image_traitee = image_reconstructed
+                    total_stop = cv2.getTickCount()
+                    total_time= int((total_stop-total_start)/cv2.getTickFrequency()*1000)
+                    fpsQueue.append(1000/total_time)
+                    if len(fpsQueue) > 10:
+                        fpsQueue.pop(0)
+                    curFPS = (sum(fpsQueue)/len(fpsQueue))
+                    texte_TIP1 = Date_hour_image + "  Frame nbr : " + str(frame_number) + "  FPS : " + str(int(curFPS*10)/10)
+                    if flag_16b == False :
+                        texte_TIP2 = "Exp = " + str(int(exposition / 1000)) + "ms | Gain = " + str(val_gain) + " | 8 bits "
+                    else :
+                        texte_TIP2 = "Exp = " + str(int(exposition / 1000)) + "ms | Gain = " + str(val_gain) + " | 16 bits " + ": 1 to " + str(TH_16B) + " bits -> 8 bits display"
+                    if flag_TIP == True :
+                        if flag_IsColor == True and flag_filtrage_ON == True :
+                            height,width,layers = image_traitee.shape
+                        else :
+                            height,width = image_traitee.shape 
+                        pos1 = 30
+                        pos2 = 70
+                        if width > 2000 :
+                            size = 1
+                        else :
+                            size = 0.5
+                            pos1 = 20
+                            pos2 = 50
+                        if width < 600 :
+                            size = 0.3
+                            pos1 = 15
+                            pos2 = 40
+                        cv2.putText(image_traitee, texte_TIP1, (pos1,pos1), font, size, (255, 255, 255), 1, cv2.LINE_AA)
+                        cv2.putText(image_traitee, texte_TIP2, (pos1,pos2), font, size, (255, 255, 255), 1, cv2.LINE_AA)
+                    if flag_mountpos == True :
+                        if flag_IsColor == True and flag_filtrage_ON == True :
+                            height,width,layers = image_traitee.shape
+                        else :
+                            height,width = image_traitee.shape 
+                        if width > 2000 :
+                            size = 1
+                            posAX = width // 2 - 120
+                            posAY = height - 30
+                            posHX = width - 220
+                            posHY = height // 2 - 10
+                        else :
+                            size = 0.5
+                            posAX = width // 2 - 100
+                            posAY = height - 20
+                            posHX = width - 150
+                            posHY = height // 2 - 5
+                        if width < 600 :
+                            size = 0.3
+                            posAX = width // 2 - 80
+                            posAY = height - 15
+                            posHX = width - 80
+                            posHY = height // 2
+                        texte_mount = angle2degminsec(azimut)
+                        cv2.putText(image_traitee, texte_mount, (posAX,posAY), font, size, (255, 255, 255), 1, cv2.LINE_AA)
+                        texte_mount = angle2degminsec(hauteur)
+                        cv2.putText(image_traitee, texte_mount, (posHX,posHY), font, size, (255, 255, 255), 1, cv2.LINE_AA)
+                    labelInfo2.config(text = str(curTT) + " ms   FPS : " + str(int(curFPS*10)/10) + "    ")
+                    total_start = cv2.getTickCount()
+                    if flag_cap_pic == True:
+                        pic_capture()
+                    if flag_cap_video == True :
+                        video_capture(image_traitee)
+                    if flag_new_stab_window == True :
+                        cv2.rectangle(image_traitee,start_point,end_point, (255,0,0), 2, cv2.LINE_AA)
+                        time.sleep(0.1)
+                        flag_new_stab_window = False
+                    if curFPS >= frame_limit :
+                        if (frame_number % frame_skip) != 1 :
+                            flag_display = True
+                        else :
+                            flag_display = False
+                    else :
+                        flag_display = True
+                    if flag_display == True :
+                        if flag_full_res == 0 :
+                            if res_cam_x > int(1350*fact_s) :
+                                if flag_OpenCvCuda == False :
+                                    image_traitee_resize = cv2.resize(image_traitee,(cam_displ_x,cam_displ_y),interpolation = cv2.INTER_LINEAR)
+                                else :
+                                    tmpbase = cv2.cuda_GpuMat()
+                                    tmprsz = cv2.cuda_GpuMat()
+                                    tmpbase.upload(image_traitee)
+                                    tmprsz = cv2.cuda.resize(tmpbase,(cam_displ_x,cam_displ_y),interpolation = cv2.INTER_LINEAR)
+                                    image_traitee_resize = tmprsz.download()
+                                cadre_image.im=PIL.Image.fromarray(image_traitee_resize)
+                            else :
+                                cadre_image.im=PIL.Image.fromarray(image_traitee)
+                        else :
+                            if res_cam_x < int(1350*fact_s) :
+                                if flag_OpenCvCuda == False :
+                                    image_traitee_resize = cv2.resize(image_traitee,(cam_displ_x,cam_displ_y),interpolation = cv2.INTER_LINEAR)
+                                else :
+                                    tmpbase = cv2.cuda_GpuMat()
+                                    tmprsz = cv2.cuda_GpuMat()
+                                    tmpbase.upload(image_traitee)
+                                    tmprsz = cv2.cuda.resize(tmpbase,(cam_displ_x,cam_displ_y),interpolation = cv2.INTER_LINEAR)
+                                    image_traitee_resize = tmprsz.download()
+                                cadre_image.im=PIL.Image.fromarray(image_traitee_resize)
+                            else :                   
+                                old_dzx = delta_zx
+                                old_dzy = delta_zy
+                                if key_pressed == "ZOOM_UP" :
+                                    delta_zy = delta_zy - 20
+                                    key_pressed = ""
+                                if key_pressed == "ZOOM_DOWN" :
+                                    delta_zy = delta_zy + 20
+                                    key_pressed = ""
+                                if key_pressed == "ZOOM_RIGHT" :
+                                    delta_zx = delta_zx + 20
+                                    key_pressed = ""
+                                if key_pressed == "ZOOM_LEFT" :
+                                    delta_zx = delta_zx - 20
+                                    key_pressed = ""
+                                if key_pressed == "ZOOM_RESET" :
+                                    delta_zx = 0
+                                    delta_zy = 0
+                                    key_pressed = ""
+                                rs = (res_cam_y - int(1012*fact_s)) // 2 - 1 + delta_zy
+                                re = (res_cam_y + int(1012*fact_s)) // 2 + 1 + delta_zy
+                                cs = (res_cam_x - int(1350*fact_s)) // 2 - 1 + delta_zx
+                                ce = (res_cam_x + int(1350*fact_s)) // 2 + 1 + delta_zx
+                                if cs < 0 or ce > res_cam_x :
+                                    delta_zx = old_dzx
+                                    cs = (res_cam_x - int(1350*fact_s)) // 2 - 1 + delta_zx
+                                    ce = (res_cam_x + int(1350*fact_s)) // 2 + 1 + delta_zx
+                                if rs < 0 or re > res_cam_y :
+                                    delta_zy = old_dzy
+                                    rs = (res_cam_y - int(1012*fact_s)) // 2 - 1 + delta_zy
+                                    re = (res_cam_y + int(1012*fact_s)) // 2 + 1 + delta_zy
+                                if rs < 0 :
+                                    rs = 0
+                                    re = res_cam_y
+                                if cs < 0 :
+                                    cs = 0
+                                    ce = res_cam_x
+                                image_crop = image_traitee[rs:re,cs:ce]
+                                cadre_image.im=PIL.Image.fromarray(image_crop)
+                        SX, SY = cadre_image.im.size
+                        if flag_cross == True :
+                            draw = PIL.ImageDraw.Draw(cadre_image.im)
+                            SX, SY = cadre_image.im.size
+                            if image_traitee.ndim == 3 :
+                                draw.line(((SX/2-100,SY/2),(SX/2+100,SY/2)), fill="red", width=1)
+                                draw.line(((SX/2,SY/2-100),(SX/2,SY/2+100)), fill="red", width=1)
+                            else :
+                                draw.line(((SX/2-100,SY/2),(SX/2+100,SY/2)), fill="white", width=1)
+                                draw.line(((SX/2,SY/2-100),(SX/2,SY/2+100)), fill="white", width=1)
+                        if flag_filtrage_ON == True :
+                            if flag_HST == 1 and flag_IsColor == True :
+                                r,g,b = cadre_image.im.split()
+                                hst_r = r.histogram()
+                                hst_g = g.histogram()
+                                hst_b = b.histogram()
+                                histo = PIL.ImageDraw.Draw(cadre_image.im)
+                                for x in range(1,256) :
+                                    histo.line(((x*3,SY),(x*3,SY-hst_r[x]/200)),fill="red")
+                                    histo.line(((x*3+1,SY),(x*3+1,SY-hst_g[x]/200)),fill="green")
+                                    histo.line(((x*3+2,SY),(x*3+2,SY-hst_b[x]/200)),fill="blue")
+                                histo.line(((256*3,SY),(256*3,SY-256*2)),fill="red",width=3)
+                                histo.line(((1,SY-256*2),(256*3,SY-256*2)),fill="red",width=3)
+                            if flag_HST == 1 and flag_IsColor == False :
+                                r = cadre_image.im
+                                hst_r = r.histogram()
+                                histo = PIL.ImageDraw.Draw(cadre_image.im)
+                                for x in range(1,256) :
+                                    histo.line(((x*3,SY),(x*3,SY-hst_r[x]/200)),fill="white")
+                                histo.line(((256*3,SY),(256*3,SY-256*2)),fill="red",width=3)
+                                histo.line(((1,SY-256*2),(256*3,SY-256*2)),fill="red",width=3)
+                            if flag_IQE == True :
+                                transform = PIL.ImageDraw.Draw(cadre_image.im)
+                                for x in range(2,256) :
+                                    y2 = int((quality[x]/max_quality)*400)
+                                    y1 = int((quality[x-1]/max_quality)*400)
+                                    transform.line((((x-1)*3,SY-y1),(x*3,SY-y2)),fill="red",width=2)
+                                transform.line(((256*3,SY),(256*3,SY-256*2)),fill="blue",width=3)
+                                transform.line(((1,SY-256*2),(256*3,SY-256*2)),fill="blue",width=3)
+                            if flag_TRSF == 1 and flag_IsColor == True :
+                                transform = PIL.ImageDraw.Draw(cadre_image.im)
+                                for x in range(2,256) :
+                                    transform.line((((x-1)*3,SY-trsf_r[x-1]*2),(x*3,SY-trsf_r[x]*2)),fill="red",width=2)
+                                    transform.line((((x-1)*3,SY-trsf_g[x-1]*2),(x*3,SY-trsf_g[x]*2)),fill="green",width=2)
+                                    transform.line((((x-1)*3,SY-trsf_b[x-1]*2),(x*3,SY-trsf_b[x]*2)),fill="blue",width=2)
+                                transform.line(((256*3,SY),(256*3,SY-256*2)),fill="red",width=3)
+                                transform.line(((1,SY-256*2),(256*3,SY-256*2)),fill="red",width=3)
+                            if flag_TRSF == 1 and flag_IsColor == False :
+                                transform = PIL.ImageDraw.Draw(cadre_image.im)
+                                for x in range(2,256) :
+                                    transform.line((((x-1)*3,SY-trsf_r[x-1]*2),(x*3,SY-trsf_r[x]*2)),fill="green",width=2)
+                                transform.line(((256*3,SY),(256*3,SY-256*2)),fill="red",width=3)
+                                transform.line(((1,SY-256*2),(256*3,SY-256*2)),fill="red",width=3)
+                            if flag_TRGS == 1 or flag_TRCLL == 1:
+                                transform = PIL.ImageDraw.Draw(cadre_image.im)
+                                if flag_TRGS == 1 :
+                                    for x in range(1,255) :
+                                        transform.line((((x-1)*3,cam_displ_y-Corr_GS[x-1]*512),(x*3,cam_displ_y-Corr_GS[x]*512)),fill="blue",width=4)
+                                if flag_TRCLL == 1 :
+                                    for x in range(1,255) :
+                                        transform.line((((x-1)*3,cam_displ_y-Corr_CLL[x-1]*2),(x*3,cam_displ_y-Corr_CLL[x]*2)),fill="green",width=4)
+                                transform.line(((256*3,cam_displ_y),(256*3,cam_displ_y-256*3)),fill="red",width=3)
+                                transform.line(((1,cam_displ_y-256*3),(256*3,cam_displ_y-256*3)),fill="red",width=3)  
+                        if flag_GO == False :
+                            transform = PIL.ImageDraw.Draw(cadre_image.im)
+                            transform.line(((0,0),(SX,SY)),fill="red",width=2)
+                            transform.line(((0,SY),(SX,0)),fill="red",width=2)
+                        if flag_BFR == True and flag_image_mode == False :
+                            transform = PIL.ImageDraw.Draw(cadre_image.im)
+                            mul_par = (SX-600) / max_qual
+                            transform.line(((0,SY - 50),(int(min_qual*mul_par),SY - 50)),fill="red",width=4) # min quality
+                            transform.line(((0,SY - 110),(int(max_qual*mul_par),SY - 110)),fill="blue",width=4) # max quality
+                            transform.line(((0,SY - 80),(int(img_qual*mul_par),SY - 80)),fill="yellow",width=4) # image quality
+                            transform.line(((int(quality_threshold*mul_par),SY - 55),(int(quality_threshold*mul_par),SY - 105)),fill="green",width=6)# threshold quality
+                        cadre_image.photo=PIL.ImageTk.PhotoImage(cadre_image.im)
+                        cadre_image.create_image(cam_displ_x/2,cam_displ_y/2, image=cadre_image.photo)
+                else :
+                    pass
+            if flag_quitter == False:
+                if flag_HDR == False :
+                    fenetre_principale.after(4, refresh)
+                else :
+                    fenetre_principale.after(6, refresh)
+        else :
+            if flag_premier_demarrage == True :
+                flag_premier_demarrage = False
+                start_keyboard()
+                if flag_image_mode == True :
+                    image_brut_read = cv2.imread(Video_Test,cv2.IMREAD_COLOR)
+                    image_brute = image_brut_read
+                    flag_image_disponible = True
+                    flag_image_mode = True
+                    res_cam_y,res_cam_x,layer = image_brut_read.shape
+                    flag_image_video_loaded = True
+                if flag_image_mode == False :
+                    video_frame_position = 1
+                    if flag_SER_file == False :
+                        video = cv2.VideoCapture(Video_Test, cv2.CAP_FFMPEG)
+                        property_id = int(cv2.CAP_PROP_FRAME_WIDTH)
+                        res_cam_x_base = int(cv2.VideoCapture.get(video, property_id))
+                        property_id = int(cv2.CAP_PROP_FRAME_HEIGHT)
+                        res_cam_y_base = int(cv2.VideoCapture.get(video, property_id))
+                        property_id = int(cv2.CAP_PROP_FRAME_COUNT)
+                        video_frame_number = int(cv2.VideoCapture.get(video, property_id))
+                    else :
+                        video = Serfile.Serfile(Video_Test,NEW=False)
+                        res_cam_x_base = video.getWidth()
+                        res_cam_y_base = video.getHeight()
+                        video_frame_number = video.getLength()
+                        SER_depth = video.getpixeldepth()
+                    echelle210 = Scale (cadre, from_ = 0, to = video_frame_number, command= choix_position_frame, orient=HORIZONTAL, length = 1350*fact_s, width = 7, resolution = 1, label="",showvalue=1,tickinterval=100,sliderlength=20)
+                    echelle210.set(video_frame_position)
+                    echelle210.place(anchor="w", x=70,y=h-30)
+                    flag_image_mode = False
+                    flag_image_video_loaded = True
+            if flag_cap_video == True and nb_cap_video == 1 and flag_image_mode == False :
+                if flag_SER_file == False :
+                    video.release()
+                    time.sleep(0.1)
+                    video = cv2.VideoCapture(Video_Test, cv2.CAP_FFMPEG)
+                    property_id = int(cv2.CAP_PROP_FRAME_COUNT)
+                    val_nb_capt_video = int(cv2.VideoCapture.get(video, property_id))
+                    property_id = int(cv2.CAP_PROP_FRAME_WIDTH)
+                    res_cam_x_base = int(cv2.VideoCapture.get(video, property_id))
+                    property_id = int(cv2.CAP_PROP_FRAME_HEIGHT)
+                    res_cam_y_base = int(cv2.VideoCapture.get(video, property_id))
+                    property_id = int(cv2.CAP_PROP_FRAME_COUNT)
+                    video_frame_number = int(cv2.VideoCapture.get(video, property_id))
+                else :
+                    video_frame_position = 0
+                    video.setCurrentPosition(video_frame_position)
+                    video_frame_number = video.getLength()
+                flag_image_video_loaded = True
+                time.sleep(0.1)
+            if flag_image_mode == False :
+                if flag_SER_file == False :
+                    video_frame_position = video_frame_position + 1
+                    ret,image_brute = video.read()
+                    if flag_capture_image_reference == True :
+                        Image_Reference = np.asarray(image_brute,dtype=np.uint8)
+                        flag_capture_image_reference = False
+                        flag_image_reference_OK = True
+                else :
+                    video_frame_position = video_frame_position + 1
+                    image_brute = video.readFrameAtPos(video_frame_position)
+                    ret = True
+                    if SER_depth == 16 :
+                        if flag_HDR == True and flag_filtrage_ON == True and type_debayer > 0 : 
+                            mono_colour = "Colour"
+                            image_brute = HDR_compute(mono_colour,image_brute,mode_HDR,TH_16B,mode_BIN,flag_HB,type_debayer)
+
+                            if flag_noir_blanc == 1 :
+                                if image_brute.ndim == 3 :
+                                    image_brute = cv2.cvtColor(image_brute, cv2.COLOR_BGR2GRAY)
+                                    flag_IsColor = False
+                        else :
+                            image_brute_cam16 = cp.asarray(image_brute,dtype=cp.uint16)
+                            image_brute_cam16[image_brute_cam16 > threshold_16bits] = threshold_16bits
+                            image_brute_cam8 = (image_brute_cam16 / threshold_16bits * 255.0)
+                            image_brute_cam8 = cp.clip(image_brute_cam8,0,255)
+                            image_brute_cam8_np = image_brute_cam8.get()
+                            image_brute = np.asarray(image_brute_cam8_np,dtype=np.uint8)
+                            if flag_capture_image_reference == True :
+                                Image_Reference = np.asarray(image_brute,dtype=np.uint8)
+                                flag_capture_image_reference = False
+                                flag_image_reference_OK = True
+                    else :
+                        image_brute = np.asarray(image_brute,dtype=np.uint8)
+                        if flag_capture_image_reference == True :
+                            Image_Reference = np.asarray(image_brute,dtype=np.uint8)
+                            flag_capture_image_reference = False
+                            flag_image_reference_OK = True
+                if (video_frame_position % 5) == 0 :
+                    echelle210.set(video_frame_position)
+                if video_frame_position >= video_frame_number - 1:
+                    if flag_SER_file == False :
+                        video_frame_position = 1
+                        video.set(cv2.CAP_PROP_POS_FRAMES,frame_position)
+                    else :
+                        video_frame_position = 1
+                        video.setCurrentPosition(video_frame_position)
+                    echelle210.set(video_frame_position)       
+                Pixel_threshold = 80
+                if ret == True :
+                    if flag_noir_blanc == 1 and image_brute.ndim == 3 and GPU_BAYER == 0 :
+                        image_brute = cv2.cvtColor(image_brute, cv2.COLOR_BGR2GRAY)
+                    if type_flip == "vertical" or type_flip == "both" :
+                        image_brute = cv2.flip(image_brute,0)
+                    if type_flip == "horizontal" or type_flip == "both" :
+                        image_brute = cv2.flip(image_brute,1)
+                    if image_brute.ndim == 3 :
+                        flag_IsColor = True
+                    else :
+                        flag_IsColor = False
+                    if flag_IsColor == False :
+                        if  flag_hot_pixels == True and flag_noir_blanc == 0 :
+                            res_r = cp.zeros_like(image_brute,dtype=cp.uint8)
+                            img = cp.asarray(image_brute,dtype=cp.uint8)
+                            height,width = image_brute.shape
+                            nb_blocksX = (width // nb_ThreadsX) + 1
+                            nb_blocksY = (height // nb_ThreadsY) + 1
+                            Dead_Pixels_Remove_Mono_GPU((nb_blocksX*2,nb_blocksY*2),(nb_ThreadsX,nb_ThreadsY),(res_r, img,  np.intc(width), np.intc(height), np.intc(Pixel_threshold)))
+                            image_brute = res_r.get()
+                    if GPU_BAYER != 0 and flag_HDR == False :
+                        flag_IsColor = True
+                        if image_brute.ndim == 3 :
+                            r = image_brute[:,:,0].copy()
+                        else :
+                            r = image_brute.copy()
+                        if  flag_hot_pixels == True :
+                            res_r = cp.zeros_like(r,dtype=cp.uint8)
+                            img = cp.asarray(r,dtype=cp.uint8)
+                            height,width = r.shape
+                            nb_blocksX = (width // nb_ThreadsX) + 1
+                            nb_blocksY = (height // nb_ThreadsY) + 1
+                            Dead_Pixels_Remove_Colour_GPU((nb_blocksX*2,nb_blocksY*2),(nb_ThreadsX,nb_ThreadsY),(res_r, img,  np.intc(width), np.intc(height), np.intc(Pixel_threshold), np.intc(GPU_BAYER)))
+                            r = res_r.get()
+                        res_r = cp.zeros_like(r,dtype=cp.uint8)
+                        res_g = cp.zeros_like(r,dtype=cp.uint8)
+                        res_b = cp.zeros_like(r,dtype=cp.uint8)
+                        img = cp.asarray(r,dtype=cp.uint8)
+                        height,width = r.shape
+                        nb_blocksX = ((width // 2) // nb_ThreadsX) + 1
+                        nb_blocksY = ((height // 2) // nb_ThreadsY) + 1
+                        Image_Debayer_GPU((nb_blocksX,nb_blocksY),(nb_ThreadsX,nb_ThreadsY),(res_r, res_g, res_b, img, np.intc(width), np.intc(height), np.intc(GPU_BAYER)))
+                        flag_newdelta = False
+                        if key_pressed != "" :
+                            if key_pressed == "RED_UP" :
+                                delta_RY = delta_RY + 1
+                                key_pressed = ""
+                                flag_newdelta = True
+                            if key_pressed == "RED_DOWN" :
+                                delta_RY = delta_RY - 1
+                                key_pressed = ""
+                                flag_newdelta = True
+                            if key_pressed == "RED_RIGHT" :
+                                delta_RX = delta_RX - 1
+                                key_pressed = ""
+                                flag_newdelta = True
+                            if key_pressed == "RED_LEFT" :
+                                delta_RX = delta_RX + 1
+                                key_pressed = ""
+                                flag_newdelta = True
+                            if key_pressed == "RED_RESET" :
+                                delta_RX = 0
+                                delta_RY = 0
+                                key_pressed = ""
+                                flag_newdelta = True
+                            if key_pressed == "BLUE_UP" :
+                                delta_BY = delta_BY + 1
+                                key_pressed = ""
+                                flag_newdelta = True
+                            if key_pressed == "BLUE_DOWN" :
+                                delta_BY = delta_BY - 1
+                                key_pressed = ""
+                                flag_newdelta = True
+                            if key_pressed == "BLUE_RIGHT" :
+                                delta_BX = delta_BX - 1
+                                key_pressed = ""
+                                flag_newdelta = True
+                            if key_pressed == "BLUE_LEFT" :
+                                delta_BX = delta_BX + 1
+                                key_pressed = ""
+                                flag_newdelta = True
+                            if key_pressed == "BLUE_RESET" :
+                                delta_BX = 0
+                                delta_BY = 0
+                                key_pressed = ""
+                                flag_newdelta = True
+                            if flag_newdelta == True :
+                                texte = "Shift Red : " + str(delta_RX) + " : "+str(delta_RY) + "    Shift Blue : " + str(delta_BX) + " : " + str(delta_BY) + "             "
+                                labelInfo10.config(text = texte)
+                        if delta_RX !=0 or delta_RY !=0 or delta_BX !=0 or delta_BY != 0 :
+                            height,width = r.shape
+                            nb_blocksX = (width // nb_ThreadsX) + 1
+                            nb_blocksY = (height // nb_ThreadsY) + 1
+                            img_r = res_r.copy()
+                            img_g = res_g.copy()
+                            img_b = res_b.copy()
+                            RGB_Align_GPU((nb_blocksX,nb_blocksY),(nb_ThreadsX,nb_ThreadsY),(res_r, res_g, res_b, img_r, img_g, img_b, np.intc(width), np.intc(height), np.intc(delta_RX), np.intc(delta_RY), np.intc(delta_BX), np.intc(delta_BY)))
+                        if Dev_system == "Windows" :
+                            temp_r = res_r.copy()
+                            temp_g = res_g.copy()
+                            temp_b = res_b.copy()
+                            if flag_noir_blanc == 1 : # and image_brute.ndim == 3 :
+                                image_brute = cupy_separateRGB_2_numpy_RGBimage(temp_r,temp_g,temp_b)
+                                image_brute = cv2.cvtColor(image_brute, cv2.COLOR_BGR2GRAY)
+                                flag_IsColor = False
+                            else :
+                                image_brute = cupy_separateRGB_2_numpy_RGBimage(temp_r,temp_g,temp_b)
+                                flag_IsColor = True
+                        else :
+                            temp_r = res_r.get()
+                            temp_g = res_g.get()
+                            temp_b = res_b.get()
+                            if flag_noir_blanc == 1 : # and image_brute.ndim == 3 :
+                                image_brute = cv2.merge((temp_r,temp_g,temp_b))
+                                image_brute = cv2.cvtColor(image_brute, cv2.COLOR_BGR2GRAY)
+                                flag_IsColor = False
+                            else :
+                                image_brute = cv2.merge((temp_r,temp_g,temp_b))
+                                flag_IsColor = True
+                    else :
+                        if flag_IsColor == True :
+                            flag_newdelta = False
+                            if key_pressed == "RED_UP" :
+                                delta_RY = delta_RY + 1
+                                key_pressed = ""
+                                flag_newdelta = True
+                            if key_pressed == "RED_DOWN" :
+                                delta_RY = delta_RY - 1
+                                key_pressed = ""
+                                flag_newdelta = True
+                            if key_pressed == "RED_RIGHT" :
+                                delta_RX = delta_RX - 1
+                                key_pressed = ""
+                                flag_newdelta = True
+                            if key_pressed == "RED_LEFT" :
+                                delta_RX = delta_RX + 1
+                                key_pressed = ""
+                                flag_newdelta = True
+                            if key_pressed == "RED_RESET" :
+                                delta_RX = 0
+                                delta_RY = 0
+                                key_pressed = ""
+                                flag_newdelta = True
+                            if key_pressed == "BLUE_UP" :
+                                delta_BY = delta_BY + 1
+                                key_pressed = ""
+                                flag_newdelta = True
+                            if key_pressed == "BLUE_DOWN" :
+                                delta_BY = delta_BY - 1
+                                key_pressed = ""
+                                flag_newdelta = True
+                            if key_pressed == "BLUE_RIGHT" :
+                                delta_BX = delta_BX - 1
+                                key_pressed = ""
+                                flag_newdelta = True
+                            if key_pressed == "BLUE_LEFT" :
+                                delta_BX = delta_BX + 1
+                                key_pressed = ""
+                                flag_newdelta = True
+                            if key_pressed == "BLUE_RESET" :
+                                delta_BX = 0
+                                delta_BY = 0
+                                key_pressed = ""
+                                flag_newdelta = True
+                            if flag_newdelta == True :
+                                texte = "Shift Red : " + str(delta_RX) + " : "+str(delta_RY) + "    Shift Blue : " + str(delta_BX) + " : " + str(delta_BY) + "             "
+                                labelInfo10.config(text = texte)
+                            if delta_RX !=0 or delta_RY !=0 or delta_BX !=0 or delta_BY != 0 :
+                                img_r,img_g,img_b = numpy_RGBImage_2_cupy_separateRGB(image_brute)
+                                res_r = cp.zeros_like(img_r,dtype=cp.uint8)
+                                res_g = cp.zeros_like(img_g,dtype=cp.uint8)
+                                res_b = cp.zeros_like(img_b,dtype=cp.uint8)
+                                height,width,layer = image_brute.shape
+                                nb_blocksX = (width // nb_ThreadsX) + 1
+                                nb_blocksY = (height // nb_ThreadsY) + 1
+                                RGB_Align_GPU((nb_blocksX,nb_blocksY),(nb_ThreadsX,nb_ThreadsY),(res_r, res_g, res_b, img_r, img_g, img_b, np.intc(width), np.intc(height), np.intc(delta_RX), np.intc(delta_RY), np.intc(delta_BX), np.intc(delta_BY)))
+                                image_brute = cupy_separateRGB_2_numpy_RGBimage(res_r,res_g,res_b)
+                    flag_image_video_loaded = True
+                    res_cam_y = res_cam_y_base
+                    res_cam_x = res_cam_x_base
+                    if mode_BIN == 2 :
+                        if flag_HB == False :
+                            BIN_mode = 0 # BIN sum
+                        else :
+                            BIN_mode = 1 # BIN mean
+                        if flag_IsColor == True :
+                            img_r,img_g,img_b = numpy_RGBImage_2_cupy_separateRGB(image_brute)
+                            height,width,layer = image_brute.shape
+                            res_r = cp.zeros([height//2,width//2],dtype=cp.uint8)
+                            res_g = cp.zeros([height//2,width//2],dtype=cp.uint8)
+                            res_b = cp.zeros([height//2,width//2],dtype=cp.uint8)
+                            nb_blocksX = ((width // 2) // nb_ThreadsX) + 1
+                            nb_blocksY = ((height //2) // nb_ThreadsY) + 1
+                            BIN_Color_GPU((nb_blocksX,nb_blocksY),(nb_ThreadsX,nb_ThreadsY),(res_r, res_g, res_b, img_r, img_g, img_b, np.intc(width//2), np.intc(height//2), np.intc(BIN_mode)))
+                            image_brute = cupy_separateRGB_2_numpy_RGBimage(res_r,res_g,res_b)
+                            res_cam_y = height // 2
+                            res_cam_x = width // 2
+                        else :
+                            img_r = cp.asarray(image_brute,dtype=cp.uint8)
+                            height,width = image_brute.shape
+                            res_r = cp.zeros([height//2,width//2],dtype=cp.uint8)
+                            nb_blocksX = ((width // 2) // nb_ThreadsX) + 1
+                            nb_blocksY = ((height //2) // nb_ThreadsY) + 1
+                            BIN_Mono_GPU((nb_blocksX,nb_blocksY),(nb_ThreadsX,nb_ThreadsY),(res_r, img_r, np.intc(width//2), np.intc(height//2), np.intc(BIN_mode)))
+                            image_brute = res_r.get()
+                            res_cam_y = height // 2
+                            res_cam_x = width // 2  
+                    if flag_STAB == True :
+                        if flag_IsColor == True :
+                            image_brute = Template_tracking(image_brute,3)
+                        else :
+                            image_brute = Template_tracking(image_brute,1)
+                    if flag_capture_image_reference == True :
+                        Image_Reference = np.asarray(image_brute,dtype=np.uint8)
+                        flag_capture_image_reference = False
+                        flag_image_reference_OK = True
+                    if flag_image_ref_sub == True and flag_image_reference_OK == True :
+                        image_2_subtract = np.asarray(image_brute,dtype=np.uint8)
+                        image_brute = cv2.subtract(image_2_subtract,Image_Reference)
+                        if flag_blur_image_ref_sub == True :
+                            image_brute = cv2.GaussianBlur(image_brute,(7,7),0)
+                else :
+                    flag_image_video_loaded = False
+            if flag_image_mode == True :
+                image_brute = image_brut_read
+                if type_flip == "vertical" or type_flip == "both" :
+                    image_brute = cv2.flip(image_brute,0)
+                if type_flip == "horizontal" or type_flip == "both" :
+                    image_brute = cv2.flip(image_brute,1)
+                res_cam_y,res_cam_x,layer = image_brute.shape
+                if key_pressed == "RED_UP" :
+                    delta_RY = delta_RY + 1
+                    key_pressed = ""
+                if key_pressed == "RED_DOWN" :
+                    delta_RY = delta_RY - 1
+                    key_pressed = ""
+                if key_pressed == "RED_RIGHT" :
+                    delta_RX = delta_RX - 1
+                    key_pressed = ""
+                if key_pressed == "RED_LEFT" :
+                    delta_RX = delta_RX + 1
+                    key_pressed = ""
+                if key_pressed == "RED_RESET" :
+                    delta_RX = 0
+                    delta_RY = 0
+                    key_pressed = ""
+                if key_pressed == "BLUE_UP" :
+                    delta_BY = delta_BY + 1
+                    key_pressed = ""
+                if key_pressed == "BLUE_DOWN" :
+                    delta_BY = delta_BY - 1
+                    key_pressed = ""
+                if key_pressed == "BLUE_RIGHT" :
+                    delta_BX = delta_BX - 1
+                    key_pressed = ""
+                if key_pressed == "BLUE_LEFT" :
+                    delta_BX = delta_BX + 1
+                    key_pressed = ""
+                if key_pressed == "BLUE_RESET" :
+                    delta_BX = 0
+                    delta_BY = 0
+                    key_pressed = ""
+                texte = "Shift Red : " + str(delta_RX) + " : "+str(delta_RY) + "    Shift Blue : " + str(delta_BX) + " : " + str(delta_BY) + "             "
+                labelInfo10.config(text = texte)
+                if delta_RX !=0 or delta_RY !=0 or delta_BX !=0 or delta_BY != 0 :
+                    img_r,img_g,img_b = numpy_RGBImage_2_cupy_separateRGB(image_brute)
+                    res_r = cp.zeros_like(img_r,dtype=cp.uint8)
+                    res_g = cp.zeros_like(img_g,dtype=cp.uint8)
+                    res_b = cp.zeros_like(img_b,dtype=cp.uint8)
+                    height,width,layer = image_brute.shape
+                    nb_blocksX = (width // nb_ThreadsX) + 1
+                    nb_blocksY = (height // nb_ThreadsY) + 1
+                    RGB_Align_GPU((nb_blocksX,nb_blocksY),(nb_ThreadsX,nb_ThreadsY),(res_r, res_g, res_b, img_r, img_g, img_b, np.intc(width), np.intc(height), np.intc(delta_RX), np.intc(delta_RY), np.intc(delta_BX), np.intc(delta_BY)))
+                    image_brute = cupy_separateRGB_2_numpy_RGBimage(res_r,res_g,res_b)
+                flag_image_video_loaded = True
+                flag_IsColor = True
+            if flag_image_video_loaded == True :
+                if flag_IsColor == True :
+                    res_rr1,res_gg1,res_bb1 = numpy_RGBImage_2_cupy_separateRGB(image_brute)
+                else :
+                    res_bb1 = cp.asarray(image_brute,dtype=cp.uint8)
+                flag_image_disponible = True
+                frame_number = frame_number + 1
+                flag_GO = True
+                if flag_BFR == True and flag_image_mode == False :
+                    if flag_IsColor == True :
+                        rs = res_cam_y // 2 - res_cam_y // 8 + delta_ty
+                        re = res_cam_y // 2 + res_cam_y // 8 + delta_ty
+                        cs = res_cam_x // 2 - res_cam_x // 8 + delta_tx
+                        ce = res_cam_x // 2 + res_cam_x // 8 + delta_tx
+                        crop_Im = image_brute[rs:re,cs:ce]
+                        crop_im_grey = cv2.cvtColor(crop_Im, cv2.COLOR_BGR2GRAY)
+                        img_qual = cv2.Laplacian(crop_im_grey, cv2.CV_64F, ksize=laplacianksize).var()
+                        img_qual = Image_Quality(crop_im_grey,IQ_Method)
+                        if img_qual > max_qual :
+                            max_qual = img_qual
+                            if flag_BFREF == True and flag_BFReference == "BestFrame" :
+                                BFR_image = image_brute
+                                flag_BFREF_image = True
+                            else :
+                                flag_BFREF_image = False
+                        if img_qual < min_qual :
+                            min_qual = img_qual
+                        quality_threshold = min_qual + (max_qual - min_qual) * (val_BFR / 100)
+                        if img_qual < quality_threshold :
+                            flag_GO = False
+                            SFN = SFN + 1
+                        ratio = int((SFN / frame_number) * 1000) / 10
+                        texte = "SFN : " + str(SFN) + "   B/T : "+str(ratio) + "  Thres : " + str(int(quality_threshold*10)/10) + "  Qual : " + str(int(img_qual*10)/10) + "             "
+                        labelInfo10.config(text = texte)
+                    else :
+                        rs = res_cam_y // 2 - res_cam_y // 8 + delta_ty
+                        re = res_cam_y // 2 + res_cam_y // 8 + delta_ty
+                        cs = res_cam_x // 2 - res_cam_x // 8 + delta_tx
+                        ce = res_cam_x // 2 + res_cam_x // 8 + delta_tx
+                        crop_im_grey = image_brute[rs:re,cs:ce]
+                        img_qual = Image_Quality(crop_im_grey,IQ_Method)
+                        if img_qual > max_qual :
+                            max_qual = img_qual
+                            if flag_BFREF == True and flag_BFReference == "BestFrame" :
+                                BFREF_image = image_brute
+                                flag_BFREF_image = True
+                            else :
+                                flag_BFREF_image = False
+                        if img_qual < min_qual :
+                            min_qual = img_qual
+                        quality_threshold = min_qual + (max_qual - min_qual) * (val_BFR / 100)
+                        if img_qual < quality_threshold :
+                            flag_GO = False
+                            SFN = SFN + 1
+                        ratio = int((SFN / frame_number) * 1000) / 10 
+                        texte = "SFN : " + str(SFN) + "   B/T : "+str(ratio) + "  Thres : " + str(int(quality_threshold*10)/10) + "  Qual : " + str(int(img_qual*10)/10) + "             "
+                        labelInfo10.config(text = texte)
+
+                if flag_BFR == False and flag_BFREF == True and flag_BFReference == "BestFrame" and flag_image_mode == False :
+                    if flag_IsColor == True :
+                        rs = res_cam_y // 2 - res_cam_y // 8 + delta_ty
+                        re = res_cam_y // 2 + res_cam_y // 8 + delta_ty
+                        cs = res_cam_x // 2 - res_cam_x // 8 + delta_tx
+                        ce = res_cam_x // 2 + res_cam_x // 8 + delta_tx
+                        crop_Im = image_brute[rs:re,cs:ce]
+                        crop_im_grey = cv2.cvtColor(crop_Im, cv2.COLOR_BGR2GRAY)
+                        img_qual = Image_Quality(crop_im_grey,IQ_Method)
+                        if img_qual > max_qual :
+                            max_qual = img_qual
+                            BFREF_image = image_brute
+                            flag_BFREF_image = True
+                    else :
+                        rs = res_cam_y // 2 - res_cam_y // 8 + delta_ty
+                        re = res_cam_y // 2 + res_cam_y // 8 + delta_ty
+                        cs = res_cam_x // 2 - res_cam_x // 8 + delta_tx
+                        ce = res_cam_x // 2 + res_cam_x // 8 + delta_tx
+                        crop_Im = image_brute[rs:re,cs:ce]
+                        img_qual = Image_Quality(crop_Im,IQ_Method)
+                        if img_qual > max_qual :
+                            max_qual = img_qual
+                            BFREF_image = image_brute
+                            flag_BFREF_image = True
+                if flag_filtrage_ON == True :
+                    if flag_GO == True :
+                        if flag_IsColor == True :
+                            application_filtrage_color(res_bb1,res_gg1,res_rr1)
+                        else :
+                            application_filtrage_mono(res_bb1)
+                    else :
+                        if flag_IsColor == True :
+                            image_traitee = cupy_separateRGB_2_numpy_RGBimage(res_bb1,res_gg1,res_rr1)
+                        else :
+                            image_traitee = res_bb1.get()
+                    if flag_AI_Craters == True and flag_crater_model_loaded == True:
+                        if flag_IsColor == True :
+                            image_model = image_traitee
+                        else :
+                            image_model = cv2.merge((image_traitee,image_traitee,image_traitee))
+                        if flag_AI_Trace == True :
+                            result_craters = model_craters_track.track(image_model, device = 0, half=True, conf = 0.05, persist = True, verbose=False)
+                            result_craters2 = model_craters_track(image_model, conf = 0.05)[0]
+                        else :
+                            result_craters = model_craters_predict.predict(image_model, device = 0,max_det = 100, half=True, verbose=False)
+                            result_craters2 = model_craters_predict(image_model, conf = 0.05)[0]
+                        boxes_crater = result_craters2.boxes.xywh.cpu()
+                        bboxes_crater = np.array(result_craters2.boxes.xyxy.cpu(), dtype="int")
+                        classes_crater = np.array(result_craters2.boxes.cls.cpu(), dtype="int")
+                        confidence_crater = result_craters2.boxes.conf.cpu()
+                        if flag_AI_Trace == True :
+                            track_crater_ids = (result_craters2.boxes.id.int().cpu().tolist() if result_craters2.boxes.id is not None else None)
+                        else :
+                            track_crater_ids = None
+                        if track_crater_ids :
+                            for cls, box, track_crater_id in zip(classes_crater, boxes_crater, track_crater_ids):
+                                x, y, w1, h1 = box
+                                object_name = model_craters_track.names[cls]
+                                if object_name == "Small crater":
+                                    BOX_COLOUR = (0, 255, 255)
+                                if object_name == "Crater":
+                                    BOX_COLOUR = (0, 255, 0)
+                                if object_name == "Large crater":
+                                    BOX_COLOUR = (255, 150, 30)
+                                if flag_IsColor == False :
+                                    BOX_COLOUR = (255, 255, 255)
+                                track_crater = track_crater_history[track_crater_id]
+                                track_crater.append((float(x), float(y)))  # x, y center point
+                                if len(track_crater) > 30:  # retain 90 tracks for 90 frames
+                                    track_crater.pop(0)
+                                points = np.hstack(track_crater).astype(np.int32).reshape((-1, 1, 2))
+                                if flag_AI_Trace == True :
+                                    cv2.polylines(image_traitee, [points], isClosed=False, color=BOX_COLOUR, thickness=1)
+                        for cls, bbox in zip(classes_crater, bboxes_crater):
+                            (x, y, x2, y2) = bbox
+                            if flag_AI_Trace == True :
+                                object_name = model_craters_track.names[cls]
+                            else :
+                                object_name = model_craters_predict.names[cls]
+                            if object_name == "Small crater":
+                                BOX_COLOUR = (0, 255, 255)
+                            if object_name == "Crater":
+                                BOX_COLOUR = (0, 255, 0)
+                            if object_name == "Large crater":
+                                BOX_COLOUR = (255, 150, 30)
+                            if flag_IsColor == False :
+                                BOX_COLOUR = (255, 255, 255)
+                            cv2.rectangle(image_traitee, (x, y), (x2, y2), BOX_COLOUR, 1)
+                            cv2.putText(image_traitee, f"{object_name}", (x, y - 5), cv2.FONT_HERSHEY_PLAIN, 1, BOX_COLOUR, 1)                         
+#                            cv2.putText(image_traitee, f"{object_name}: {conf:.2f}", (x, y - 5), cv2.FONT_HERSHEY_PLAIN, 2, BOX_COLOUR, 2)
+                    if flag_AI_Satellites == True and flag_satellites_model_loaded == True :
+                        flag_sat_OK,image_model = satellites_tracking_AI()
+                        calque_satellites_AI = np.zeros_like(image_traitee)
+                        if flag_sat_OK == True :
+                            try :
+                                if flag_AI_Trace == True :
+                                    result_sat = model_satellites_track.track(image_model, tracker = Custom_satellites_model_tracker, device = 0, half=False, conf = 0.01, persist = True, verbose=False)
+                                    result_sat2 = model_satellites_track(image_model, conf = 0.01)[0]
+                                else :
+                                    result_sat = model_satellites_predict.predict(image_model, device = 0,max_det = 100, half=True, verbose=False)
+                                    result_sat2 = model_satellites_predict(image_model, conf = 0.1)[0]
+                                model_OK = True
+                            except :
+                                model_OK = False
+                            if model_OK == True :
+                                boxes_sat = result_sat2.boxes.xywh.cpu()
+                                bboxes_sat = np.array(result_sat2.boxes.xyxy.cpu(), dtype="int")
+                                classes_sat = np.array(result_sat2.boxes.cls.cpu(), dtype="int")
+                                confidence_sat = result_sat2.boxes.conf.cpu()
+                                if flag_AI_Trace == True :
+                                    track_sat_ids = (result_sat2.boxes.id.int().cpu().tolist() if result_sat2.boxes.id is not None else None)
+                                else :
+                                    track_sat_ids = None
+                                if track_sat_ids :
+                                    for cls, box, track_sat_id in zip(classes_sat, boxes_sat, track_sat_ids):
+                                        x, y, w1, h1 = box
+                                        object_name = model_satellites_track.names[cls]
+                                        if object_name == "Shooting star":
+                                            BOX_COLOUR = (255, 0, 0)
+                                        if object_name == "Plane":
+                                            BOX_COLOUR = (255, 255, 0)
+                                            ep = 2
+                                        if object_name == "Satellite":
+                                            BOX_COLOUR = (0, 255, 0)
+                                            ep = 1
+                                        if flag_IsColor == False :
+                                            BOX_COLOUR = (255, 255, 255)
+                                        track_sat = track_satellite_history[track_sat_id]
+                                        track_sat.append((float(x), float(y)))  # x, y center point
+                                        if len(track_sat) > 30:  # retain 90 tracks for 90 frames
+                                            track_sat.pop(0)
+                                        points = np.hstack(track_sat).astype(np.int32).reshape((-1, 1, 2))
+                                        if flag_AI_Trace == True :
+                                            cv2.polylines(calque_satellites_AI, [points], isClosed=False, color=BOX_COLOUR, thickness=1)
+                                for cls, bbox,conf in zip(classes_sat, bboxes_sat, confidence_sat):
+                                    (x, y, x2, y2) = bbox
+                                    if flag_AI_Trace == True :
+                                        object_name = model_satellites_track.names[cls]
+                                    else :
+                                        object_name = model_satellites_predict.names[cls]
+                                    if object_name == "Shooting star":
+                                        box_text = "Sht Star"
+                                        ep = 2
+                                        BOX_COLOUR = (255, 0, 0)
+                                    if object_name == "Plane":
+                                        box_text = "Plane"
+                                        ep = 2
+                                        BOX_COLOUR = (255, 255, 0)
+                                    if object_name == "Satellite":
+                                        box_text = "Sat"
+                                        ep = 1
+                                        BOX_COLOUR = (0, 255, 0)
+                                    if flag_IsColor == False :
+                                        ep = 1
+                                        BOX_COLOUR = (255, 255, 255)
+                                    cv2.rectangle(calque_satellites_AI, (x, y), (x2, y2), BOX_COLOUR, 1)
+                                    cv2.putText(calque_satellites_AI, f"{box_text}", (x, y - 5), cv2.FONT_HERSHEY_PLAIN, 1, BOX_COLOUR, ep)                         
+#                                    cv2.putText(calque_satellites_AI, f"{object_name}: {conf:.2f}", (x, y - 5), cv2.FONT_HERSHEY_PLAIN, 1, BOX_COLOUR, ep)
+                else :
+                    if flag_IsColor == True :
+                        image_traitee = cupy_separateRGB_2_numpy_RGBimage(res_bb1,res_gg1,res_rr1)
+                    else :
+                        image_traitee = res_bb1.get()
+                if flag_IQE == True :
+                    if flag_IsColor == True :
+                        rs = res_cam_y // 2 - res_cam_y // 8 + delta_ty
+                        re = res_cam_y // 2 + res_cam_y // 8 + delta_ty
+                        cs = res_cam_x // 2 - res_cam_x // 8 + delta_tx
+                        ce = res_cam_x // 2 + res_cam_x // 8 + delta_tx
+                        crop_Im = image_traitee[rs:re,cs:ce]
+                        crop_im_grey = cv2.cvtColor(crop_Im, cv2.COLOR_BGR2GRAY)
+                        quality[quality_pos] = int(Image_Quality(crop_im_grey,IQ_Method))
+                        if quality[quality_pos] > max_quality :
+                            max_quality = quality[quality_pos]
+                        quality_pos = quality_pos + 1
+                        if quality_pos > 255 :
+                            quality_pos = 1
+                    else :
+                        rs = res_cam_y // 2 - res_cam_y // 8 + delta_ty
+                        re = res_cam_y // 2 + res_cam_y // 8 + delta_ty
+                        cs = res_cam_x // 2 - res_cam_x // 8 + delta_tx
+                        ce = res_cam_x // 2 + res_cam_x // 8 + delta_tx
+                        crop_Im = image_traitee[rs:re,cs:ce]
+                        quality[quality_pos] = int(Image_Quality(crop_Im,IQ_Method))
+                        if quality[quality_pos] > max_quality :
+                            max_quality = quality[quality_pos]
+                        quality_pos = quality_pos + 1
+                        if quality_pos > 255 :
+                            quality_pos = 1
+                total_stop = cv2.getTickCount()
+                total_time= int((total_stop-total_start)/cv2.getTickFrequency()*1000)
+                fpsQueue.append(1000/total_time)
+                if len(fpsQueue) > 10:
+                    fpsQueue.pop(0)
+                curFPS = (sum(fpsQueue)/len(fpsQueue))
+                if flag_image_mode == False :
+                    labelInfo2.config(text = "FPS : " + str(int(curFPS*10)/10) + "    ")
+                else :
+                    labelInfo2.config(text = str(curTT) + " ms      ")
+                total_start = cv2.getTickCount()
+                start_time_video = stop_time_video
+
+                if flag_false_colours == True :
+                    if flag_IsColor == True :
+                        tmp_grey = cv2.cvtColor(image_traitee, cv2.COLOR_BGR2GRAY)
+                        image_traitee = cv2.applyColorMap(tmp_grey, cv2.COLORMAP_JET)
+                    else:
+                        image_traitee = cv2.applyColorMap(image_traitee, cv2.COLORMAP_JET)
+                if flag_CONST == 0 :
+                    if (flag_TRKSAT == 1 and flag_image_mode == False) and flag_REMSAT == 0 :
+                         satellites_tracking()
+                    if (flag_REMSAT == 1 and flag_image_mode == False) :
+                         remove_satellites()
+                    flag_sat_detected = False
+                    if flag_DETECT_STARS == 1 and flag_image_mode == False :
+                        stars_detection(True)
+                    if (flag_TRKSAT == 1  and nb_sat >= 0 and nb_sat < max_sat and flag_image_mode == False) and flag_REMSAT == 0 :
+                        font = cv2.FONT_HERSHEY_SIMPLEX
+                        size = 0.5
+                        for i in range(nb_sat+1):
+                            if correspondance[i] >=0:
+                                centercircle = (sat_x[i],sat_y[i])
+                                center_texte = (sat_x[i]+10,sat_y[i]+10)
+                                texte = "Sat"
+                                if flag_IsColor == True :
+                                    cv2.circle(calque_direction_satellites, centercircle, 7, (0,255,0), 1, cv2.LINE_AA)
+                                    cv2.putText(calque_direction_satellites, texte,center_texte, font, size, (0, 255, 0), 1, cv2.LINE_AA)
+                                    center_texte = (sat_x[i]+10,sat_y[i]+25)
+                                    texte = "Rel Speed " + str(sat_speed[i])
+                                    cv2.putText(calque_direction_satellites, texte,center_texte, font, size, (255, 255, 0), 1, cv2.LINE_AA)
+                                else :
+                                    cv2.circle(calque_direction_satellites, centercircle, 7, (255,255,255), 1, cv2.LINE_AA)
+                                    cv2.putText(calque_direction_satellites, texte,center_texte, font, size, (255, 255, 255), 1, cv2.LINE_AA)
+                                    center_texte = (sat_x[i]+10,sat_y[i]+25)
+                                    texte = "Rel Speed " + str(sat_speed[i])
+                                    cv2.putText(calque_direction_satellites, texte,center_texte, font, size, (255, 255, 255), 1, cv2.LINE_AA)
+                        image_traitee = cv2.addWeighted(image_traitee, 1, calque_direction_satellites, 1, 0)     
+                    if flag_DETECT_STARS == 1 and flag_image_mode == False :
+                        image_traitee = cv2.addWeighted(image_traitee, 1, calque_stars, 1, 0)
+                    if flag_AI_Satellites and flag_satellites_model_loaded == True :
+                        image_traitee = cv2.addWeighted(image_traitee, 1, calque_satellites_AI, 1, 0)
+                else :
+                    reconstruction_image()
+                    image_traitee = image_reconstructed
+                    
+                if flag_cap_pic == True :
+                    pic_capture()
+                if flag_cap_video == True and flag_image_mode == False :
+                    video_capture(image_traitee)
+                if flag_new_stab_window == True :
+                    cv2.rectangle(image_traitee,start_point,end_point, (255,0,0), 2, cv2.LINE_AA)
+                    time.sleep(0.1)
+                    flag_new_stab_window = False
+                if (res_cam_x > int(cam_displ_x*fact_s) or res_cam_y > int(cam_displ_y*fact_s)) and flag_full_res == 0 :
+                    image_traitee_resize = cv2.resize(image_traitee,(int(cam_displ_x*fact_s),int(cam_displ_y*fact_s)),interpolation = cv2.INTER_LINEAR)
+                    cadre_image.im=PIL.Image.fromarray(image_traitee_resize)
+                if (res_cam_x < int(cam_displ_x*fact_s) or res_cam_y < int(cam_displ_y*fact_s)) and flag_full_res == 1 :
+                    image_traitee_resize = cv2.resize(image_traitee,(int(cam_displ_x*fact_s),int(cam_displ_y*fact_s)),interpolation = cv2.INTER_LINEAR)
+                    cadre_image.im=PIL.Image.fromarray(image_traitee_resize)
+                if (res_cam_x > int(1350*fact_s) or res_cam_y > int(1012*fact_s)) and flag_full_res == 1 :
+                    old_dzx = delta_zx
+                    old_dzy = delta_zy
+                    if key_pressed == "ZOOM_UP" :
+                        delta_zy = delta_zy - 20
+                        key_pressed = ""
+                    if key_pressed == "ZOOM_DOWN" :
+                         delta_zy = delta_zy + 20
+                         key_pressed = ""
+                    if key_pressed == "ZOOM_RIGHT" :
+                        delta_zx = delta_zx + 20
+                        key_pressed = ""
+                    if key_pressed == "ZOOM_LEFT" :
+                        delta_zx = delta_zx - 20
+                        key_pressed = ""
+                    if key_pressed == "ZOOM_RESET" :
+                        delta_zx = 0
+                        delta_zy = 0
+                        key_pressed = ""
+                    if (res_cam_x > int(1350*fact_s) and res_cam_y > int(1012*fact_s)) :
+                        rs = (res_cam_y - int(1012*fact_s)) // 2 - 1 + delta_zy
+                        re = (res_cam_y + int(1012*fact_s)) // 2 + 1 + delta_zy
+                        cs = (res_cam_x - int(1350*fact_s)) // 2 - 1 + delta_zx
+                        ce = (res_cam_x + int(1350*fact_s)) // 2 + 1 + delta_zx
+                        if cs < 0 or ce > res_cam_x :
+                            delta_zx = old_dzx
+                            cs = (res_cam_x - int(1350*fact_s)) // 2 - 1 + delta_zx
+                            ce = (res_cam_x + int(1350*fact_s)) // 2 + 1 + delta_zx
+                        if rs < 0 or re > res_cam_y :
+                            delta_zy = old_dzy
+                            rs = (res_cam_y - int(1012*fact_s)) // 2 - 1 + delta_zy
+                            re = (res_cam_y + int(1012*fact_s)) // 2 + 1 + delta_zy
+                    if (res_cam_x > int(1350*fact_s) and res_cam_y <= int(1012*fact_s)) :
+                        rs = 0
+                        re = res_cam_y
+                        cs = (res_cam_x - int(1350*fact_s)) // 2 - 1 + delta_zx
+                        ce = (res_cam_x + int(1350*fact_s)) // 2 + 1 + delta_zx
+                        if cs < 0 or ce > res_cam_x :
+                            delta_zx = old_dzx
+                            cs = (res_cam_x - int(1350*fact_s)) // 2 - 1 + delta_zx
+                            ce = (res_cam_x + int(1350*fact_s)) // 2 + 1 + delta_zx
+                    if (res_cam_x <= int(1350*fact_s) and res_cam_y > int(1012*fact_s)) :
+                        rs = (res_cam_y - int(1012*fact_s)) // 2 - 1 + delta_zy
+                        re = (res_cam_y + int(1012*fact_s)) // 2 + 1 + delta_zy
+                        cs = 0
+                        ce = res_cam_x
+                        if rs < 0 or re > res_cam_y :
+                            delta_zy = old_dzy
+                            rs = (res_cam_y - int(1012*fact_s)) // 2 - 1 + delta_zy
+                            re = (res_cam_y + int(1012*fact_s)) // 2 + 1 + delta_zy
+                    image_crop = image_traitee[rs:re,cs:ce]
+                    cadre_image.im=PIL.Image.fromarray(image_crop)
+                if res_cam_x <= int(cam_displ_x*fact_s) and flag_full_res == 0 :
+                    cadre_image.im=PIL.Image.fromarray(image_traitee)                    
+                if flag_cross == True :
+                    draw = PIL.ImageDraw.Draw(cadre_image.im)
+                    SX, SY = cadre_image.im.size
+                    draw.line(((SX/2-100,SY/2),(SX/2+100,SY/2)), fill="red", width=1)
+                    draw.line(((SX/2,SY/2-100),(SX/2,SY/2+100)), fill="red", width=1)
+                if flag_HST == 1 and flag_IsColor == True :
+                    r,g,b = cadre_image.im.split()
+                    hst_r = r.histogram()
+                    hst_g = g.histogram()
+                    hst_b = b.histogram()
+                    histo = PIL.ImageDraw.Draw(cadre_image.im)
+                    for x in range(1,256) :
+                        histo.line(((x*3,cam_displ_y),(x*3,cam_displ_y-hst_r[x]/100)),fill="red")
+                        histo.line(((x*3+1,cam_displ_y),(x*3+1,cam_displ_y-hst_g[x]/100)),fill="green")
+                        histo.line(((x*3+2,cam_displ_y),(x*3+2,cam_displ_y-hst_b[x]/100)),fill="blue")
+                    histo.line(((256*3,cam_displ_y),(256*3,cam_displ_y-256*3)),fill="red",width=3)
+                    histo.line(((1,cam_displ_y-256*3),(256*3,cam_displ_y-256*3)),fill="red",width=3)
+                if flag_IQE == True :
+                    transform = PIL.ImageDraw.Draw(cadre_image.im)
+                    for x in range(2,256) :
+                        y2 = int((quality[x]/max_quality)*400)
+                        y1 = int((quality[x-1]/max_quality)*400)
+                        transform.line((((x-1)*3,cam_displ_y-y1),(x*3,cam_displ_y-y2)),fill="red",width=2)
+                    transform.line(((256*3,cam_displ_y),(256*3,cam_displ_y-256*3)),fill="blue",width=3)
+                    transform.line(((1,cam_displ_y-256*3),(256*3,cam_displ_y-256*3)),fill="blue",width=3)
+                if flag_HST == 1 and flag_IsColor == False :
+                    r = cadre_image.im
+                    hst_r = r.histogram()
+                    histo = PIL.ImageDraw.Draw(cadre_image.im)
+                    for x in range(1,256) :
+                        histo.line(((x*3,cam_displ_y),(x*3,cam_displ_y-hst_r[x]/100)),fill="white")
+                    histo.line(((256*3,cam_displ_y),(256*3,cam_displ_y-256*3)),fill="red",width=3)
+                    histo.line(((1,cam_displ_y-256*3),(256*3,cam_displ_y-256*3)),fill="red",width=3)
+                if flag_TRSF == 1 and flag_IsColor == True :
+                    transform = PIL.ImageDraw.Draw(cadre_image.im)
+                    for x in range(2,256) :
+                        transform.line((((x-1)*3,cam_displ_y-trsf_r[x-1]*3),(x*3,cam_displ_y-trsf_r[x]*3)),fill="red",width=2)
+                        transform.line((((x-1)*3,cam_displ_y-trsf_g[x-1]*3),(x*3,cam_displ_y-trsf_g[x]*3)),fill="green",width=2)
+                        transform.line((((x-1)*3,cam_displ_y-trsf_b[x-1]*3),(x*3,cam_displ_y-trsf_b[x]*3)),fill="blue",width=2)
+                    transform.line(((256*3,cam_displ_y),(256*3,cam_displ_y-256*3)),fill="red",width=3)
+                    transform.line(((1,cam_displ_y-256*3),(256*3,cam_displ_y-256*3)),fill="red",width=3)
+                if flag_TRSF == 1 and flag_IsColor == False :
+                    transform = PIL.ImageDraw.Draw(cadre_image.im)
+                    for x in range(2,256) :
+                        transform.line((((x-1)*3,cam_displ_y-trsf_r[x-1]*3),(x*3,cam_displ_y-trsf_r[x]*3)),fill="green",width=2)
+                    transform.line(((256*3,cam_displ_y),(256*3,cam_displ_y-256*3)),fill="red",width=3)
+                    transform.line(((1,cam_displ_y-256*3),(256*3,cam_displ_y-256*3)),fill="red",width=3)
+                if flag_TRGS == 1 or flag_TRCLL == 1:
+                    transform = PIL.ImageDraw.Draw(cadre_image.im)
+                    if flag_TRGS == 1 :
+                        for x in range(1,255) :
+                            transform.line((((x-1)*3,cam_displ_y-Corr_GS[x-1]*512),(x*3,cam_displ_y-Corr_GS[x]*512)),fill="blue",width=4)
+                    if flag_TRCLL == 1 :
+                        for x in range(1,255) :
+                            transform.line((((x-1)*3,cam_displ_y-Corr_CLL[x-1]*2),(x*3,cam_displ_y-Corr_CLL[x]*2)),fill="green",width=4)
+                    transform.line(((256*3,cam_displ_y),(256*3,cam_displ_y-256*3)),fill="red",width=3)
+                    transform.line(((1,cam_displ_y-256*3),(256*3,cam_displ_y-256*3)),fill="red",width=3)
+                if flag_BFR == True and flag_image_mode == False :
+                    transform = PIL.ImageDraw.Draw(cadre_image.im)
+                    mul_par = (cam_displ_x*fact_s-600) / max_qual
+                    transform.line(((0,cam_displ_y*fact_s - 50),(int(min_qual*mul_par),cam_displ_y*fact_s - 50)),fill="red",width=4) # min quality
+                    transform.line(((0,cam_displ_y*fact_s - 110),(int(max_qual*mul_par),cam_displ_y*fact_s - 110)),fill="blue",width=4) # max quality
+                    transform.line(((0,cam_displ_y*fact_s - 80),(int(img_qual*mul_par),cam_displ_y*fact_s - 80)),fill="yellow",width=4) # image quality
+                    transform.line(((int(quality_threshold*mul_par),cam_displ_y*fact_s - 55),(int(quality_threshold*mul_par),cam_displ_y*fact_s - 105)),fill="green",width=6)# threshold quality
+                if flag_GO == False :
+                    transform = PIL.ImageDraw.Draw(cadre_image.im)
+                    transform.line(((0,0),(cam_displ_x*fact_s,cam_displ_y*fact_s)),fill="red",width=2)
+                    transform.line(((0,cam_displ_y*fact_s),(cam_displ_x*fact_s,0)),fill="red",width=2)
+                cadre_image.photo=PIL.ImageTk.PhotoImage(cadre_image.im)
+                cadre_image.create_image(cam_displ_x*fact_s/2,cam_displ_y*fact_s/2, image=cadre_image.photo)
+                flag_image_video_loaded = False
+            else :
+                if flag_image_mode == False :
+                    video.release()
+                    flag_premier_demarrage = True
+                    flag_cap_video = False
+            if flag_image_mode == True :
+                fenetre_principale.after(10, refresh)
+            else :
+                fenetre_principale.after(4, refresh)
+
 
 def satellites_tracking_AI ():
     global imggrey12,imggrey22,image_traitee,flag_IsColor,cupy_context,sat_frame_count,sat_frame_count_AI,flag_img_sat_buf1_AI,flag_img_sat_buf2_AI,flag_img_sat_buf3_AI,\
@@ -2121,24 +3509,98 @@ def reconstruction_image() :
             draw_satellite(sat_x[i],sat_y[i])
     
     
-# Image conversion utilities moved to image_utils.py
-cupy_RGBImage_2_cupy_separateRGB = image_utils.cupy_RGBImage_2_cupy_separateRGB
-numpy_RGBImage_2_numpy_separateRGB = image_utils.numpy_RGBImage_2_numpy_separateRGB
-numpy_RGBImage_2_cupy_separateRGB = image_utils.numpy_RGBImage_2_cupy_separateRGB
-cupy_RGBImage_2_numpy_separateRGB = image_utils.cupy_RGBImage_2_numpy_separateRGB
-cupy_separateRGB_2_numpy_RGBimage = image_utils.cupy_separateRGB_2_numpy_RGBimage
-cupy_separateRGB_2_cupy_RGBimage = image_utils.cupy_separateRGB_2_cupy_RGBimage
-numpy_separateRGB_2_numpy_RGBimage = image_utils.numpy_separateRGB_2_numpy_RGBimage
-gaussianblur_mono = image_utils.gaussianblur_mono
-gaussianblur_colour = image_utils.gaussianblur_colour
-image_negative_colour = image_utils.image_negative_colour
-Image_Quality = image_utils.Image_Quality
+def cupy_RGBImage_2_cupy_separateRGB(cupyImageRGB):
+    cupy_R = cp.ascontiguousarray(cupyImageRGB[:,:,0], dtype=cp.uint8)
+    cupy_G = cp.ascontiguousarray(cupyImageRGB[:,:,1], dtype=cp.uint8)
+    cupy_B = cp.ascontiguousarray(cupyImageRGB[:,:,2], dtype=cp.uint8)
+    
+    return cupy_B,cupy_G,cupy_R
 
-# Initialize the filter pipeline with globals and app_state (must be after CUDA kernels and image utility functions are loaded)
-filter_pipeline.init_filter_pipeline(globals(), app_state)
 
-# Sync display state from globals (one-time init, then callbacks maintain it)
-app_state.sync_display_from_globals(globals())
+def numpy_RGBImage_2_numpy_separateRGB(numpyImageRGB):
+    numpy_R = np.ascontiguousarray(numpyImageRGB[:,:,0], dtype=np.uint8)
+    numpy_G = np.ascontiguousarray(numpyImageRGB[:,:,1], dtype=np.uint8)
+    numpy_B = np.ascontiguousarray(numpyImageRGB[:,:,2], dtype=np.uint8)
+    
+    return numpy_R,numpy_G,numpy_B
+
+
+def numpy_RGBImage_2_cupy_separateRGB(numpyImageRGB):
+    cupyImageRGB = cp.asarray(numpyImageRGB)
+    cupy_R = cp.ascontiguousarray(cupyImageRGB[:,:,0], dtype=cp.uint8)
+    cupy_G = cp.ascontiguousarray(cupyImageRGB[:,:,1], dtype=cp.uint8)
+    cupy_B = cp.ascontiguousarray(cupyImageRGB[:,:,2], dtype=cp.uint8)
+    
+    return cupy_R,cupy_G,cupy_B
+
+
+def cupy_RGBImage_2_numpy_separateRGB(cupyImageRGB):
+    cupy_R = cp.ascontiguousarray(cupyImageRGB[:,:,0], dtype=cp.uint8)
+    cupy_G = cp.ascontiguousarray(cupyImageRGB[:,:,1], dtype=cp.uint8)
+    cupy_B = cp.ascontiguousarray(cupyImageRGB[:,:,2], dtype=cp.uint8)
+    numpy_R = cupy_R.get()
+    numpy_G = cupy_G.get()
+    numpy_B = cupy_B.get()
+    
+    return numpy_R,numpy_G,numpy_B
+
+
+def cupy_separateRGB_2_numpy_RGBimage(cupyR,cupyG,cupyB):
+    rgb = (cupyR[..., cp.newaxis], cupyG[..., cp.newaxis], cupyB[..., cp.newaxis])
+    cupyRGB = cp.concatenate(rgb, axis=-1, dtype=cp.uint8)
+    numpyRGB = cupyRGB.get()
+    
+    return numpyRGB
+
+
+def cupy_separateRGB_2_cupy_RGBimage(cupyR,cupyG,cupyB):
+    rgb = (cupyR[..., cp.newaxis], cupyG[..., cp.newaxis], cupyB[..., cp.newaxis])
+    cupyRGB = cp.concatenate(rgb, axis=-1, dtype=cp.uint8)
+    
+    return cupyRGB
+
+
+def numpy_separateRGB_2_numpy_RGBimage(npR,npG,npB):
+    rgb = (npR[..., np.newaxis], npG[..., np.newaxis], np[..., np.newaxis])
+    numpyRGB = np.concatenate(rgb, axis=-1, dtype=np.uint8)
+    
+    return numpyRGB
+
+
+def gaussianblur_mono(image_mono,niveau_blur):
+    image_gaussian_blur_mono = ndimage.gaussian_filter(image_mono, sigma = niveau_blur)
+    
+    return image_gaussian_blur_mono
+
+
+def gaussianblur_colour(im_r,im_g,im_b,niveau_blur):
+    im_GB_r = ndimage.gaussian_filter(im_r, sigma = niveau_blur)
+    im_GB_g = ndimage.gaussian_filter(im_g, sigma = niveau_blur)
+    im_GB_b = ndimage.gaussian_filter(im_b, sigma = niveau_blur)
+    
+    return im_GB_r,im_GB_g,im_GB_b
+
+
+def image_negative_colour (red,green,blue):
+    blue = cp.invert(blue,dtype=cp.uint8)
+    green = cp.invert(green,dtype=cp.uint8)
+    red = cp.invert(red,dtype=cp.uint8)
+    
+    return red,green,blue
+
+
+def Image_Quality(image,IQ_Method):
+    if IQ_Method == "Laplacian" :
+        image = cv2.GaussianBlur(image,(3,3), 0)
+        Image_Qual = cv2.Laplacian(image, cv2.CV_64F, ksize=laplacianksize).var()
+    elif IQ_Method == "Sobel" :
+        image = cv2.GaussianBlur(image,(3,3), 0)
+        Image_Qual = cv2.Sobel(image, cv2.CV_64F, 1, 1, ksize=SobelSize).var()
+    else :
+        image = cv2.GaussianBlur(image,(3,3), 0)
+        Image_Qual = cv2.Laplacian(image, cv2.CV_64F, ksize=laplacianksize).var()
+        
+    return Image_Qual
 
 
 def Template_tracking(image,dim) :
@@ -2268,6 +3730,1476 @@ def Template_tracking(image,dim) :
             new_image = image
             
     return new_image
+       
+    
+def application_filtrage_color(res_b1,res_g1,res_r1) :
+    global compteur_FS,Im1OK,Im2OK,Im3OK,b1_sm, b2_sm, b3_sm, b4_sm, b5_sm, g1_sm, g2_sm, g3_sm, g4_sm, g5_sm, r1_sm, r2_sm, r3_sm, r4_sm, r5_sm,\
+           Im4OK,Im5OK,val_denoise,val_denoise_KNN,val_histo_min,val_histo_max,image_brute_grey,cupy_context,BFREF_image,flag_BFREF_image,flag_SAT2PASS,\
+           flag_cap_pic,flag_traitement,flag_CLL,val_contrast_CLAHE,flag_histogram_phitheta,image_traitee,Date_hour_image,image_brute,flag_IsColor,flag_BFReference,BFREF_image_PT,max_qual_PT,flag_BFREF_image_PT,\
+           val_heq2,val_SGR,val_NGB,val_AGR,flag_AmpSoft,val_ampl,grad_vignet,compteur_AANR,compteur_AANRB,compteur_RV,flag_SAT,val_SAT,flag_NB_estime,TTQueue,curTT,\
+           Im1fsdnOK,Im2fsdnOK,Im1fsdnOKB,Im2fsdnOKB,Im1rvOK,Im2rvOK,image_traiteefsdn1,image_traiteefsdn2,old_image,val_reds,val_greens,val_blues,trsf_r,trsf_g,trsf_b,val_sigma_sharpen,val_sigma_sharpen2,\
+           flag_dyn_AANR,Corr_GS,azimut,hauteur,val_ghost_reducer,res_b2,res_g2,res_r2,time_exec_test,flag_HDR,val_sharpen,val_sharpen2,flag_reduce_variation,val_reduce_variation,\
+           imgb1,imgg1,imgr1,imgb2,imgg2,imgr2,imgb3,imgg3,imgr3,compteur_3FNR,img1_3FNROK,img2_3FNROK,img3_3FNROK,FNR_First_Start,flag_3FNR,Corr_CLL,res_b2B,res_g2B,res_r2B,\
+           imgb1B,imgg1B,imgr1B,imgb2B,imgg2B,imgr2B,imgb3B,imgg3B,imgr3B,compteur_3FNRB,img1_3FNROKB,img2_3FNROKB,img3_3FNROKB,FNRB_First_Start,flag_3FNRB,flag_AANRB,val_3FNR_Thres,\
+           compteur_3FNR2,img1_3FNR2OK,img2_3FNR2OK,img3_3FNR2OK,FNR2_First_Start,flag_3FNR2,compteur_3FNR2B,img1_3FNR2OKB,img2_3FNR2OKB,img3_3FNR2OKB,FNR2B_First_Start,flag_3FNR2B,\
+           imgb21,imgg21,imgr21,imgb22,imgg22,imgr22,imgb23,imgg23,imgr23,imgb21B,imgg21B,imgr21B,imgb22B,imgg22B,imgr22B,imgb23B,imgg23B,imgr23B
+
+    start_time_test = cv2.getTickCount()
+
+    with cupy_context :     
+        if flag_filtrage_ON == True :
+            if flag_TRSF == 1 :
+                for x in range(1,256) :
+                    trsf_r[x] = x
+                    trsf_g[x] = x
+                    trsf_b[x] = x
+                                            
+            if flag_IsColor == True :
+
+                # Colour image treatment
+                
+                if flag_DEMO == 1 :
+                    if Dev_system == "Windows" :
+                        image_base = cupy_separateRGB_2_numpy_RGBimage(res_b1,res_g1,res_r1)
+                    else :
+                        image_base = cupy_separateRGB_2_numpy_RGBimage(res_b1,res_g1,res_r1)
+#                        image_base = cv2.merge((res_b1.get(),res_g1.get(),res_r1.get()))
+                
+                height,width = res_b1.shape
+                                
+                nb_pixels = height * width
+                nb_blocksX = (width // nb_ThreadsX) + 1
+                nb_blocksY = (height // nb_ThreadsY) + 1
+
+                # Gaussian Blur
+                if flag_GaussBlur == True :
+                    res_b1,res_g1,res_r1 = gaussianblur_colour(res_b1,res_g1,res_r1,3)
+
+                # Adjust RGB channels soft
+                if (val_reds != 1.0 or val_greens != 1.0 or val_blues != 1.0) :              
+
+                    b_gpu = res_b1
+                    g_gpu = res_g1
+                    r_gpu = res_r1
+                    
+                    Set_RGB((nb_blocksX,nb_blocksY),(nb_ThreadsX,nb_ThreadsY),(r_gpu, g_gpu, b_gpu, res_r1, res_g1, res_b1, np.int_(width), np.int_(height), \
+                            np.float32(val_reds), np.float32(val_greens), np.float32(val_blues)))
+
+                    res_r1 = r_gpu
+                    res_g1 = g_gpu
+                    res_b1 = b_gpu
+
+                    if flag_TRSF == 1 :                                                      
+                        if val_reds != 0 :
+                            for x in range(1,256) :
+                                trsf_r[x] = (int)(trsf_r[x] * val_reds)
+                            trsf_r = np.clip(trsf_r,0,255)
+                        if val_greens != 0 :
+                            for x in range(1,256) :
+                                trsf_g[x] = (int)(trsf_g[x] * val_greens)
+                            trsf_g = np.clip(trsf_g,0,255)
+                        if val_blues != 0 :
+                            for x in range(1,256) :
+                                trsf_b[x] = (int)(trsf_b[x] * val_blues)
+                            trsf_b = np.clip(trsf_b,0,255)
+
+                # Image negative
+                if ImageNeg == 1 :
+                    res_b1,res_g1,res_r1 = image_negative_colour(res_b1,res_g1,res_r1)  
+                    if flag_TRSF == 1 :                    
+                        for x in range(1,256) :
+                            trsf_r[x] = (int)(256-trsf_r[x])
+                            trsf_g[x] = (int)(256-trsf_g[x])
+                            trsf_b[x] = (int)(256-trsf_b[x])
+                        trsf_r = np.clip(trsf_r,0,255)
+                        trsf_g = np.clip(trsf_g,0,255)
+                        trsf_b = np.clip(trsf_b,0,255)
+
+                # Luminance estimation if a mono sensor was used
+                if flag_NB_estime == 1 :
+
+                    b_gpu = res_b1
+                    g_gpu = res_g1
+                    r_gpu = res_r1
+                    
+                    color_estimate_Mono((nb_blocksX,nb_blocksY),(nb_ThreadsX,nb_ThreadsY),(r_gpu, g_gpu, b_gpu, res_r1, res_g1, res_b1,\
+                        np.int_(width), np.int_(height)))
+
+                    res_r1 = r_gpu
+                    res_g1 = g_gpu
+                    res_b1 = b_gpu
+
+                if val_FS > 1 and flag_image_mode == False :
+                    compteur_FS = compteur_FS+1
+                    if compteur_FS > val_FS :
+                        compteur_FS = 1
+                    if compteur_FS == 1 :
+                        b1_sm = cp.asarray(res_b1).astype(cp.int16)
+                        g1_sm = cp.asarray(res_g1).astype(cp.int16)
+                        r1_sm = cp.asarray(res_r1).astype(cp.int16)
+                        Im1OK = True
+                    if compteur_FS == 2 :
+                        b2_sm = cp.asarray(res_b1).astype(cp.int16)
+                        g2_sm = cp.asarray(res_g1).astype(cp.int16)
+                        r2_sm = cp.asarray(res_r1).astype(cp.int16)
+                        Im2OK = True
+                    if compteur_FS == 3 :
+                        b3_sm = cp.asarray(res_b1).astype(cp.int16)
+                        g3_sm = cp.asarray(res_g1).astype(cp.int16)
+                        r3_sm = cp.asarray(res_r1).astype(cp.int16)
+                        Im3OK = True
+                    if compteur_FS == 4 :
+                        b4_sm = cp.asarray(res_b1).astype(cp.int16)
+                        g4_sm = cp.asarray(res_g1).astype(cp.int16)
+                        r4_sm = cp.asarray(res_r1).astype(cp.int16)
+                        Im4OK = True
+                    if compteur_FS == 5 :
+                        b5_sm = cp.asarray(res_b1).astype(cp.int16)
+                        g5_sm = cp.asarray(res_g1).astype(cp.int16)
+                        r5_sm = cp.asarray(res_r1).astype(cp.int16)
+                        Im5OK = True
+                                            
+                    if val_FS == 2 and Im2OK == True :
+                        if stack_div == 1 :
+                            sum_b = b1_sm + b2_sm
+                            sum_g = g1_sm + g2_sm
+                            sum_r = r1_sm + r2_sm
+                            sum_b = cp.clip(sum_b,0,255)
+                            sum_g = cp.clip(sum_g,0,255)
+                            sum_r = cp.clip(sum_r,0,255)         
+                            res_b1 = cp.asarray(sum_b,dtype=cp.uint8)
+                            res_g1 = cp.asarray(sum_g,dtype=cp.uint8)
+                            res_r1 = cp.asarray(sum_r,dtype=cp.uint8)
+                        else :
+                            imgs = [b1_sm,b2_sm]
+                            imgs = cp.asarray(imgs)
+                            sum_b = cp.median(imgs,axis=0)
+                            res_b1 = cp.asarray(sum_b,dtype=cp.uint8)
+                            imgs = [g1_sm,g2_sm]
+                            imgs = cp.asarray(imgs)
+                            sum_g = cp.median(imgs,axis=0)
+                            res_g1 = cp.asarray(sum_g,dtype=cp.uint8)
+                            imgs = [r1_sm,r2_sm]
+                            imgs = cp.asarray(imgs)
+                            sum_r = cp.median(imgs,axis=0)
+                            res_r1 = cp.asarray(sum_r,dtype=cp.uint8)
+                    
+                    if val_FS == 3 and Im3OK == True :
+                        if stack_div == 1 :
+                            sum_b = b1_sm + b2_sm + b3_sm
+                            sum_g = g1_sm + g2_sm + g3_sm
+                            sum_r = r1_sm + r2_sm + r3_sm
+                            sum_b = cp.clip(sum_b,0,255)
+                            sum_g = cp.clip(sum_g,0,255)
+                            sum_r = cp.clip(sum_r,0,255)         
+                            res_b1 = cp.asarray(sum_b,dtype=cp.uint8)
+                            res_g1 = cp.asarray(sum_g,dtype=cp.uint8)
+                            res_r1 = cp.asarray(sum_r,dtype=cp.uint8)          
+                        else :
+                            imgs = [b1_sm,b2_sm,b3_sm]
+                            imgs = cp.asarray(imgs)
+                            sum_b = cp.median(imgs,axis=0)
+                            res_b1 = cp.asarray(sum_b,dtype=cp.uint8)
+                            imgs = [g1_sm,g2_sm,g3_sm]
+                            imgs = cp.asarray(imgs)
+                            sum_g = cp.median(imgs,axis=0)
+                            res_g1 = cp.asarray(sum_g,dtype=cp.uint8)
+                            imgs = [r1_sm,r2_sm,r3_sm]
+                            imgs = cp.asarray(imgs)
+                            sum_r = cp.median(imgs,axis=0)
+                            res_r1 = cp.asarray(sum_r,dtype=cp.uint8)
+                            
+                    if val_FS == 4 and Im4OK == True :
+                        if stack_div == 1 :
+                            sum_b = b1_sm + b2_sm + b3_sm + b4_sm
+                            sum_g = g1_sm + g2_sm + g3_sm + g4_sm
+                            sum_r = r1_sm + r2_sm + r3_sm + r4_sm
+                            sum_b = cp.clip(sum_b,0,255)
+                            sum_g = cp.clip(sum_g,0,255)
+                            sum_r = cp.clip(sum_r,0,255)         
+                            res_b1 = cp.asarray(sum_b,dtype=cp.uint8)
+                            res_g1 = cp.asarray(sum_g,dtype=cp.uint8)
+                            res_r1 = cp.asarray(sum_r,dtype=cp.uint8)          
+                        else :
+                            imgs = [b1_sm,b2_sm,b3_sm,b4_sm]
+                            imgs = cp.asarray(imgs)
+                            sum_b = cp.median(imgs,axis=0)
+                            res_b1 = cp.asarray(sum_b,dtype=cp.uint8)
+                            imgs = [g1_sm,g2_sm,g3_sm,g4_sm]
+                            imgs = cp.asarray(imgs)
+                            sum_g = cp.median(imgs,axis=0)
+                            res_g1 = cp.asarray(sum_g,dtype=cp.uint8)
+                            imgs = [r1_sm,r2_sm,r3_sm,r4_sm]
+                            imgs = cp.asarray(imgs)
+                            sum_r = cp.median(imgs,axis=0)
+                            res_r1 = cp.asarray(sum_r,dtype=cp.uint8)
+                        
+                    if val_FS == 5 and Im5OK == True :
+                        if stack_div == 1 :
+                            sum_b = b1_sm + b2_sm + b3_sm + b4_sm + b5_sm
+                            sum_g = g1_sm + g2_sm + g3_sm + g4_sm + g5_sm
+                            sum_r = r1_sm + r2_sm + r3_sm + r4_sm + r5_sm
+                            sum_b = cp.clip(sum_b,0,255)
+                            sum_g = cp.clip(sum_g,0,255)
+                            sum_r = cp.clip(sum_r,0,255)         
+                            res_b1 = cp.asarray(sum_b,dtype=cp.uint8)
+                            res_g1 = cp.asarray(sum_g,dtype=cp.uint8)
+                            res_r1 = cp.asarray(sum_r,dtype=cp.uint8)
+                        else :
+                            imgs = [b1_sm,b2_sm,b3_sm,b4_sm,b5_sm]
+                            imgs = cp.asarray(imgs)
+                            sum_b = cp.median(imgs,axis=0)
+                            res_b1 = cp.asarray(sum_b,dtype=cp.uint8)
+                            imgs = [g1_sm,g2_sm,g3_sm,g4_sm,g5_sm]
+                            imgs = cp.asarray(imgs)
+                            sum_g = cp.median(imgs,axis=0)
+                            res_g1 = cp.asarray(sum_g,dtype=cp.uint8)
+                            imgs = [r1_sm,r2_sm,r3_sm,r4_sm,r5_sm]
+                            imgs = cp.asarray(imgs)
+                            sum_r = cp.median(imgs,axis=0)
+                            res_r1 = cp.asarray(sum_r,dtype=cp.uint8)
+
+                # Reduce variation filter (turbulence management) with Previous frame reference
+                if flag_reduce_variation == True and flag_BFReference == "PreviousFrame" and flag_image_mode == False :
+                    compteur_RV = compteur_RV + 1
+                    if compteur_RV < 3 :
+                        if compteur_RV == 1 :
+                            res_b2 = res_b1.copy()
+                            res_g2 = res_g1.copy()
+                            res_r2 = res_r1.copy()
+                            Im1rvOK = True
+                        if compteur_RV == 2 :
+                            Im2rvOK = True
+
+                    b_gpu = res_b1
+                    g_gpu = res_g1
+                    r_gpu = res_r1
+     
+                    if Im2rvOK == True :
+                        variation = int(255/100*val_reduce_variation)
+                        
+                        reduce_variation_Color((nb_blocksX,nb_blocksY),(nb_ThreadsX,nb_ThreadsY),(r_gpu, g_gpu, b_gpu, res_r1, res_g1, res_b1, res_r2, res_g2, res_b2,\
+                                             np.int_(width), np.int_(height),np.int_(variation)))
+
+                        res_b2 = res_b1.copy()
+                        res_g2 = res_g1.copy()
+                        res_r2 = res_r1.copy()
+                        res_r1 = r_gpu
+                        res_g1 = g_gpu
+                        res_b1 = b_gpu
+
+
+                # Reduce variation filter (turbulence management) with best frame reference
+                if flag_reduce_variation == True and flag_BFReference == "BestFrame" and flag_BFREF_image == True and flag_image_mode == False :
+
+                    res_r2,res_g2,res_b2 = numpy_RGBImage_2_cupy_separateRGB(BFREF_image)
+                    variation = int(255/100*val_reduce_variation)
+                    b_gpu = res_b1
+                    g_gpu = res_g1
+                    r_gpu = res_r1
+                        
+                    reduce_variation_Color((nb_blocksX,nb_blocksY),(nb_ThreadsX,nb_ThreadsY),(r_gpu, g_gpu, b_gpu, res_r1, res_g1, res_b1, res_r2, res_g2, res_b2,\
+                                         np.int_(width), np.int_(height),np.int_(variation)))
+
+                    res_r1 = r_gpu
+                    res_g1 = g_gpu
+                    res_b1 = b_gpu
+
+                # 3 Frames Noise Reduction 1 Filter Front
+                if flag_3FNR == True and flag_image_mode == False :
+                    if compteur_3FNR < 4 and FNR_First_Start == True:
+                        compteur_3FNR = compteur_3FNR + 1
+                        if compteur_3FNR == 1 :
+                            imgb1 = res_b1.copy()
+                            imgg1 = res_g1.copy()
+                            imgr1 = res_r1.copy()
+                            img1_3FNROK = True
+                        if compteur_3FNR == 2 :
+                            imgb2 = res_b1.copy()
+                            imgg2 = res_g1.copy()
+                            imgr2 = res_r1.copy()
+                            img2_3FNROK = True
+                        if compteur_3FNR == 3 :
+                            imgb3 = res_b1.copy()
+                            imgg3 = res_g1.copy()
+                            imgr3 = res_r1.copy()
+                            img3_3FNROK = True
+                            FNR_First_Start = True
+                    if img3_3FNROK == True :
+                        if FNR_First_Start == False :
+                            imgb3 = res_b1.copy()
+                            imgg3 = res_g1.copy()
+                            imgr3 = res_r1.copy()
+                        
+                        FNR_First_Start = False
+                        b_gpu = res_b1
+                        g_gpu = res_g1
+                        r_gpu = res_r1
+                
+                        FNR_Color((nb_blocksX,nb_blocksY),(nb_ThreadsX,nb_ThreadsY),(r_gpu, g_gpu, b_gpu, imgr1, imgg1, imgb1, imgr2, imgg2, imgb2,\
+                                             imgr3, imgg3, imgb3, np.int_(width), np.int_(height),np.float32(val_3FNR_Thres)))
+                
+                        res_r1 = r_gpu
+                        res_g1 = g_gpu
+                        res_b1 = b_gpu
+
+                        imgb1 = imgb2.copy()
+                        imgg1 = imgg2.copy()
+                        imgr1 = imgr2.copy()
+                        imgr2 = r_gpu.copy()
+                        imgg2 = g_gpu.copy()
+                        imgb2 = b_gpu.copy()
+                        
+
+                # 3 Frames Noise Reduction 2 Filter Front
+                if flag_3FNR2 == True and flag_image_mode == False :
+                    if compteur_3FNR2 < 4 and FNR2_First_Start == True:
+                        compteur_3FNR2 = compteur_3FNR2 + 1
+                        if compteur_3FNR2 == 1 :
+                            imgb21 = res_b1.copy()
+                            imgg21 = res_g1.copy()
+                            imgr21 = res_r1.copy()
+                            img1_3FNR2OK = True
+                        if compteur_3FNR2 == 2 :
+                            imgb22 = res_b1.copy()
+                            imgg22 = res_g1.copy()
+                            imgr22 = res_r1.copy()
+                            img2_3FNR2OK = True
+                        if compteur_3FNR2 == 3 :
+                            imgb23 = res_b1.copy()
+                            imgg23 = res_g1.copy()
+                            imgr23 = res_r1.copy()
+                            img3_3FNR2OK = True
+                            FNR2_First_Start = True
+                    if img3_3FNR2OK == True :
+                        if FNR2_First_Start == False :
+                            imgb23 = res_b1.copy()
+                            imgg23 = res_g1.copy()
+                            imgr23 = res_r1.copy()
+                        
+                        FNR2_First_Start = False
+                        b_gpu = res_b1
+                        g_gpu = res_g1
+                        r_gpu = res_r1
+                
+                        FNR2_Color((nb_blocksX,nb_blocksY),(nb_ThreadsX,nb_ThreadsY),(r_gpu, g_gpu, b_gpu, imgr21, imgg21, imgb21, imgr22, imgg22, imgb22,\
+                                             imgr23, imgg23, imgb23, np.int_(width), np.int_(height)))
+                
+                        res_r1 = r_gpu
+                        res_g1 = g_gpu
+                        res_b1 = b_gpu
+
+                        imgb21 = imgb22.copy()
+                        imgg21 = imgg22.copy()
+                        imgr21 = imgr22.copy()
+                        imgr22 = r_gpu.copy()
+                        imgg22 = g_gpu.copy()
+                        imgb22 = b_gpu.copy()
+                                                                           
+                # Adaptative Absorber Denoise Filter Front
+                if flag_AANR == True and flag_image_mode == False :
+                    if compteur_AANR < 3 :
+                        compteur_AANR = compteur_AANR + 1
+                        if compteur_AANR == 1 :
+                            res_b2 = res_b1.copy()
+                            res_g2 = res_g1.copy()
+                            res_r2 = res_r1.copy()
+                            Im1fsdnOK = True
+                        if compteur_AANR == 2 :
+                            Im2fsdnOK = True
+
+                    b_gpu = res_b1
+                    g_gpu = res_g1
+                    r_gpu = res_r1
+     
+                    if Im2fsdnOK == True :
+                        
+                        adaptative_absorber_denoise_Color((nb_blocksX,nb_blocksY),(nb_ThreadsX,nb_ThreadsY),(r_gpu, g_gpu, b_gpu, res_r1, res_g1, res_b1, res_r2, res_g2, res_b2,\
+                                             np.int_(width), np.int_(height),np.intc(flag_dyn_AANR),np.intc(flag_ghost_reducer),np.intc(val_ghost_reducer)))
+
+
+                        res_b2 = res_b1.copy()
+                        res_g2 = res_g1.copy()
+                        res_r2 = res_r1.copy()
+
+                        tmp = cp.asarray(r_gpu).astype(cp.float64) * 1.05
+                        tmp = cp.clip(tmp,0,255)
+                        res_r1 = cp.asarray(tmp,dtype=cp.uint8)
+                        tmp = cp.asarray(g_gpu).astype(cp.float64) * 1.05
+                        tmp = cp.clip(tmp,0,255)
+                        res_g1 = cp.asarray(tmp,dtype=cp.uint8)
+                        tmp = cp.asarray(b_gpu).astype(cp.float64) * 1.05
+                        tmp = cp.clip(tmp,0,255)
+                        res_b1 = cp.asarray(tmp,dtype=cp.uint8)
+                                
+                # Denoise image PAILLOU 1
+                if flag_denoise_Paillou == 1 :
+                    cell_size = 5
+                    sqr_cell_size = cell_size * cell_size
+                    
+                    b_gpu = res_b1
+                    g_gpu = res_g1
+                    r_gpu = res_r1
+
+                    Denoise_Paillou_Colour((nb_blocksX,nb_blocksY),(nb_ThreadsX,nb_ThreadsY),(r_gpu, g_gpu, b_gpu, res_r1, res_g1, res_b1, np.intc(width), np.intc(height), np.intc(cell_size), \
+                                np.intc(sqr_cell_size)))
+
+                    res_r1 = r_gpu
+                    res_g1 = g_gpu
+                    res_b1 = b_gpu
+
+                # Denoise image PAILLOU 2 
+                if flag_denoise_Paillou2 == 1 :
+                    
+                    b_gpu = res_b1
+                    g_gpu = res_g1
+                    r_gpu = res_r1
+
+                    reduce_noise_Color((nb_blocksX,nb_blocksY),(nb_ThreadsX,nb_ThreadsY),(r_gpu, g_gpu, b_gpu, res_r1, res_g1, res_b1, np.intc(width), np.intc(height)))
+                    
+                    res_r1 = r_gpu
+                    res_g1 = g_gpu
+                    res_b1 = b_gpu
+
+
+                # Denoise NLM2
+                if flag_NLM2 == 1 :
+                    nb_ThreadsXs = 8
+                    nb_ThreadsYs = 8
+                    nb_blocksXs = (width // nb_ThreadsXs) + 1
+                    nb_blocksYs = (height // nb_ThreadsYs) + 1
+                    param=float(val_denoise)
+                    Noise = 1.0/(param*param)
+                    lerpC = 0.4
+
+                    b_gpu = res_b1
+                    g_gpu = res_g1
+                    r_gpu = res_r1
+                    
+                    NLM2_Colour_GPU((nb_blocksXs,nb_blocksYs),(nb_ThreadsXs,nb_ThreadsYs),(r_gpu, g_gpu, b_gpu, res_r1, res_g1, res_b1, np.intc(width), np.intc(height), np.float32(Noise), \
+                         np.float32(lerpC)))
+
+                    res_r1 = r_gpu
+                    res_g1 = g_gpu
+                    res_b1 = b_gpu
+                
+                # Denoise KNN
+                if flag_denoise_KNN == 1 :
+                    param=float(val_denoise_KNN)
+                    Noise = 1.0/(param*param)
+                    lerpC = 0.4
+
+                    b_gpu = res_b1
+                    g_gpu = res_g1
+                    r_gpu = res_r1
+                
+                    KNN_Colour_GPU((nb_blocksX,nb_blocksY),(nb_ThreadsX,nb_ThreadsY),(r_gpu, g_gpu, b_gpu, res_r1, res_g1, res_b1, np.intc(width), np.intc(height), np.float32(Noise), \
+                         np.float32(lerpC)))
+
+                    res_r1 = r_gpu
+                    res_g1 = g_gpu
+                    res_b1 = b_gpu
+
+                if flag_BFREFPT == True and flag_image_mode == False :
+                    rs = res_cam_y // 2 - res_cam_y // 8 + delta_ty
+                    re = res_cam_y // 2 + res_cam_y // 8 + delta_ty
+                    cs = res_cam_x // 2 - res_cam_x // 8 + delta_tx
+                    ce = res_cam_x // 2 + res_cam_x // 8 + delta_tx
+                    im_qual_tmp = cupy_separateRGB_2_numpy_RGBimage(res_r1,res_g1,res_b1)
+                    crop_Im = im_qual_tmp[rs:re,cs:ce]
+                    crop_im_grey = cv2.cvtColor(crop_Im, cv2.COLOR_BGR2GRAY)
+                    img_qual_PT = int(Image_Quality(crop_im_grey,IQ_Method))
+                    if img_qual_PT > max_qual_PT :
+                        max_qual_PT = img_qual_PT
+                        BFREF_image_PT = im_qual_tmp
+                        flag_BFREF_image_PT = True
+                    if flag_BFREF_image_PT == True :
+                        res_r2,res_g2,res_b2 = numpy_RGBImage_2_cupy_separateRGB(BFREF_image_PT)
+                        variation = int(255/100*val_reduce_variation)
+                        b_gpu = res_b1
+                        g_gpu = res_g1
+                        r_gpu = res_r1
+                            
+                        reduce_variation_Color((nb_blocksX,nb_blocksY),(nb_ThreadsX,nb_ThreadsY),(r_gpu, g_gpu, b_gpu, res_r1, res_g1, res_b1, res_r2, res_g2, res_b2,\
+                                             np.int_(width), np.int_(height),np.int_(variation)))
+
+                        res_r1 = r_gpu
+                        res_g1 = g_gpu
+                        res_b1 = b_gpu
+
+                if (flag_histogram_stretch == 1 or flag_histogram_equalize2 == 1 or flag_histogram_phitheta == 1) or\
+                   (flag_AmpSoft == 1  and (flag_lin_gauss == 1 or flag_lin_gauss == 2)) :
+                   
+                    b_gpu = res_b1
+                    g_gpu = res_g1
+                    r_gpu = res_r1
+
+                if (flag_histogram_stretch == 1 or flag_histogram_equalize2 == 1 or flag_histogram_phitheta == 1) :
+                    # Histo equalize 2
+                    # Histo stretch
+                    # Histo Phi Theta
+                
+                    Histo_Color((nb_blocksX,nb_blocksY),(nb_ThreadsX,nb_ThreadsY),(r_gpu, g_gpu, b_gpu, res_r1, res_g1, res_b1, np.int_(width), np.int_(height), \
+                       np.intc(flag_histogram_stretch),np.float32(val_histo_min), np.float32(val_histo_max), \
+                       np.intc(flag_histogram_equalize2), np.float32(val_heq2), np.intc(flag_histogram_phitheta), np.float32(val_phi), np.float32(val_theta)))
+
+                    res_r1 = r_gpu
+                    res_g1 = g_gpu
+                    res_b1 = b_gpu
+
+                    if flag_TRSF == 1 :                                                      
+                        if flag_histogram_phitheta == 1 :
+                            for x in range(1,256) :
+                                trsf_r[x] = (int)(255.0/(1.0+math.exp(-1.0*val_phi*((trsf_r[x]-val_theta)/32.0))))
+                                trsf_g[x] = (int)(255.0/(1.0+math.exp(-1.0*val_phi*((trsf_g[x]-val_theta)/32.0))))
+                                trsf_b[x] = (int)(255.0/(1.0+math.exp(-1.0*val_phi*((trsf_b[x]-val_theta)/32.0))))
+                                trsf_r = np.clip(trsf_r,0,255)
+                                trsf_g = np.clip(trsf_g,0,255)
+                                trsf_b = np.clip(trsf_b,0,255)
+
+                        if flag_histogram_equalize2 == 1 :
+                            for x in range(1,256) :
+                                trsf_r[x] = (int)(255.0*math.pow(((trsf_r[x]) / 255.0),val_heq2))
+                                trsf_g[x] = (int)(255.0*math.pow(((trsf_g[x]) / 255.0),val_heq2))
+                                trsf_b[x] = (int)(255.0*math.pow(((trsf_b[x]) / 255.0),val_heq2))
+                                trsf_r = np.clip(trsf_r,0,255)
+                                trsf_g = np.clip(trsf_g,0,255)
+                                trsf_b = np.clip(trsf_b,0,255)
+
+                        if flag_histogram_stretch == 1 :
+                            delta_histo = val_histo_max-val_histo_min
+                            for x in range(1,256) :
+                                trsf_r[x] = (int)((trsf_r[x]-val_histo_min)*(255.0/delta_histo))
+                                trsf_g[x] = (int)((trsf_g[x]-val_histo_min)*(255.0/delta_histo))
+                                trsf_b[x] = (int)((trsf_b[x]-val_histo_min)*(255.0/delta_histo))
+                                trsf_r = np.clip(trsf_r,0,255)
+                                trsf_g = np.clip(trsf_g,0,255)
+                                trsf_b = np.clip(trsf_b,0,255)
+                    
+
+                # Amplification soft Linear or Gaussian
+                if flag_AmpSoft == 1 :
+                    if flag_lin_gauss == 1 or flag_lin_gauss == 2 :
+                        correction = cp.asarray(Corr_GS)
+
+                        Colour_ampsoft_GPU((nb_blocksX,nb_blocksY),(nb_ThreadsX,nb_ThreadsY),(r_gpu, g_gpu, b_gpu, res_r1, res_g1, res_b1, np.int_(width), np.int_(height), \
+                            np.float32(val_ampl), correction))
+
+                        res_r1 = r_gpu
+                        res_g1 = g_gpu
+                        res_b1 = b_gpu
+
+                    if flag_TRSF == 1 :
+                        for x in range(1,256) :
+                            trsf_r[x] = (int)(trsf_r[x] * val_ampl)
+                            trsf_g[x] = (int)(trsf_g[x] * val_ampl)
+                            trsf_b[x] = (int)(trsf_b[x] * val_ampl)
+                        trsf_r = np.clip(trsf_r,0,255)
+                        trsf_g = np.clip(trsf_g,0,255)
+                        trsf_b = np.clip(trsf_b,0,255)
+
+
+                # Amplification soft Stars Amplification
+                if flag_AmpSoft == 1 and flag_lin_gauss == 3 :
+
+                    r_gpu = res_r1
+                    image_brute_grey = cv2.cvtColor(cupy_separateRGB_2_numpy_RGBimage(res_b1,res_g1,res_r1), cv2.COLOR_RGB2GRAY)
+                    imagegrey = cp.asarray(image_brute_grey)
+                 
+                    niveau_blur = 7
+                    imagegreyblur=gaussianblur_mono(imagegrey,niveau_blur)             
+                    correction = cp.asarray(Corr_GS)
+                    r_gpu = res_r1
+                    g_gpu = res_g1
+                    b_gpu = res_b1
+
+                    Colour_staramp_GPU((nb_blocksX,nb_blocksY),(nb_ThreadsX,nb_ThreadsY),(r_gpu, g_gpu, b_gpu, res_r1, res_g1, res_b1, imagegrey, imagegreyblur,np.int_(width), np.int_(height), \
+                            np.float32(val_Mu),np.float32(val_Ro),np.float32(val_ampl), correction))
+
+                    res_r1 = r_gpu
+                    res_g1 = g_gpu
+                    res_b1 = b_gpu
+
+                # Gradient Removal or Vignetting correction
+                if flag_GR == True :
+                    if grad_vignet == 1 :
+                        seuilb = int(cp.percentile(res_b1, val_SGR))
+                        seuilg = int(cp.percentile(res_g1, val_SGR))
+                        seuilr = int(cp.percentile(res_r1, val_SGR))
+                        img_b = res_b1.copy()
+                        img_g = res_g1.copy()
+                        img_r = res_r1.copy()
+                        img_b[img_b > seuilb] = seuilb
+                        img_g[img_g > seuilg] = seuilg
+                        img_r[img_r > seuilr] = seuilr
+                        niveau_blur = val_NGB*2 + 3
+                        img_b,img_g,img_r = gaussianblur_colour(img_b,img_g,img_r,niveau_blur)
+                        att_b = cp.asarray(img_b) * ((100.0-val_AGR) / 100.0) 
+                        att_g = cp.asarray(img_g) * ((100.0-val_AGR) / 100.0) 
+                        att_r = cp.asarray(img_r) * ((100.0-val_AGR) / 100.0)
+                        resb = cp.subtract(cp.asarray(res_b1),att_b)
+                        resg = cp.subtract(cp.asarray(res_g1),att_g)
+                        resr = cp.subtract(cp.asarray(res_r1),att_r)
+                        resb = cp.clip(resb,0,255)
+                        resg = cp.clip(resg,0,255)
+                        resr = cp.clip(resr,0,255)      
+                        res_b1 = cp.asarray(resb,dtype=cp.uint8)
+                        res_g1 = cp.asarray(resg,dtype=cp.uint8)
+                        res_r1 = cp.asarray(resr,dtype=cp.uint8)        
+                    else :
+                        seuilb = int(cp.percentile(res_b1, val_SGR))
+                        seuilg = int(cp.percentile(res_g1, val_SGR))
+                        seuilr = int(cp.percentile(res_r1, val_SGR))   
+                        fd_b = res_b1.copy()
+                        fd_g = res_g1.copy()
+                        fd_r = res_r1.copy()
+                        fd_b[fd_b > seuilb] = seuilb
+                        fd_g[fd_g > seuilg] = seuilg
+                        fd_r[fd_r > seuilr] = seuilr
+                        niveau_blur = val_NGB*2 + 3
+                        fd_b,fd_g,fd_r = gaussianblur_colour(fd_b,fd_g,fd_r,niveau_blur)
+                        pivot_b = int(cp.percentile(cp.asarray(res_b1), val_AGR))
+                        pivot_g = int(cp.percentile(cp.asarray(res_g1), val_AGR))
+                        pivot_r = int(cp.percentile(cp.asarray(res_r1), val_AGR))               
+                        corr_b = cp.asarray(res_b1).astype(cp.int16) - cp.asarray(fd_b).astype(cp.int16) + pivot_b
+                        corr_g = cp.asarray(res_g1).astype(cp.int16) - cp.asarray(fd_g).astype(cp.int16) + pivot_g
+                        corr_r = cp.asarray(res_r1).astype(cp.int16) - cp.asarray(fd_r).astype(cp.int16) + pivot_r           
+                        corr_b = cp.clip(corr_b,0,255)
+                        corr_g = cp.clip(corr_g,0,255)
+                        corr_r = cp.clip(corr_r,0,255)         
+                        res_b1 = cp.asarray(corr_b,dtype=cp.uint8)
+                        res_g1 = cp.asarray(corr_g,dtype=cp.uint8)
+                        res_r1 = cp.asarray(corr_r,dtype=cp.uint8)          
+
+                # Contrast Low Light
+                if flag_CLL == 1 :
+                    correction_CLL = cp.asarray(Corr_CLL,dtype=cp.uint8)
+
+                    r_gpu = res_r1
+                    g_gpu = res_g1
+                    b_gpu = res_b1
+
+                    Contrast_Low_Light_Colour_GPU((nb_blocksX,nb_blocksY),(nb_ThreadsX,nb_ThreadsY),(r_gpu, g_gpu, b_gpu, res_r1, res_g1, res_b1, np.int_(width), np.int_(height), \
+                        correction_CLL))
+
+                    res_r1 = r_gpu
+                    res_g1 = g_gpu
+                    res_b1 = b_gpu
+                                           
+                # Contrast CLAHE
+                if flag_contrast_CLAHE ==1 :
+                    if flag_OpenCvCuda == True :
+                        clahe = cv2.cuda.createCLAHE(clipLimit=val_contrast_CLAHE, tileGridSize=(val_grid_CLAHE,val_grid_CLAHE))
+                        srcb = cv2.cuda_GpuMat()
+                        srcb.upload(res_b1.get())
+                        resb = clahe.apply(srcb, cv2.cuda_Stream.Null())
+                        resbb = resb.download()
+
+                        srcg = cv2.cuda_GpuMat()
+                        srcg.upload(res_g1.get())
+                        resg = clahe.apply(srcg, cv2.cuda_Stream.Null())
+                        resgg = resg.download()
+
+                        srcr = cv2.cuda_GpuMat()
+                        srcr.upload(res_r1.get())
+                        resr = clahe.apply(srcr, cv2.cuda_Stream.Null())
+                        resrr = resr.download()
+
+                        res_b1 = cp.asarray(resbb)
+                        res_g1 = cp.asarray(resgg)
+                        res_r1 = cp.asarray(resrr)
+                    else :        
+                        clahe = cv2.createCLAHE(clipLimit=val_contrast_CLAHE, tileGridSize=(val_grid_CLAHE,val_grid_CLAHE))
+                        b = clahe.apply(res_b1.get())
+                        g = clahe.apply(res_g1.get())
+                        r = clahe.apply(res_r1.get())
+                        res_b1 = cp.asarray(b)
+                        res_g1 = cp.asarray(g)
+                        res_r1 = cp.asarray(r)
+
+                # image saturation enhancement
+                if flag_SAT == True :
+                    if flag_SAT_Image == True :
+                        r_gpu = res_r1.copy()
+                        g_gpu = res_g1.copy()
+                        b_gpu = res_b1.copy()
+                        init_r = res_r1.copy()
+                        init_g = res_g1.copy()
+                        init_b = res_b1.copy()
+                        coul_r,coul_g,coul_b = gaussianblur_colour(r_gpu,g_gpu,b_gpu,5)
+                        if ImageNeg == 1 :
+                            flag_neg_sat = 1
+                        else :
+                            flag_neg_sat = 0
+                        Saturation_Colour((nb_blocksX,nb_blocksY),(nb_ThreadsX,nb_ThreadsY),(r_gpu, g_gpu, b_gpu, coul_r, coul_g, coul_b, np.int_(width), np.int_(height),np.float32(val_SAT), np.int_(flag_neg_sat)))
+                        coul_gauss2_r = r_gpu.copy()
+                        coul_gauss2_g = g_gpu.copy()
+                        coul_gauss2_b = b_gpu.copy()
+                        coul_gauss2_r,coul_gauss2_g,coul_gauss2_b = gaussianblur_colour(coul_gauss2_r,coul_gauss2_g,coul_gauss2_b,7)
+                        Saturation_Combine_Colour((nb_blocksX,nb_blocksY),(nb_ThreadsX,nb_ThreadsY),(r_gpu, g_gpu, b_gpu, init_r, init_g, init_b, coul_gauss2_r,coul_gauss2_g,coul_gauss2_b, np.int_(width), np.int_(height)))
+                        res_r1 = r_gpu.copy()
+                        res_g1 = g_gpu.copy()
+                        res_b1 = b_gpu.copy()
+                        if flag_SAT2PASS == True :
+                            r_gpu = res_r1.copy()
+                            g_gpu = res_g1.copy()
+                            b_gpu = res_b1.copy()
+                            init_r = res_r1.copy()
+                            init_g = res_g1.copy()
+                            init_b = res_b1.copy()
+                            coul_r,coul_g,coul_b = gaussianblur_colour(r_gpu,g_gpu,b_gpu,11)
+                            if ImageNeg == 1 :
+                                flag_neg_sat = 1
+                            else :
+                                flag_neg_sat = 0
+                            Saturation_Colour((nb_blocksX,nb_blocksY),(nb_ThreadsX,nb_ThreadsY),(r_gpu, g_gpu, b_gpu, coul_r, coul_g, coul_b, np.int_(width), np.int_(height),np.float32(val_SAT), np.int_(flag_neg_sat)))
+                            coul_gauss2_r = r_gpu.copy()
+                            coul_gauss2_g = g_gpu.copy()
+                            coul_gauss2_b = b_gpu.copy()
+                            coul_gauss2_r,coul_gauss2_g,coul_gauss2_b = gaussianblur_colour(coul_gauss2_r,coul_gauss2_g,coul_gauss2_b,7)
+                            Saturation_Combine_Colour((nb_blocksX,nb_blocksY),(nb_ThreadsX,nb_ThreadsY),(r_gpu, g_gpu, b_gpu, init_r, init_g, init_b, coul_gauss2_r,coul_gauss2_g,coul_gauss2_b, np.int_(width), np.int_(height)))
+                            res_r1 = r_gpu.copy()
+                            res_g1 = g_gpu.copy()
+                            res_b1 = b_gpu.copy()
+                    else :
+                        r_gpu = res_r1.copy()
+                        g_gpu = res_g1.copy()
+                        b_gpu = res_b1.copy()
+                        coul_gauss_r = res_r1.copy()
+                        coul_gauss_g = res_g1.copy()
+                        coul_gauss_b = res_b1.copy()
+                        coul_gauss_r,coul_gauss_g,coul_gauss_b = gaussianblur_colour(coul_gauss_r,coul_gauss_g,coul_gauss_b,5)
+                        if ImageNeg == 1 :
+                            flag_neg_sat = 1
+                        else :
+                            flag_neg_sat = 0  
+                        Saturation_Colour((nb_blocksX,nb_blocksY),(nb_ThreadsX,nb_ThreadsY),(r_gpu, g_gpu, b_gpu, coul_gauss_r,coul_gauss_g,coul_gauss_b, np.int_(width), np.int_(height),np.float32(val_SAT), np.int_(flag_neg_sat)))
+                        coul_gauss_r = r_gpu.copy()
+                        coul_gauss_g = g_gpu.copy()
+                        coul_gauss_b = b_gpu.copy()
+                        coul_gauss_r,coul_gauss_g,coul_gauss_b = gaussianblur_colour(coul_gauss_r,coul_gauss_g,coul_gauss_b,7)
+                        Saturation_Combine_Colour((nb_blocksX,nb_blocksY),(nb_ThreadsX,nb_ThreadsY),(r_gpu, g_gpu, b_gpu, res_r1, res_g1, res_b1, coul_gauss_r, coul_gauss_g, coul_gauss_b, np.int_(width), np.int_(height)))
+                        res_r1 = r_gpu.copy()
+                        res_g1 = g_gpu.copy()
+                        res_b1 = b_gpu.copy()
+                        if flag_SAT2PASS == True :
+                            r_gpu = res_r1.copy()
+                            g_gpu = res_g1.copy()
+                            b_gpu = res_b1.copy()
+                            coul_gauss_r = res_r1.copy()
+                            coul_gauss_g = res_g1.copy()
+                            coul_gauss_b = res_b1.copy()
+                            coul_gauss_r,coul_gauss_g,coul_gauss_b = gaussianblur_colour(coul_gauss_r,coul_gauss_g,coul_gauss_b,11)
+                            if ImageNeg == 1 :
+                                flag_neg_sat = 1
+                            else :
+                                flag_neg_sat = 0  
+                            Saturation_Colour((nb_blocksX,nb_blocksY),(nb_ThreadsX,nb_ThreadsY),(r_gpu, g_gpu, b_gpu, coul_gauss_r,coul_gauss_g,coul_gauss_b, np.int_(width), np.int_(height),np.float32(val_SAT), np.int_(flag_neg_sat)))
+                            coul_gauss_r = r_gpu.copy()
+                            coul_gauss_g = g_gpu.copy()
+                            coul_gauss_b = b_gpu.copy()
+                            coul_gauss_r,coul_gauss_g,coul_gauss_b = gaussianblur_colour(coul_gauss_r,coul_gauss_g,coul_gauss_b,7)
+                            Saturation_Combine_Colour((nb_blocksX,nb_blocksY),(nb_ThreadsX,nb_ThreadsY),(r_gpu, g_gpu, b_gpu, res_r1, res_g1, res_b1, coul_gauss_r, coul_gauss_g, coul_gauss_b, np.int_(width), np.int_(height)))
+                            res_r1 = r_gpu.copy()
+                            res_g1 = g_gpu.copy()
+                            res_b1 = b_gpu.copy()
+
+                                  
+                # 3 Frames Noise Reduction Filter Back
+                if flag_3FNRB == True and flag_image_mode == False :
+                    if compteur_3FNRB < 4 and FNRB_First_Start == True:
+                        compteur_3FNRB = compteur_3FNRB + 1
+                        if compteur_3FNRB == 1 :
+                            imgb1B = res_b1.copy()
+                            imgg1B = res_g1.copy()
+                            imgr1B = res_r1.copy()
+                            img1_3FNROKB = True
+                        if compteur_3FNRB == 2 :
+                            imgb2B = res_b1.copy()
+                            imgg2B = res_g1.copy()
+                            imgr2B = res_r1.copy()
+                            img2_3FNROKB = True
+                        if compteur_3FNRB == 3 :
+                            imgb3B = res_b1.copy()
+                            imgg3B = res_g1.copy()
+                            imgr3B = res_r1.copy()
+                            img3_3FNROKB = True
+                            FNRB_First_Start = True
+                    if img3_3FNROKB == True :
+                        if FNRB_First_Start == False :
+                            imgb3B = res_b1.copy()
+                            imgg3B = res_g1.copy()
+                            imgr3B = res_r1.copy()
+                        
+                        FNRB_First_Start = False
+                        b_gpu = res_b1
+                        g_gpu = res_g1
+                        r_gpu = res_r1
+                
+                        FNR_Color((nb_blocksX,nb_blocksY),(nb_ThreadsX,nb_ThreadsY),(r_gpu, g_gpu, b_gpu, imgr1B, imgg1B, imgb1B, imgr2B, imgg2B, imgb2B,\
+                                             imgr3B, imgg3B, imgb3B, np.int_(width), np.int_(height),np.float32(val_3FNR_Thres)))
+                
+                        res_r1 = r_gpu
+                        res_g1 = g_gpu
+                        res_b1 = b_gpu
+
+                        imgb1B = imgb2B.copy()
+                        imgg1B = imgg2B.copy()
+                        imgr1B = imgr2B.copy()
+                        imgr2B = r_gpu.copy()
+                        imgg2B = g_gpu.copy()
+                        imgb2B = b_gpu.copy()
+
+
+                # 3 Frames Noise Reduction 2 Filter Back
+                if flag_3FNR2B == True and flag_image_mode == False :
+                    if compteur_3FNR2B < 4 and FNR2B_First_Start == True:
+                        compteur_3FNR2B = compteur_3FNR2B + 1
+                        if compteur_3FNR2B == 1 :
+                            imgb21B = res_b1.copy()
+                            imgg21B = res_g1.copy()
+                            imgr21B = res_r1.copy()
+                            img1_3FNR2OKB = True
+                        if compteur_3FNR2B == 2 :
+                            imgb22B = res_b1.copy()
+                            imgg22B = res_g1.copy()
+                            imgr22B = res_r1.copy()
+                            img2_3FNR2OKB = True
+                        if compteur_3FNR2B == 3 :
+                            imgb23B = res_b1.copy()
+                            imgg23B = res_g1.copy()
+                            imgr23B = res_r1.copy()
+                            img3_3FNR2OKB = True
+                            FNR2B_First_Start = True
+                    if img3_3FNR2OKB == True :
+                        if FNR2B_First_Start == False :
+                            imgb23B = res_b1.copy()
+                            imgg23B = res_g1.copy()
+                            imgr23B = res_r1.copy()
+                        
+                        FNR2B_First_Start = False
+                        b_gpu = res_b1
+                        g_gpu = res_g1
+                        r_gpu = res_r1
+                
+                        FNR2_Color((nb_blocksX,nb_blocksY),(nb_ThreadsX,nb_ThreadsY),(r_gpu, g_gpu, b_gpu, imgr21B, imgg21B, imgb21B, imgr22B, imgg22B, imgb22B,\
+                                             imgr23B, imgg23B, imgb23B, np.int_(width), np.int_(height)))
+                
+                        res_r1 = r_gpu
+                        res_g1 = g_gpu
+                        res_b1 = b_gpu
+
+                        imgb21B = imgb22B.copy()
+                        imgg21B = imgg22B.copy()
+                        imgr21B = imgr22B.copy()
+                        imgr22B = r_gpu.copy()
+                        imgg22B = g_gpu.copy()
+                        imgb22B = b_gpu.copy()
+
+
+                # Adaptative Absorber Denoise Filter Back
+                if flag_AANRB == True and flag_image_mode == False :
+                    if compteur_AANRB < 3 :
+                        compteur_AANRB = compteur_AANRB + 1
+                        if compteur_AANRB == 1 :
+                            res_b2B = res_b1.copy()
+                            res_g2B = res_g1.copy()
+                            res_r2B = res_r1.copy()
+                            Im1fsdnOKB = True
+                        if compteur_AANRB == 2 :
+                            Im2fsdnOKB = True
+
+                    b_gpu = res_b1
+                    g_gpu = res_g1
+                    r_gpu = res_r1
+     
+                    if Im2fsdnOKB == True :
+
+                        local_dyn = 1
+                        local_GR = 0
+                        local_VGR = 0
+                        
+                        adaptative_absorber_denoise_Color((nb_blocksX,nb_blocksY),(nb_ThreadsX,nb_ThreadsY),(r_gpu, g_gpu, b_gpu, res_r1, res_g1, res_b1, res_r2B, res_g2B, res_b2B,\
+                                             np.int_(width), np.int_(height),np.intc(local_dyn),np.intc(local_GR),np.intc(local_VGR)))
+
+                        res_b2B = res_b1.copy()
+                        res_g2B = res_g1.copy()
+                        res_r2B = res_r1.copy()
+                        tmp = cp.asarray(r_gpu).astype(cp.float64) * 1.05
+                        tmp = cp.clip(tmp,0,255)
+                        res_r1 = cp.asarray(tmp,dtype=cp.uint8)
+                        tmp = cp.asarray(g_gpu).astype(cp.float64) * 1.05
+                        tmp = cp.clip(tmp,0,255)
+                        res_g1 = cp.asarray(tmp,dtype=cp.uint8)
+                        tmp = cp.asarray(b_gpu).astype(cp.float64) * 1.05
+                        tmp = cp.clip(tmp,0,255)
+                        res_b1 = cp.asarray(tmp,dtype=cp.uint8)
+
+                # image sharpen 1
+                if flag_sharpen_soft1 == 1 :
+                    cupy_context.use()
+                    res_b1_blur,res_g1_blur,res_r1_blur = gaussianblur_colour(res_b1,res_g1,res_r1,val_sigma_sharpen)
+                    tmp_b1 = cp.asarray(res_b1).astype(cp.int16)
+                    tmp_g1 = cp.asarray(res_g1).astype(cp.int16)
+                    tmp_r1 = cp.asarray(res_r1).astype(cp.int16)
+                    tmp_b1 = tmp_b1 + val_sharpen * (tmp_b1 - res_b1_blur)
+                    tmp_g1 = tmp_g1 + val_sharpen * (tmp_g1 - res_g1_blur)
+                    tmp_r1 = tmp_r1 + val_sharpen * (tmp_r1 - res_r1_blur)
+                    tmp_b1 = cp.clip(tmp_b1,0,255)
+                    tmp_g1 = cp.clip(tmp_g1,0,255)
+                    tmp_r1 = cp.clip(tmp_r1,0,255)
+                    if flag_sharpen_soft2 == 1 :
+                        res_s1_b1 = cp.asarray(tmp_b1,dtype=cp.uint8)
+                        res_s1_g1 = cp.asarray(tmp_g1,dtype=cp.uint8)
+                        res_s1_r1 = cp.asarray(tmp_r1,dtype=cp.uint8)
+                    else :
+                        res_b1 = cp.asarray(tmp_b1,dtype=cp.uint8)
+                        res_g1 = cp.asarray(tmp_g1,dtype=cp.uint8)
+                        res_r1 = cp.asarray(tmp_r1,dtype=cp.uint8)
+
+                # image sharpen 2
+                if flag_sharpen_soft2 == 1 :
+                    cupy_context.use()
+                    res_b1_blur,res_g1_blur,res_r1_blur = gaussianblur_colour(res_b1,res_g1,res_r1,val_sigma_sharpen2)
+                    tmp_b1 = cp.asarray(res_b1).astype(cp.int16)
+                    tmp_g1 = cp.asarray(res_g1).astype(cp.int16)
+                    tmp_r1 = cp.asarray(res_r1).astype(cp.int16)
+                    tmp_b1 = tmp_b1 + val_sharpen2 * (tmp_b1 - res_b1_blur)
+                    tmp_g1 = tmp_g1 + val_sharpen2 * (tmp_g1 - res_g1_blur)
+                    tmp_r1 = tmp_r1 + val_sharpen2 * (tmp_r1 - res_r1_blur)
+                    tmp_b1 = cp.clip(tmp_b1,0,255)
+                    tmp_g1 = cp.clip(tmp_g1,0,255)
+                    tmp_r1 = cp.clip(tmp_r1,0,255)
+                    if flag_sharpen_soft1 == 1 :
+                        res_s2_b1 = cp.asarray(tmp_b1,dtype=cp.uint8)
+                        res_s2_g1 = cp.asarray(tmp_g1,dtype=cp.uint8)
+                        res_s2_r1 = cp.asarray(tmp_r1,dtype=cp.uint8)
+                    else :
+                        res_b1 = cp.asarray(tmp_b1,dtype=cp.uint8)
+                        res_g1 = cp.asarray(tmp_g1,dtype=cp.uint8)
+                        res_r1 = cp.asarray(tmp_r1,dtype=cp.uint8)
+
+                if flag_sharpen_soft1 == 1 and flag_sharpen_soft2 == 1 :
+                    res_b1 = cp.minimum(res_s1_b1,res_s2_b1)
+                    res_g1 = cp.minimum(res_s1_g1,res_s2_g1)
+                    res_r1 = cp.minimum(res_s1_r1,res_s2_r1)
+
+                if flag_reverse_RB == 0 :
+                    image_traitee = cupy_separateRGB_2_numpy_RGBimage(res_b1,res_g1,res_r1)
+                else :
+                    image_traitee = cupy_separateRGB_2_numpy_RGBimage(res_r1,res_g1,res_b1)
+                    
+
+                if flag_DEMO == 1 :
+                    if flag_demo_side == "Left" :
+                        image_traitee[0:height,0:width//2] = image_base[0:height,0:width//2]            
+                    if flag_demo_side == "Right" :
+                        image_traitee[0:height,width//2:width] = image_base[0:height,width//2:width]            
+    
+    stop_time_test = cv2.getTickCount()
+    time_exec_test= int((stop_time_test-start_time_test)/cv2.getTickFrequency()*1000)
+
+    TTQueue.append(time_exec_test)
+    if len(TTQueue) > 10:
+        TTQueue.pop(0)
+    curTT = (sum(TTQueue)/len(TTQueue))
+
+
+def application_filtrage_mono(res_b1) :
+    global compteur_FS,Im1OK,Im2OK,Im3OK,b1_sm, b2_sm, b3_sm, b4_sm, b5_sm,flag_IsColor,flag_BFReference,\
+           Im4OK,Im5OK,val_denoise,val_denoise_KNN,val_histo_min,val_histo_max,image_brute_grey,cupy_context, BFREF_image_PT,max_qual_PT,flag_BFREF_image_PT,\
+           flag_cap_pic,flag_traitement,flag_CLL,val_contrast_CLAHE,flag_histogram_phitheta,image_traitee,Date_hour_image,image_brute,BFREF_image,flag_BFREF_image,\
+           val_heq2,val_SGR,val_NGB,val_AGR,flag_AmpSoft,val_ampl,grad_vignet,compteur_AANR,compteur_RV,flag_SAT,val_SAT,flag_NB_estime,TTQueue,curTT,\
+           Im1fsdnOK,Im2fsdnOK,Im1rvOK,Im2rvOK,image_traiteefsdn1,image_traiteefsdn2,old_image,trsf_r,trsf_g,trsf_b,val_sigma_sharpen,val_sigma_sharpen2,\
+           flag_dyn_AANR,Corr_GS,azimut,hauteur,val_ghost_reducer,res_b2,res_b2B,time_exec_test,flag_HDR,val_sharpen,val_sharpen2,flag_reduce_variation,val_reduce_variation,\
+           imgb1,imgb2,imgb3,compteur_3FNR,img1_3FNROK,img2_3FNROK,img3_3FNROK,FNR_First_Start,flag_3FNR,Corr_CLL,Im1fsdnOKB,Im2fsdnOKB, \
+           imgb1B,imgb2B,imgb3B,compteur_3FNRB,img1_3FNROKB,img2_3FNROKB,img3_3FNROKB,FNRB_First_Start,flag_3FNRB,compteur_AANRB,val_3FNR_Thres,\
+           compteur_3FNR2,img1_3FNR2OK,img2_3FNR2OK,img3_3FNR2OK,FNR2_First_Start,flag_3FNR2,compteur_3FNR2B,img1_3FNR2OKB,img2_3FNR2OKB,img3_3FNR2OKB,FNR2B_First_Start,flag_3FNR2B,\
+           imgb21,imgb22,imgb23,imgb21B,imgb22B,imgb23B
+
+
+    start_time_test = cv2.getTickCount()
+
+    with cupy_context :     
+        if flag_filtrage_ON == True :
+            for x in range(1,256) :
+                trsf_r[x] = x
+                trsf_g[x] = x
+                trsf_b[x] = x
+            
+            if flag_IsColor == False :
+
+                # traitement image monochrome
+
+                if flag_DEMO == 1 :
+                    image_base = res_b1.get()
+                    
+                height,width = res_b1.shape
+                nb_pixels = height * width
+                nb_blocksX = (width // nb_ThreadsX) + 1
+                nb_blocksY = (height // nb_ThreadsY) + 1
+                
+                # Gaussian Blur
+                if flag_GaussBlur == True :
+                    res_b1 = gaussianblur_mono(res_b1,3)
+
+                # Image Negative
+                if ImageNeg == 1 :
+                    res_b1 = cp.invert(res_b1,dtype=cp.uint8)
+                    for x in range(1,256) :
+                        trsf_r[x] = (int)(256-trsf_r[x])
+                    trsf_r = np.clip(trsf_r,0,255)
+
+                r_gpu = res_b1.copy()
+
+                # Estimate luminance if mono sensor was used - Do not use with a mono sensor
+                if flag_NB_estime == 1 :
+                    
+                    grey_estimate_Mono((nb_blocksX,nb_blocksY),(nb_ThreadsX,nb_ThreadsY),(r_gpu, res_b1,\
+                        np.int_(width), np.int_(height)))
+
+                    res_b1 = r_gpu.copy()
+     
+                if val_FS > 1 and flag_image_mode == False :
+                    compteur_FS = compteur_FS+1
+                    if compteur_FS > val_FS :
+                        compteur_FS = 1
+                    if compteur_FS == 1 :
+                        b1_sm = cp.asarray(res_b1).astype(cp.int16)
+                        Im1OK = True
+                    if compteur_FS == 2 :
+                        b2_sm = cp.asarray(res_b1).astype(cp.int16)
+                        Im2OK = True
+                    if compteur_FS == 3 :
+                        b3_sm = cp.asarray(res_b1).astype(cp.int16)
+                        Im3OK = True
+                    if compteur_FS == 4 :
+                        b4_sm = cp.asarray(res_b1).astype(cp.int16)
+                        Im4OK = True
+                    if compteur_FS == 5 :
+                        b5_sm = cp.asarray(res_b1).astype(cp.int16)
+                        Im5OK = True
+                                            
+                    if val_FS == 2 and Im2OK == True :
+                        if stack_div == 1 :
+                            sum_b = b1_sm + b2_sm
+                            sum_b = cp.clip(sum_b,0,255)
+                            res_b1 = cp.asarray(sum_b,dtype=cp.uint8)
+                        else :
+                            imgs = [b1_sm,b2_sm]
+                            imgs = cp.asarray(imgs)
+                            sum_b = cp.median(imgs,axis=0)
+                            res_b1 = cp.asarray(sum_b,dtype=cp.uint8)
+                    
+                    if val_FS == 3 and Im3OK == True :
+                        if stack_div == 1 :
+                            sum_b = b1_sm + b2_sm + b3_sm
+                            sum_b = cp.clip(sum_b,0,255)
+                            res_b1 = cp.asarray(sum_b,dtype=cp.uint8)
+                        else :
+                            imgs = [b1_sm,b2_sm,b3_sm]
+                            imgs = cp.asarray(imgs)
+                            sum_b = cp.median(imgs,axis=0)
+                            res_b1 = cp.asarray(sum_b,dtype=cp.uint8)
+                            
+                    if val_FS == 4 and Im4OK == True :
+                        if stack_div == 1 :
+                            sum_b = b1_sm + b2_sm + b3_sm + b4_sm
+                            sum_b = cp.clip(sum_b,0,255)
+                            res_b1 = cp.asarray(sum_b,dtype=cp.uint8)
+                        else :
+                            imgs = [b1_sm,b2_sm,b3_sm,b4_sm]
+                            imgs = cp.asarray(imgs)
+                            sum_b = cp.median(imgs,axis=0)
+                            res_b1 = cp.asarray(sum_b,dtype=cp.uint8)
+                        
+                    if val_FS == 5 and Im5OK == True :
+                        if stack_div == 1 :
+                            sum_b = b1_sm + b2_sm + b3_sm + b4_sm + b5_sm
+                            sum_b = cp.clip(sum_b,0,255)
+                            res_b1 = cp.asarray(sum_b,dtype=cp.uint8)
+                        else :
+                            imgs = [b1_sm,b2_sm,b3_sm,b4_sm,b5_sm]
+                            imgs = cp.asarray(imgs)
+                            sum_b = cp.median(imgs,axis=0)
+                            res_b1 = cp.asarray(sum_b,dtype=cp.uint8)
+
+                # Reduce variation filter (turbulence management) with Previous frame reference
+                if flag_reduce_variation == True and flag_BFReference == "PreviousFrame" and flag_image_mode == False :
+                    compteur_RV = compteur_RV + 1
+                    if compteur_RV < 3 :
+                        if compteur_RV == 1 :
+                            res_b2 = res_b1.copy()
+                            Im1rvOK = True
+                        if compteur_RV == 2 :
+                            Im2rvOK = True
+
+                    b_gpu = res_b1
+     
+                    if Im2rvOK == True :
+                        variation = int(255/100*val_reduce_variation)
+                        
+                        reduce_variation_Mono((nb_blocksX,nb_blocksY),(nb_ThreadsX,nb_ThreadsY),(b_gpu, res_b1, res_b2, np.int_(width), np.int_(height),np.int_(variation)))
+
+                        res_b2 = res_b1.copy()
+                        res_b1 = b_gpu
+
+                # Reduce variation filter (turbulence management) with best frame reference
+                if flag_reduce_variation == True and flag_BFReference == "BestFrame" and flag_BFREF_image == True and flag_image_mode == False :
+
+                    res_b2 = cp.asarray(BFREF_image,dtype=cp.uint8)
+                    variation = int(255/100*val_reduce_variation)
+                    b_gpu = res_b1
+                        
+                    reduce_variation_Mono((nb_blocksX,nb_blocksY),(nb_ThreadsX,nb_ThreadsY),(b_gpu, res_b1, res_b2, np.int_(width), np.int_(height),np.int_(variation)))
+
+                    res_b1 = b_gpu
+     
+                # 3 Frames Noise reduction Front
+                if flag_3FNR == True and flag_image_mode == False :
+                    if compteur_3FNR < 4 and FNR_First_Start == True:
+                        compteur_3FNR = compteur_3FNR + 1
+                        if compteur_3FNR == 1 :
+                            imgb1 = res_b1.copy()
+                            img1_3FNROK = True
+                        if compteur_3FNR == 2 :
+                            imgb2 = res_b1.copy()
+                            img2_3FNROK = True
+                        if compteur_3FNR == 3 :
+                            imgb3 = res_b1.copy()
+                            img3_3FNROK = True
+                            FNR_First_Start = True     
+                    if img3_3FNROK == True :
+                        if FNR_First_Start == False :
+                            imgb3 = res_b1.copy()
+                        
+                        FNR_First_Start = False
+                        b_gpu = res_b1
+                
+                        FNR_Mono((nb_blocksX,nb_blocksY),(nb_ThreadsX,nb_ThreadsY),(b_gpu, imgb1, imgb2, imgb3, np.int_(width), np.int_(height),np.float32(val_3FNR_Thres)))
+                                              
+                        res_b1 = b_gpu
+                        imgb1 = imgb2.copy()
+                        imgb2 = b_gpu.copy()
+
+
+                # 3 Frames Noise Reduction 2 Filter Front
+                if flag_3FNR2 == True and flag_image_mode == False :
+                    if compteur_3FNR2 < 4 and FNR2_First_Start == True:
+                        compteur_3FNR2 = compteur_3FNR2 + 1
+                        if compteur_3FNR2 == 1 :
+                            imgb21 = res_b1.copy()
+                            img1_3FNR2OK = True
+                        if compteur_3FNR2 == 2 :
+                            imgb22 = res_b1.copy()
+                            img2_3FNR2OK = True
+                        if compteur_3FNR2 == 3 :
+                            imgb23 = res_b1.copy()
+                            img3_3FNR2OK = True
+                            FNR2_First_Start = True
+                    if img3_3FNR2OK == True :
+                        if FNR2_First_Start == False :
+                            imgb23 = res_b1.copy()
+                        
+                        FNR2_First_Start = False
+                        b_gpu = res_b1
+                
+                        FNR2_Mono((nb_blocksX,nb_blocksY),(nb_ThreadsX,nb_ThreadsY),(b_gpu, imgb21, imgb22, imgb23, np.int_(width), np.int_(height)))
+                
+                        res_b1 = b_gpu
+
+                        imgb21 = imgb22.copy()
+                        imgb22 = b_gpu.copy()
+
+
+                # Adaptative Absorber Noise Reduction
+                if flag_AANR == True and flag_image_mode == False :
+                    if compteur_AANR < 3 :
+                        compteur_AANR = compteur_AANR + 1
+                        if compteur_AANR == 1 :
+                            res_b2 = res_b1.copy()
+                            Im1fsdnOK = True
+                        if compteur_AANR == 2 :
+                            Im2fsdnOK = True
+
+                    b_gpu = res_b1
+                
+                    if Im2fsdnOK == True :
+                        nb_images = 2
+                        divise = 2.0
+
+                        adaptative_absorber_denoise_Mono((nb_blocksX,nb_blocksY),(nb_ThreadsX,nb_ThreadsY),(r_gpu, res_b1, res_b2,\
+                                             np.int_(width), np.int_(height),np.intc(flag_dyn_AANR),np.intc(flag_ghost_reducer),np.intc(val_ghost_reducer)))
+
+                        res_b2 = res_b1.copy()
+                        tmp = cp.asarray(r_gpu).astype(cp.float64) * 1.05
+                        tmp = cp.clip(tmp,0,255)
+                        res_b1 = cp.asarray(tmp,dtype=cp.uint8)
+
+
+                # Denoise PAILLOU CUDA 1
+                if flag_denoise_Paillou == 1 :
+                    cell_size = 3
+                    sqr_cell_size = cell_size * cell_size
+                    r_gpu = res_b1
+                    Denoise_Paillou_Mono((nb_blocksX,nb_blocksY),(nb_ThreadsX,nb_ThreadsY),(r_gpu, res_b1, np.intc(width), np.intc(height), np.intc(cell_size), \
+                                np.intc(sqr_cell_size)))
+
+                    res_b1 = r_gpu
+
+                # Denoise PAILLOU 2
+                if flag_denoise_Paillou2 == 1 :
+                    
+                    r_gpu = res_b1
+                    reduce_noise_Mono((nb_blocksX,nb_blocksY),(nb_ThreadsX,nb_ThreadsY),(r_gpu, res_b1, np.intc(width), np.intc(height)))                    
+                    res_b1 = r_gpu
+
+     
+                # Denoise NLM2
+                if flag_NLM2 == 1 :
+                    nb_ThreadsXs = 8
+                    nb_ThreadsYs = 8
+                    nb_blocksXs = (width // nb_ThreadsXs) + 1
+                    nb_blocksYs = (height // nb_ThreadsYs) + 1
+                    param=float(val_denoise)
+                    Noise = 1.0/(param*param)
+                    lerpC = 0.4
+                    r_gpu = res_b1
+                    NLM2_Mono_GPU((nb_blocksXs,nb_blocksYs),(nb_ThreadsXs,nb_ThreadsYs),(r_gpu, res_b1, np.intc(width),np.intc(height), np.float32(Noise), \
+                         np.float32(lerpC)))
+
+                    res_b1 = r_gpu
+                    
+                # Denoise KNN
+                if flag_denoise_KNN == 1 :               
+                    param=float(val_denoise_KNN)
+                    Noise = 1.0/(param*param)
+                    lerpC = 0.4
+                    r_gpu = res_b1
+                    KNN_Mono_GPU((nb_blocksX,nb_blocksY),(nb_ThreadsX,nb_ThreadsY),(r_gpu, res_b1, np.intc(width),np.intc(height), np.float32(Noise), \
+                         np.float32(lerpC)))                            
+
+                    res_b1 = r_gpu
+
+                if flag_BFREFPT == True and flag_image_mode == False :
+                    rs = res_cam_y // 2 - res_cam_y // 8 + delta_ty
+                    re = res_cam_y // 2 + res_cam_y // 8 + delta_ty
+                    cs = res_cam_x // 2 - res_cam_x // 8 + delta_tx
+                    ce = res_cam_x // 2 + res_cam_x // 8 + delta_tx
+                    im_qual_tmp = res_b1.get()
+                    crop_im_grey = im_qual_tmp[rs:re,cs:ce]
+                    img_qual_PT = int(Image_Quality(crop_im_grey,IQ_Method))
+                    if img_qual_PT > max_qual_PT :
+                        max_qual_PT = img_qual_PT
+                        BFREF_image_PT = im_qual_tmp
+                        flag_BFREF_image_PT = True
+                    if flag_BFREF_image_PT == True :
+                        res_b2 = cp.asarray(BFREF_image_PT,dtype=cp.uint8)
+                        variation = int(255/100*val_reduce_variation)
+                        b_gpu = res_b1
+                            
+                        reduce_variation_Mono((nb_blocksX,nb_blocksY),(nb_ThreadsX,nb_ThreadsY),(b_gpu, res_b1, res_b2,\
+                                             np.int_(width), np.int_(height),np.int_(variation)))
+
+                        res_b1 = b_gpu
+
+                if (flag_histogram_stretch == 1 or flag_histogram_equalize2 == 1 or flag_histogram_phitheta == 1) or (flag_AmpSoft == 1  and (flag_lin_gauss == 1 or flag_lin_gauss == 2)) :
+                    
+                    r_gpu = res_b1
+
+                if (flag_histogram_stretch == 1 or flag_histogram_equalize2 == 1 or flag_histogram_phitheta == 1) :
+                    # Histo equalize 2 CUDA
+                    # Histo stretch CUDA
+                    # Histo Phi Theta CUDA
+                    
+                    Histo_Mono((nb_blocksX,nb_blocksY),(nb_ThreadsX,nb_ThreadsY),(r_gpu, res_b1, np.int_(width), np.int_(height), \
+                       np.intc(flag_histogram_stretch),np.float32(val_histo_min), np.float32(val_histo_max), \
+                       np.intc(flag_histogram_equalize2), np.float32(val_heq2), np.intc(flag_histogram_phitheta), np.float32(val_phi), np.float32(val_theta)))
+
+                    res_b1 = r_gpu
+
+                    if flag_histogram_phitheta == 1 :
+                        for x in range(1,256) :
+                            trsf_r[x] = (int)(255.0/(1.0+math.exp(-1.0*val_phi*((trsf_r[x]-val_theta)/32.0))))
+                        trsf_r = np.clip(trsf_r,0,255)
+
+                    if flag_histogram_equalize2 == 1 :
+                        for x in range(1,256) :
+                            trsf_r[x] = (int)(255.0*math.pow(((trsf_r[x]) / 255.0),val_heq2))
+                        trsf_r = np.clip(trsf_r,0,255)
+
+                    if flag_histogram_stretch == 1 :
+                        delta_histo = val_histo_max-val_histo_min
+                        for x in range(1,256) :
+                            trsf_r[x] = (int)((trsf_r[x]-val_histo_min)*(255.0/delta_histo))
+                        trsf_r = np.clip(trsf_r,0,255)
+
+                # Amplification image LInear or Gaussian
+                if flag_AmpSoft == 1 :
+                    if flag_lin_gauss == 1 or flag_lin_gauss == 2 :
+                        correction = cp.asarray(Corr_GS)
+
+                        Mono_ampsoft_GPU((nb_blocksX,nb_blocksY),(nb_ThreadsX,nb_ThreadsY),(r_gpu, res_b1, np.int_(width), np.int_(height), \
+                            np.float32(val_ampl), correction))
+
+                        res_b1 = r_gpu
+
+                    for x in range(1,256) :
+                        trsf_r[x] = (int)(trsf_r[x] * val_ampl)
+                    trsf_r = np.clip(trsf_r,0,255)
+
+
+                # Amplification soft Stars Amplification
+                if flag_AmpSoft == 1 and flag_lin_gauss == 3 :           
+                    niveau_blur = 7
+                    imagegreyblur=gaussianblur_mono(res_b1,niveau_blur)
+                    correction = cp.asarray(Corr_GS)
+                    r_gpu = res_b1
+                                
+                    Mono_staramp_GPU((nb_blocksX,nb_blocksY),(nb_ThreadsX,nb_ThreadsY),(r_gpu, res_b1, imagegreyblur,np.int_(width), np.int_(height), \
+                            np.float32(val_Mu),np.float32(val_Ro),np.float32(val_ampl), correction))
+
+                    res_b1 = r_gpu
+
+                # Gradient Removal or Vignetting reduction
+                if flag_GR == True :
+                    if grad_vignet == 1 :
+                        seuilb = int(cp.percentile(res_b1, val_SGR))
+                        img_b = res_b1.copy()
+                        img_b[img_b > seuilb] = seuilb
+                        niveau_blur = val_NGB*2 + 3
+                        img_b = gaussianblur_mono(img_b,niveau_blur)
+                        att_b = cp.asarray(img_b) * ((100.0-val_AGR) / 100.0) 
+                        resb = cp.subtract(cp.asarray(res_b1),att_b)
+                        resb = cp.clip(resb,0,255)
+                        res_b1 = cp.asarray(resb,dtype=cp.uint8)
+                    else :
+                        seuilb = int(cp.percentile(res_b1, val_SGR))
+                        fd_b = res_b1.copy()
+                        fd_b[fd_b > seuilb] = seuilb
+                        niveau_blur = val_NGB*2 + 3
+                        fd_b = gaussianblur_mono(fd_b,niveau_blur)
+                        pivot_b = int(cp.percentile(cp.asarray(res_b1), val_AGR))
+                        corr_b = cp.asarray(res_b1).astype(cp.int16) - cp.asarray(fd_b).astype(cp.int16) + pivot_b
+                        corr_b = cp.clip(corr_b,0,255)
+                        res_b1 = cp.asarray(corr_b,dtype=cp.uint8)
+
+                # Contrast Low Light
+                if flag_CLL == 1 :
+                    correction_CLL = cp.asarray(Corr_CLL,dtype=cp.uint8)
+                    r_gpu = res_b1
+                    Contrast_Low_Light_Mono_GPU((nb_blocksX,nb_blocksY),(nb_ThreadsX,nb_ThreadsY),(r_gpu, res_b1, np.int_(width), np.int_(height), correction_CLL))
+                    res_b1 = r_gpu
+
+                # Contrast CLAHE
+                if flag_contrast_CLAHE ==1 :
+                    if flag_OpenCvCuda == True :
+                        clahe = cv2.cuda.createCLAHE(clipLimit=val_contrast_CLAHE, tileGridSize=(val_grid_CLAHE,val_grid_CLAHE))
+                        srcb = cv2.cuda_GpuMat()
+                        srcb.upload(res_b1.get())
+                        resb = clahe.apply(srcb, cv2.cuda_Stream.Null())
+                        resbb = resb.download()
+                        res_b1 = cp.asarray(resbb,dtype=cp.uint8)
+                    else :        
+                        clahe = cv2.createCLAHE(clipLimit=val_contrast_CLAHE, tileGridSize=(val_grid_CLAHE,val_grid_CLAHE))
+                        b = clahe.apply(res_b1.get())
+                        res_b1 = cp.asarray(b,dtype=cp.uint8)
+                        
+                # 3 Frames Noise reduction back
+                if flag_3FNRB == True and flag_image_mode == False :
+                    if compteur_3FNRB < 4 and FNRB_First_Start == True:
+                        compteur_3FNRB = compteur_3FNRB + 1
+                        if compteur_3FNRB == 1 :
+                            imgb1B = res_b1.copy()
+                            img1_3FNROKB = True
+                        if compteur_3FNRB == 2 :
+                            imgb2B = res_b1.copy()
+                            img2_3FNROKB = True
+                        if compteur_3FNRB == 3 :
+                            imgb3B = res_b1.copy()
+                            img3_3FNROKB = True
+                            FNRB_First_Start = True
+                    if img3_3FNROKB == True :
+                        if FNRB_First_Start == False :
+                            imgb3B = res_b1.copy()
+                        
+                        FNRB_First_Start = False
+                        b_gpu = res_b1
+                
+                        FNR_Mono((nb_blocksX,nb_blocksY),(nb_ThreadsX,nb_ThreadsY),(b_gpu, imgb1B, imgb2B, imgb3B, np.int_(width), np.int_(height),np.float32(val_3FNR_Thres)))
+                                              
+                        res_b1 = b_gpu.copy()
+                        imgb1B = imgb2B.copy()
+                        imgb2B = b_gpu.copy()
+
+                # Adaptative Absorber Denoise Filter Back
+                if flag_AANRB == True and flag_image_mode == False :
+                    if compteur_AANRB < 3 :
+                        compteur_AANRB = compteur_AANRB + 1
+                        if compteur_AANRB == 1 :
+                            res_b2B = res_b1.copy()
+                            Im1fsdnOKB = True
+                        if compteur_AANRB == 2 :
+                            Im2fsdnOKB = True
+
+                    r_gpu = res_b1
+     
+                    if Im2fsdnOKB == True :
+
+                        local_dyn = 1
+                        local_GR = 0
+                        local_VGR = 0
+                        
+                        adaptative_absorber_denoise_Mono((nb_blocksX,nb_blocksY),(nb_ThreadsX,nb_ThreadsY),(r_gpu, res_b1, res_b2B,\
+                                             np.int_(width), np.int_(height),np.intc(local_dyn),np.intc(local_GR),np.intc(local_VGR)))
+
+                        res_b2B = res_b1.copy()
+                        tmp = cp.asarray(r_gpu).astype(cp.float64) * 1.05
+                        tmp = cp.clip(tmp,0,255)
+                        res_b1 = cp.asarray(tmp,dtype=cp.uint8)
+
+                # Image Sharpen 1
+                if flag_sharpen_soft1 == 1 :
+                    cupy_context.use()
+                    res_b1_blur = gaussianblur_mono(res_b1,val_sigma_sharpen)
+                    tmp_b1 = cp.asarray(res_b1).astype(cp.int16)
+                    tmp_b1 = tmp_b1 + val_sharpen * (tmp_b1 - res_b1_blur)
+                    tmp_b1 = cp.clip(tmp_b1,0,255)
+                    if flag_sharpen_soft2 == 1 :
+                        res_s1_b1 = cp.asarray(tmp_b1,dtype=cp.uint8)
+                    else :
+                        res_b1 = cp.asarray(tmp_b1,dtype=cp.uint8)
+
+                # Image Sharpen 2
+                if flag_sharpen_soft2 == 1 :
+                    cupy_context.use()
+                    res_b1_blur = gaussianblur_mono(res_b1,val_sigma_sharpen2)
+                    tmp_b1 = cp.asarray(res_b1).astype(cp.int16)
+                    tmp_b1 = tmp_b1 + val_sharpen2 * (tmp_b1 - res_b1_blur)
+                    tmp_b1 = cp.clip(tmp_b1,0,255)
+                    if flag_sharpen_soft1 == 1 :
+                        res_s2_b1 = cp.asarray(tmp_b1,dtype=cp.uint8)
+                    else :
+                        res_b1 = cp.asarray(tmp_b1,dtype=cp.uint8)
+
+                if flag_sharpen_soft1 == 1 and flag_sharpen_soft2 == 1 :
+                    res_b1 = res_s1_b1 // 2 + res_s2_b1 // 2
+ 
+                image_traitee = res_b1.get()
+                
+                if flag_DEMO == 1 :
+                    if flag_demo_side == "Left" :
+                        image_traitee[0:height,0:width//2] = image_base[0:height,0:width//2]            
+                    if flag_demo_side == "Right" :
+                        image_traitee[0:height,width//2:width] = image_base[0:height,width//2:width]            
+    
+    stop_time_test = cv2.getTickCount()
+    time_exec_test= int((stop_time_test-start_time_test)/cv2.getTickFrequency()*1000)
+
+    TTQueue.append(time_exec_test)
+    if len(TTQueue) > 10:
+        TTQueue.pop(0)
+    curTT = (sum(TTQueue)/len(TTQueue))
 
  
 def mount_info() :
@@ -2645,8 +5577,2152 @@ def choose_dir_pic() :
     image_path = fd.askdirectory()
 
 
-# Note: GUI callback functions have been moved to gui_callbacks.py module
-# They are loaded via exec() below in the GUI initialization section
+def mode_Lineaire() :
+    global Corr_GS,flag_lin_gauss
+    flag_lin_gauss = 1
+    for x in range(0,255) :
+        Corr_GS[x] = 1
+
+
+def mode_Gauss() :
+    global Corr_GS,flag_lin_gauss
+    flag_lin_gauss = 2
+    for x in range(0,255) :
+        Corr_GS[x] = np.exp(-0.5*((x*0.0392157-5-val_Mu)/val_Ro)**2)
+
+
+def mode_Stars() :
+    global Corr_GS,flag_lin_gauss
+    flag_lin_gauss = 3
+    for x in range(0,255) :
+        Corr_GS[x] = np.exp(-0.5*((x*0.0392157-5-val_Mu)/val_Ro)**2)
+
+    
+def HDR_Mertens() :
+    global mode_HDR
+
+    mode_HDR = "Mertens"
+
+
+def HDR_Median() :
+    global mode_HDR
+
+    mode_HDR = "Median"
+
+
+def HDR_Mean() :
+    global mode_HDR
+
+    mode_HDR = "Mean"
+
+
+def mode_acq_rapide() :
+    global labelParam1,flag_acq_rapide,camera,exp_min, exp_max, exp_delta,exp_interval,echelle1,val_exposition,timeoutexp,flag_read_speed,\
+           frame_rate,flag_stop_acquisition,exposition
+
+    if flag_camera_ok == True :
+        flag_acq_rapide = "Fast"
+        flag_stop_acquisition=True
+        time.sleep(1)
+        exp_min=100 #µs
+        exp_max=10000 #µs
+        exp_delta=100 #µs
+        exp_interval=2000 #µs
+        val_exposition=exp_min
+        echelle1 = Scale (cadre, from_ = exp_min, to = exp_max , command= valeur_exposition, orient=HORIZONTAL, length = 330, width = 7, resolution = exp_delta, label="",showvalue=1,tickinterval=exp_interval,sliderlength=20)
+        echelle1.set (val_exposition)
+        echelle1.place(anchor="w", x=xS1+delta_s,y=yS1)
+        exposition = val_exposition
+        camera.set_control_value(asi.ASI_EXPOSURE, exposition)
+        timeoutexp = (exposition / 1000) * 2 + 500
+        camera.default_timeout = timeoutexp
+        if flag_read_speed == "Slow" :
+            camera.set_control_value(asi.ASI_HIGH_SPEED_MODE,0)
+        else :
+            camera.set_control_value(asi.ASI_HIGH_SPEED_MODE,1)
+        time.sleep(0.1)
+        flag_stop_acquisition=False
+
+
+def mode_acq_mediumF() :
+    global labelParam1,flag_acq_rapide,camera,exp_min, exp_max, exp_delta,exp_interval,echelle1,timeoutexp,flag_read_speed,\
+           val_exposition,frame_rate,flag_stop_acquisition,exposition
+
+    if flag_camera_ok == True :
+        flag_acq_rapide = "MedF"
+        flag_stop_acquisition=True
+        time.sleep(1)
+        exp_min=1 #ms
+        exp_max=400 #ms
+        exp_delta=1 #ms
+        exp_interval=50
+        val_exposition=exp_min
+        echelle1 = Scale (cadre, from_ = exp_min, to = exp_max , command= valeur_exposition, orient=HORIZONTAL, length = 330, width = 7, resolution = exp_delta, label="",showvalue=1,tickinterval=exp_interval,sliderlength=20)
+        echelle1.set (val_exposition)
+        echelle1.place(anchor="w", x=xS1+delta_s,y=yS1)
+        exposition = val_exposition * 1000
+        if flag_read_speed == "Slow" :
+            camera.set_control_value(asi.ASI_HIGH_SPEED_MODE,0)
+        else :
+            camera.set_control_value(asi.ASI_HIGH_SPEED_MODE,1)
+        camera.set_control_value(asi.ASI_EXPOSURE, exposition)
+        timeoutexp = val_exposition * 2 + 500
+        camera.default_timeout = timeoutexp
+        time.sleep(0.1)
+        flag_stop_acquisition=False
+
+
+def mode_acq_mediumS() :
+    global labelParam1,flag_acq_rapide,camera,exp_min, exp_max, exp_delta,exp_interval,echelle1,timeoutexp,flag_read_speed,\
+           val_exposition,frame_rate,flag_stop_acquisition,exposition
+
+    if flag_camera_ok == True :
+        flag_acq_rapide = "MedS"
+        flag_stop_acquisition=True
+        time.sleep(1)
+        exp_min=1 #ms
+        exp_max=1000 #ms
+        exp_delta=1 #ms
+        exp_interval=200
+        val_exposition=exp_min
+        echelle1 = Scale (cadre, from_ = exp_min, to = exp_max , command= valeur_exposition, orient=HORIZONTAL, length = 330, width = 7, resolution = exp_delta, label="",showvalue=1,tickinterval=exp_interval,sliderlength=20)
+        echelle1.set (val_exposition)
+        echelle1.place(anchor="w", x=xS1+delta_s,y=yS1)
+        exposition = val_exposition * 1000
+        camera.set_control_value(asi.ASI_EXPOSURE, exposition)
+        timeoutexp = val_exposition * 2 + 500
+        camera.default_timeout = timeoutexp
+        if flag_read_speed == "Slow" :
+            camera.set_control_value(asi.ASI_HIGH_SPEED_MODE,0)
+        else :
+            camera.set_control_value(asi.ASI_HIGH_SPEED_MODE,1)
+        time.sleep(0.1)
+        flag_stop_acquisition=False
+
+
+def mode_acq_lente() :
+    global labelParam1,flag_acq_rapide,camera,exp_min, exp_max, exp_delta,exp_interval,echelle1,timeoutexp,flag_read_speed,\
+           val_exposition,frame_rate,flag_stop_acquisition,exposition
+
+    if flag_camera_ok == True :
+        flag_acq_rapide = "Slow"
+        flag_stop_acquisition=True
+        time.sleep(1)
+        exp_min=500 #ms
+        exp_max=20000 #ms
+        exp_delta=100 #ms
+        exp_interval=5000
+        val_exposition=exp_min
+        echelle1 = Scale (cadre, from_ = exp_min, to = exp_max , command= valeur_exposition, orient=HORIZONTAL, length = 330, width = 7, resolution = exp_delta, label="",showvalue=1,tickinterval=exp_interval,sliderlength=20)
+        echelle1.set (val_exposition)
+        echelle1.place(anchor="w", x=xS1+delta_s,y=yS1)
+        exposition = val_exposition * 1000
+        camera.set_control_value(asi.ASI_EXPOSURE, exposition)
+        timeoutexp = val_exposition * 2 + 500
+        camera.default_timeout = timeoutexp
+        if flag_read_speed == "Slow" :
+            camera.set_control_value(asi.ASI_HIGH_SPEED_MODE,0)
+        else :
+            camera.set_control_value(asi.ASI_HIGH_SPEED_MODE,1)
+        time.sleep(0.1)
+        flag_stop_acquisition=False
+
+
+def valeur_exposition (event=None) :
+    global timeoutexp,timeout_val,flag_acq_rapide,camera,val_exposition,echelle1,val_resolution,flag_stop_acquisition,exposition
+
+    if flag_camera_ok == True :
+        if flag_autoexposure_exposition == False :
+            flag_stop_acquisition=True
+            val_exposition = echelle1.get()
+            if flag_acq_rapide == "Fast" :
+                exposition = val_exposition
+            else :
+                exposition = val_exposition*1000
+            camera.set_control_value(asi.ASI_EXPOSURE, exposition)
+            if flag_acq_rapide == "Fast" :
+                timeoutexp = (exposition / 1000) * 2 + 500
+            else :
+                timeoutexp =  val_exposition * 2 + 500
+            camera.default_timeout = timeoutexp
+            time.sleep(0.05)
+            flag_stop_acquisition=False
+
+
+def valeur_gain (event=None) :
+    global camera,val_gain,echelle2,flag_stop_acquisition
+
+    if flag_camera_ok == True :
+        if flag_autoexposure_gain == False :
+            val_gain = echelle2.get()
+            camera.set_control_value(asi.ASI_GAIN, val_gain)
+
+
+def choix_BIN1(event=None) :
+    global val_FS,camera,val_resolution,echelle3,flag_stop_acquisition,mode_BIN,flag_nouvelle_resolution,flag_TIP,choix_TIP,flag_cap_video,flag_image_disponible
+
+    if flag_camera_ok == True :
+        if flag_cap_video == False :
+            flag_image_disponible = False
+            reset_general_FS()
+            reset_FS()
+            flag_TIP = 0
+            choix_TIP.set(0)
+            flag_nouvelle_resolution = True
+            flag_stop_acquisition=True
+            stop_tracking()
+            time.sleep(0.5)
+            echelle3 = Scale (cadre, from_ = 1, to = 9, command= choix_resolution_camera, orient=HORIZONTAL, length = 130, width = 7, resolution = 1, label="",showvalue=1,tickinterval=1,sliderlength=20)
+            val_resolution = 1
+            echelle3.set (val_resolution)
+            echelle3.place(anchor="w", x=xS3+delta_s,y=yS3)
+            time.sleep(0.1)
+            mode_BIN = 1
+            choix_resolution_camera()
+            flag_stop_acquisition=False
+    else :
+        mode_BIN = 1
+            
+
+def choix_BIN2(event=None) :
+    global val_FS,camera,val_resolution,echelle3,flag_stop_acquisition,mode_BIN,flag_nouvelle_resolution,flag_TIP,choix_TIP,flag_cap_video
+
+    if flag_camera_ok == True :
+        if flag_cap_video == False :
+            reset_general_FS()
+            reset_FS()
+            flag_TIP = 0
+            choix_TIP.set(0)
+            flag_nouvelle_resolution = True
+            flag_stop_acquisition=True
+            stop_tracking()
+            time.sleep(0.5)
+            echelle3 = Scale (cadre, from_ = 1, to = 7, command= choix_resolution_camera, orient=HORIZONTAL, length = 130, width = 7, resolution = 1, label="",showvalue=1,tickinterval=1,sliderlength=20)
+            val_resolution = 1
+            echelle3.set (val_resolution)
+            echelle3.place(anchor="w", x=xS3+delta_s,y=yS3)
+            mode_BIN = 2
+            choix_resolution_camera()
+            flag_stop_acquisition=False
+    else :
+        mode_BIN = 2
+            
+    
+def choix_resolution_camera(event=None) :
+    global val_FS,camera,traitement,val_resolution,res_cam_x,res_cam_y, img_cam,rawCapture,echelle3,\
+           flag_image_disponible,flag_stop_acquisition,flag_autorise_acquisition,flag_HDR,\
+           flag_nouvelle_resolution,tnr,inSize,backend,choix_TIP,flag_TIP,flag_cap_video
+    
+    if flag_camera_ok == True :
+        if flag_cap_video == False :
+            flag_autorise_acquisition = False
+            reset_FS()
+            reset_general_FS()
+            time.sleep(0.5)
+            flag_TIP = 0
+            choix_TIP.set(0)
+            flag_stop_acquisition=True
+            time.sleep(0.1)
+            stop_tracking()
+            time.sleep(0.1)
+            val_resolution = echelle3.get()
+            if mode_BIN == 1 :
+                res_cam_x = RES_X_BIN1[val_resolution-1]
+                res_cam_y = RES_Y_BIN1[val_resolution-1]
+            if mode_BIN == 2 :
+                res_cam_x = RES_X_BIN2[val_resolution-1]
+                res_cam_y = RES_Y_BIN2[val_resolution-1]
+            inSize = (int(res_cam_x), int(res_cam_y))
+            camera.stop_video_capture()
+            time.sleep(0.1)
+            camera.set_roi(None,None,res_cam_x, res_cam_y,mode_BIN,format_capture)
+            time.sleep(0.1)
+            flag_nouvelle_resolution = True
+            camera.start_video_capture()
+            print("resolution camera = ",res_cam_x," ",res_cam_y)
+            if flag_HDR == False :
+                flag_autorise_acquisition = True
+            flag_stop_acquisition=False
+
+
+def choix_valeur_denoise(event=None) :
+    global val_denoise
+    
+    val_denoise=echelle4.get()
+    if val_denoise == 0 :
+        val_denoise += 1
+
+
+def choix_grid_CLAHE(event=None) :
+    global val_grid_CLAHE
+    
+    val_grid_CLAHE=echelle109.get()
+
+
+def commande_flipV() :
+    global FlipV,FlipH,val_FS,GPU_BAYER,type_flip,type_debayer
+
+    if flag_camera_ok == True :
+        reset_FS()
+        if choix_flipV.get() == 0 :
+            FlipV = 0
+        else :
+            FlipV = 1
+        if Camera_Bayer == "RAW" :
+            type_debayer = 0
+            if FlipV == 1 and FlipH == 1 :
+                GPU_BAYER = 0
+                camera.set_control_value(asi.ASI_FLIP, 3)
+            if FlipV == 0 and FlipH == 0 :
+                GPU_BAYER = 0
+                camera.set_control_value(asi.ASI_FLIP, 0)
+            if FlipV == 1 and FlipH == 0 :
+                GPU_BAYER = 0
+                camera.set_control_value(asi.ASI_FLIP, 2)
+            if FlipV == 0 and FlipH == 1 :
+                GPU_BAYER = 0
+                camera.set_control_value(asi.ASI_FLIP, 1)            
+        if Camera_Bayer == "RGGB" :
+            if FlipV == 1 and FlipH == 1 :
+                GPU_BAYER = 2
+                type_debayer = cv2.COLOR_BayerBG2RGB
+                camera.set_control_value(asi.ASI_FLIP, 3)
+            if FlipV == 0 and FlipH == 0 :
+                GPU_BAYER = 1
+                type_debayer = cv2.COLOR_BayerRG2RGB
+                camera.set_control_value(asi.ASI_FLIP, 0)
+            if FlipV == 1 and FlipH == 0 :
+                GPU_BAYER = 3
+                type_debayer = cv2.COLOR_BayerGB2RGB
+                camera.set_control_value(asi.ASI_FLIP, 2)
+            if FlipV == 0 and FlipH == 1 :
+                GPU_BAYER = 4
+                type_debayer = cv2.COLOR_BayerGR2RGB
+                camera.set_control_value(asi.ASI_FLIP, 1)
+        if Camera_Bayer == "BGGR" :
+            if FlipV == 1 and FlipH == 1 :
+                GPU_BAYER = 1
+                camera.set_control_value(asi.ASI_FLIP, 3)
+                type_debayer = cv2.COLOR_BayerRG2RGB
+            if FlipV == 0 and FlipH == 0 :
+                GPU_BAYER = 2
+                type_debayer = cv2.COLOR_BayerBG2RGB
+                camera.set_control_value(asi.ASI_FLIP, 0)
+            if FlipV == 1 and FlipH == 0 :
+                GPU_BAYER = 4
+                type_debayer = cv2.COLOR_BayerGR2RGB
+                camera.set_control_value(asi.ASI_FLIP, 2)
+            if FlipV == 0 and FlipH == 1 :
+                GPU_BAYER = 3
+                type_debayer = cv2.COLOR_BayerGB2RGB
+                camera.set_control_value(asi.ASI_FLIP, 1)
+        if Camera_Bayer == "GRBG" :
+            if FlipV == 1 and FlipH == 1 :
+                GPU_BAYER = 3
+                type_debayer = cv2.COLOR_BayerGR2RGB
+                camera.set_control_value(asi.ASI_FLIP, 3)
+            if FlipV == 0 and FlipH == 0 :
+                GPU_BAYER = 4
+                type_debayer = cv2.COLOR_BayerGB2RGB
+                camera.set_control_value(asi.ASI_FLIP, 0)
+            if FlipV == 1 and FlipH == 0 :
+                GPU_BAYER = 2
+                type_debayer = cv2.COLOR_BayerBG2RGB
+                camera.set_control_value(asi.ASI_FLIP, 2)
+            if FlipV == 0 and FlipH == 1 :
+                GPU_BAYER = 1
+                type_debayer = cv2.COLOR_BayerRG2RGB
+                camera.set_control_value(asi.ASI_FLIP, 1)
+        if Camera_Bayer == "GBRG" :
+            if FlipV == 1 and FlipH == 1 :
+                GPU_BAYER = 4
+                type_debayer = cv2.COLOR_BayerGB2RGB
+                camera.set_control_value(asi.ASI_FLIP, 3)
+            if FlipV == 0 and FlipH == 0 :
+                GPU_BAYER = 3
+                type_debayer = cv2.COLOR_BayerGR2RGB
+                camera.set_control_value(asi.ASI_FLIP, 0)
+            if FlipV == 1 and FlipH == 0 :
+                GPU_BAYER = 1
+                type_debayer = cv2.COLOR_BayerRG2RGB
+                camera.set_control_value(asi.ASI_FLIP, 2)
+            if FlipV == 0 and FlipH == 1 :
+                GPU_BAYER = 2
+                type_debayer = cv2.COLOR_BayerBG2RGB
+                camera.set_control_value(asi.ASI_FLIP, 1)
+    else :
+        if choix_flipV.get() == 0 :
+            FlipV = 0
+        else :
+            FlipV = 1
+        if Video_Bayer == "RGGB" :
+            if FlipV == 1 and FlipH == 1 :
+                GPU_BAYER = 2
+                type_flip = "both"
+            if FlipV == 0 and FlipH == 0 :
+                GPU_BAYER = 1
+                type_flip = "none"
+            if FlipV == 1 and FlipH == 0 :
+                GPU_BAYER = 3
+                type_flip = "vertical"
+            if FlipV == 0 and FlipH == 1 :
+                GPU_BAYER = 4
+                type_flip = "horizontal"
+        if Video_Bayer == "BGGR" :
+            if FlipV == 1 and FlipH == 1 :
+                GPU_BAYER = 1
+                type_flip = "both"
+            if FlipV == 0 and FlipH == 0 :
+                GPU_BAYER = 2
+                type_flip = "none"
+            if FlipV == 1 and FlipH == 0 :
+                GPU_BAYER = 4
+                type_flip = "vertical"
+            if FlipV == 0 and FlipH == 1 :
+                GPU_BAYER = 3
+                type_flip = "horizontal"
+        if Video_Bayer == "GRBG" :
+            if FlipV == 1 and FlipH == 1 :
+                GPU_BAYER = 3
+                type_flip = "both"
+            if FlipV == 0 and FlipH == 0 :
+                GPU_BAYER = 4
+                type_flip = "none"
+            if FlipV == 1 and FlipH == 0 :
+                GPU_BAYER = 2
+                type_flip = "vertical"
+            if FlipV == 0 and FlipH == 1 :
+                GPU_BAYER = 1
+                type_flip = "horizontal"
+        if Video_Bayer == "GBRG" :
+            if FlipV == 1 and FlipH == 1 :
+                GPU_BAYER = 4
+                type_flip = "both"
+            if FlipV == 0 and FlipH == 0 :
+                GPU_BAYER = 3
+                type_flip = "none"
+            if FlipV == 1 and FlipH == 0 :
+                GPU_BAYER = 1
+                type_flip = "vertical"
+            if FlipV == 0 and FlipH == 1 :
+                GPU_BAYER = 2
+                type_flip = "horizontal"
+        if Video_Bayer == "RAW" :
+            if FlipV == 1 and FlipH == 1 :
+                GPU_BAYER = 0
+                type_flip = "both"
+            if FlipV == 0 and FlipH == 0 :
+                GPU_BAYER = 0
+                type_flip = "none"
+            if FlipV == 1 and FlipH == 0 :
+                GPU_BAYER = 0
+                type_flip = "vertical"
+            if FlipV == 0 and FlipH == 1 :
+                GPU_BAYER = 0
+                type_flip = "horizontal"
+        
+
+def commande_flipH() :
+    global FlipH,FlipV,val_FS,GPU_BAYER,type_flip,type_debayer
+
+    if flag_camera_ok == True :
+        reset_FS()
+        if choix_flipH.get() == 0 :
+            FlipH = 0
+        else :
+            FlipH = 1
+        if Camera_Bayer == "RAW" :
+            type_debayer = 0
+            if FlipV == 1 and FlipH == 1 :
+                GPU_BAYER = 0
+                camera.set_control_value(asi.ASI_FLIP, 3)
+            if FlipV == 0 and FlipH == 0 :
+                GPU_BAYER = 0
+                camera.set_control_value(asi.ASI_FLIP, 0)
+            if FlipV == 1 and FlipH == 0 :
+                GPU_BAYER = 0
+                camera.set_control_value(asi.ASI_FLIP, 2)
+            if FlipV == 0 and FlipH == 1 :
+                GPU_BAYER = 0
+                camera.set_control_value(asi.ASI_FLIP, 1)            
+        if Camera_Bayer == "RGGB" :
+            if FlipV == 1 and FlipH == 1 :
+                GPU_BAYER = 2
+                type_debayer = cv2.COLOR_BayerBG2RGB
+                camera.set_control_value(asi.ASI_FLIP, 3)
+            if FlipV == 0 and FlipH == 0 :
+                GPU_BAYER = 1
+                type_debayer = cv2.COLOR_BayerRG2RGB
+                camera.set_control_value(asi.ASI_FLIP, 0)
+            if FlipV == 1 and FlipH == 0 :
+                GPU_BAYER = 3
+                type_debayer = cv2.COLOR_BayerGB2RGB
+                camera.set_control_value(asi.ASI_FLIP, 2)
+            if FlipV == 0 and FlipH == 1 :
+                GPU_BAYER = 4
+                type_debayer = cv2.COLOR_BayerGR2RGB
+                camera.set_control_value(asi.ASI_FLIP, 1)
+        if Camera_Bayer == "BGGR" :
+            if FlipV == 1 and FlipH == 1 :
+                GPU_BAYER = 1
+                camera.set_control_value(asi.ASI_FLIP, 3)
+                type_debayer = cv2.COLOR_BayerRG2RGB
+            if FlipV == 0 and FlipH == 0 :
+                GPU_BAYER = 2
+                type_debayer = cv2.COLOR_BayerBG2RGB
+                camera.set_control_value(asi.ASI_FLIP, 0)
+            if FlipV == 1 and FlipH == 0 :
+                GPU_BAYER = 4
+                type_debayer = cv2.COLOR_BayerGR2RGB
+                camera.set_control_value(asi.ASI_FLIP, 2)
+            if FlipV == 0 and FlipH == 1 :
+                GPU_BAYER = 3
+                type_debayer = cv2.COLOR_BayerGB2RGB
+                camera.set_control_value(asi.ASI_FLIP, 1)
+        if Camera_Bayer == "GRBG" :
+            if FlipV == 1 and FlipH == 1 :
+                GPU_BAYER = 3
+                type_debayer = cv2.COLOR_BayerGR2RGB
+                camera.set_control_value(asi.ASI_FLIP, 3)
+            if FlipV == 0 and FlipH == 0 :
+                GPU_BAYER = 4
+                type_debayer = cv2.COLOR_BayerGB2RGB
+                camera.set_control_value(asi.ASI_FLIP, 0)
+            if FlipV == 1 and FlipH == 0 :
+                GPU_BAYER = 2
+                type_debayer = cv2.COLOR_BayerBG2RGB
+                camera.set_control_value(asi.ASI_FLIP, 2)
+            if FlipV == 0 and FlipH == 1 :
+                GPU_BAYER = 1
+                type_debayer = cv2.COLOR_BayerRG2RGB
+                camera.set_control_value(asi.ASI_FLIP, 1)
+        if Camera_Bayer == "GBRG" :
+            if FlipV == 1 and FlipH == 1 :
+                GPU_BAYER = 4
+                type_debayer = cv2.COLOR_BayerGB2RGB
+                camera.set_control_value(asi.ASI_FLIP, 3)
+            if FlipV == 0 and FlipH == 0 :
+                GPU_BAYER = 3
+                type_debayer = cv2.COLOR_BayerGR2RGB
+                camera.set_control_value(asi.ASI_FLIP, 0)
+            if FlipV == 1 and FlipH == 0 :
+                GPU_BAYER = 1
+                type_debayer = cv2.COLOR_BayerRG2RGB
+                camera.set_control_value(asi.ASI_FLIP, 2)
+            if FlipV == 0 and FlipH == 1 :
+                GPU_BAYER = 2
+                type_debayer = cv2.COLOR_BayerBG2RGB
+                camera.set_control_value(asi.ASI_FLIP, 1)
+    else :
+        if choix_flipH.get() == 0 :
+            FlipH = 0
+        else :
+            FlipH = 1
+        if Video_Bayer == "RGGB" :
+            if FlipV == 1 and FlipH == 1 :
+                GPU_BAYER = 2
+                type_flip = "both"
+            if FlipV == 0 and FlipH == 0 :
+                GPU_BAYER = 1
+                type_flip = "none"
+            if FlipV == 1 and FlipH == 0 :
+                GPU_BAYER = 3
+                type_flip = "vertical"
+            if FlipV == 0 and FlipH == 1 :
+                GPU_BAYER = 4
+                type_flip = "horizontal"
+        if Video_Bayer == "BGGR" :
+            if FlipV == 1 and FlipH == 1 :
+                GPU_BAYER = 1
+                type_flip = "both"
+            if FlipV == 0 and FlipH == 0 :
+                GPU_BAYER = 2
+                type_flip = "none"
+            if FlipV == 1 and FlipH == 0 :
+                GPU_BAYER = 4
+                type_flip = "vertical"
+            if FlipV == 0 and FlipH == 1 :
+                GPU_BAYER = 3
+                type_flip = "horizontal"
+        if Video_Bayer == "GRBG" :
+            if FlipV == 1 and FlipH == 1 :
+                GPU_BAYER = 3
+                type_flip = "both"
+            if FlipV == 0 and FlipH == 0 :
+                GPU_BAYER = 4
+                type_flip = "none"
+            if FlipV == 1 and FlipH == 0 :
+                GPU_BAYER = 2
+                type_flip = "vertical"
+            if FlipV == 0 and FlipH == 1 :
+                GPU_BAYER = 1
+                type_flip = "horizontal"
+        if Video_Bayer == "GBRG" :
+            if FlipV == 1 and FlipH == 1 :
+                GPU_BAYER = 4
+                type_flip = "both"
+            if FlipV == 0 and FlipH == 0 :
+                GPU_BAYER = 3
+                type_flip = "none"
+            if FlipV == 1 and FlipH == 0 :
+                GPU_BAYER = 1
+                type_flip = "vertical"
+            if FlipV == 0 and FlipH == 1 :
+                GPU_BAYER = 2
+                type_flip = "horizontal"
+        if Video_Bayer == "RAW" :
+            if FlipV == 1 and FlipH == 1 :
+                GPU_BAYER = 0
+                type_flip = "both"
+            if FlipV == 0 and FlipH == 0 :
+                GPU_BAYER = 0
+                type_flip = "none"
+            if FlipV == 1 and FlipH == 0 :
+                GPU_BAYER = 0
+                type_flip = "vertical"
+            if FlipV == 0 and FlipH == 1 :
+                GPU_BAYER = 0
+                type_flip = "horizontal"
+
+
+def commande_img_Neg() :
+    global ImageNeg,trsf_r,trsf_g,trsf_b
+    
+    if choix_img_Neg.get() == 0 :
+        ImageNeg = 0
+    else :
+        ImageNeg = 1
+
+
+def commande_TIP() :
+    global flag_TIP
+    
+    if choix_TIP.get() == 0 :
+        flag_TIP = False
+    else :
+        flag_TIP = True
+
+
+def commande_SAT() :
+    global flag_SAT
+    
+    if choix_SAT.get() == 0 :
+        flag_SAT = False
+    else :
+        flag_SAT = True
+
+
+def commande_SAT2PASS() :
+    global flag_SAT2PASS
+    
+    if choix_SAT2PASS.get() == 0 :
+        flag_SAT2PASS = False
+    else :
+        flag_SAT2PASS = True
+
+
+def commande_mount() :
+    global flag_mountpos
+    
+    if choix_mount.get() == 0 :
+        flag_mountpos = False
+    else :
+        flag_mountpos = True
+
+
+def commande_cross() :
+    global flag_cross
+    
+    if choix_cross.get() == 0 :
+        flag_cross = False
+    else :
+        flag_cross = True
+
+
+def commande_mode_full_res() :
+    global flag_full_res,delta_zx,delta_zy
+    
+    delta_zx = 0
+    delta_zy = 0
+    if choix_mode_full_res.get() == 0 :
+        flag_full_res = 0
+    else :
+        flag_full_res = 1
+
+
+def choix_valeur_CLAHE(event=None) :
+    global val_contrast_CLAHE,echelle9
+    
+    val_contrast_CLAHE=echelle9.get()
+
+
+def commande_sharpen_soft1() :
+    global flag_sharpen_soft1
+    
+    if choix_sharpen_soft1.get() == 0 :
+        flag_sharpen_soft1 = 0
+    else :
+        flag_sharpen_soft1 = 1
+
+
+def commande_sharpen_soft2() :
+    global flag_sharpen_soft2
+    
+    if choix_sharpen_soft2.get() == 0 :
+        flag_sharpen_soft2 = 0
+    else :
+        flag_sharpen_soft2 = 1
+
+
+def commande_NLM2() :
+    global flag_NLM2
+    
+    if choix_NLM2.get() == 0 :
+        flag_NLM2 = 0
+    else :
+        flag_NLM2 = 1
+
+
+def commande_denoise_Paillou() :
+    global flag_denoise_Paillou
+    
+    if choix_denoise_Paillou.get() == 0 :
+        flag_denoise_Paillou = 0
+    else :
+        flag_denoise_Paillou = 1
+
+
+def commande_denoise_Paillou2() :
+    global flag_denoise_Paillou2
+    
+    if choix_denoise_Paillou2.get() == 0 :
+        flag_denoise_Paillou2 = 0
+    else :
+        flag_denoise_Paillou2 = 1
+
+
+def commande_HST() :
+    global flag_HST
+    
+    if choix_HST.get() == 0 :
+        flag_HST = 0
+    else :
+        flag_HST = 1
+
+
+def commande_TRSF() :
+    global flag_TRSF
+    
+    if choix_TRSF.get() == 0 :
+        flag_TRSF = 0
+    else :
+        flag_TRSF = 1
+
+
+def commande_TRGS() :
+    global flag_TRGS
+    
+    if choix_TRGS.get() == 0 :
+        flag_TRGS = 0
+    else :
+        flag_TRGS = 1
+
+
+def commande_TRCLL() :
+    global flag_TRCLL
+    
+    if choix_TRCLL.get() == 0 :
+        flag_TRCLL = 0
+    else :
+        flag_TRCLL = 1
+
+
+def commande_DEMO() :
+    global flag_DEMO
+    
+    if choix_DEMO.get() == 0 :
+        flag_DEMO = 0
+    else :
+        flag_DEMO = 1
+
+
+def commande_STAB() :
+    global flag_STAB, flag_Template,delta_tx,delta_ty,DSW
+    
+    delta_tx = 0
+    delta_ty = 0
+    DSW = 0
+    if choix_STAB.get() == 0 :
+        flag_STAB = False
+    else :
+        flag_STAB = True
+    flag_Template = False
+
+
+def commande_DETECT_STARS() :
+    global flag_DETECT_STARS,flag_nouvelle_resolution
+    
+    if choix_DETECT_STARS.get() == 0 :
+        flag_DETECT_STARS = 0
+    else :
+        flag_DETECT_STARS = 1
+        flag_nouvelle_resolution = True
+
+      
+def commande_AANR() :
+    global flag_AANR,compteur_AANR,Im1fsdnOK,Im2fsdnOK
+    
+    if choix_AANR.get() == 0 :
+        flag_AANR = False
+    else :
+        flag_AANR = True
+        compteur_AANR = 0
+        Im1fsdnOK = False
+        Im2fsdnOK = False
+
+
+def commande_AANRB() :
+    global flag_AANRB,compteur_AANRB,Im1fsdnOKB,Im2fsdnOKB
+    
+    if choix_AANRB.get() == 0 :
+        flag_AANRB = False
+    else :
+        flag_AANRB = True
+        compteur_AANRB = 0
+        Im1fsdnOKB = False
+        Im2fsdnOKB = False
+
+
+def commande_3FNR() :
+    global flag_3FNR,compteur_3FNR,img1_3FNROK,img2_3FNROK,img3_3FNROK,FNR_First_Start
+    
+    if choix_3FNR.get() == 0 :
+        flag_3FNR = False
+    else :
+        flag_3FNR = True
+        compteur_3FNR = 0
+        img1_3FNROK = False
+        img2_3FNROK = False
+        img3_3FNROK = False
+        FNR_First_Start = True
+
+def commande_3FNR2() :
+    global flag_3FNR2,compteur_3FNR2,img1_3FNR2OK,img2_3FNR2OK,img3_3FNR2OK,FNR2_First_Start
+    
+    if choix_3FNR2.get() == 0 :
+        flag_3FNR2 = False
+    else :
+        flag_3FNR2 = True
+        compteur_3FNR2 = 0
+        img1_3FNR2OK = False
+        img2_3FNR2OK = False
+        img3_3FNR2OK = False
+        FNR2_First_Start = True
+
+
+def commande_3FNRB() :
+    global flag_3FNRB,compteur_3FNRB,img1_3FNROKB,img2_3FNROKB,img3_3FNROKB,FNRB_First_Start
+    
+    if choix_3FNRB.get() == 0 :
+        flag_3FNRB = False
+    else :
+        flag_3FNRB = True
+        compteur_3FNRB = 0
+        img1_3FNROKB = False
+        img2_3FNROKB = False
+        img3_3FNROKB = False
+        FNRB_First_Start = True
+
+def commande_3FNR2B() :
+    global flag_3FNR2B,compteur_3FNR2B,img1_3FNR2OKB,img2_3FNR2OKB,img3_3FNR2OKB,FNR2B_First_Start
+    
+    if choix_3FNR2B.get() == 0 :
+        flag_3FNR2B = False
+    else :
+        flag_3FNR2B = True
+        compteur_3FNR2B = 0
+        img1_3FNR2OKB = False
+        img2_3FNR2OKB = False
+        img3_3FNR2OKB = False
+        FNR2B_First_Start = True
+
+
+def commande_ghost_reducer() :
+    global choix_ghost_reducer, flag_ghost_reducer
+    
+    if choix_ghost_reducer.get() == 0 :
+        flag_ghost_reducer = 0
+    else :
+        flag_ghost_reducer = 1
+
+
+def choix_KNN() :
+    global flag_denoise_KNN
+    
+    if choix_denoise_KNN.get() == 0 :
+        flag_denoise_KNN = 0
+    else :
+        flag_denoise_KNN = 1
+
+
+def commande_reduce_variation() :
+    global flag_reduce_variation,val_RV,compteur_RV,Im1rvOK,Im2rvOK,flag_BFREF,flag_BFREF_image,max_qual
+    
+    if choix_reduce_variation.get() == 0 :
+        flag_reduce_variation = False
+        flag_BFREF = False
+        flag_BFREF_image = False
+    else :
+        flag_reduce_variation = True
+        val_RV = 1
+        compteur_RV = 0
+        Im1rvOK = False
+        Im2rvOK = False
+        max_qual = 0
+        flag_BFREF = True
+        flag_BFREF_image = False
+
+
+def commande_reduce_variation_post_treatment() :
+    global flag_reduce_variation_post_treatment,flag_BFREF_imagePT,max_qual_PT,flag_BFREFPT
+    
+    if choix_reduce_variation_post_treatment.get() == 0 :
+        flag_reduce_variation_post_treatment = False
+        flag_BFREFPT = False
+        flag_BFREF_image = False
+        max_qual_PT = 0
+    else :
+        flag_reduce_variation_post_treatment = True
+        max_qual_PT = 0
+        flag_BFREFPT = True
+        flag_BFREF_image_PT = False
+
+
+def commande_DEF() :
+    global flag_DEF
+    
+    if choix_DEF.get() == 0 :
+        flag_DEF = 0
+    else :
+        flag_DEF = 1
+
+
+def commande_GR() :
+    global flag_GR
+    
+    if choix_GR.get() == 0 :
+        flag_GR = 0
+    else :
+        flag_GR = 1
+
+
+def commande_HDR() :
+    global flag_HDR,flag_autorise_acquisition
+    
+    if choix_HDR.get() == 0 :
+        flag_HDR = False
+        flag_autorise_acquisition = True
+    else :
+        flag_HDR = True
+        flag_autorise_acquisition = False
+    time.sleep(1)
+
+
+def commande_HOTPIX() :
+    global flag_hot_pixels
+    
+    if choix_HOTPIX.get() == 0 :
+        flag_hot_pixels = False
+    else :
+        flag_hot_pixels = True
+
+
+def choix_val_ghost_reducer(event=None) :
+    global val_ghost_reducer,echelle130
+    
+    val_ghost_reducer = echelle130.get()
+
+
+def choix_val_3FNR_Thres(event=None) :
+    global val_3FNR_Thres,echelle330
+    
+    val_3FNR_Thres = echelle330.get()
+
+
+def commande_histogram_equalize2() :
+    global flag_histogram_equalize2
+    
+    if choix_histogram_equalize2.get() == 0 :
+        flag_histogram_equalize2 = 0
+    else :
+        flag_histogram_equalize2 = 1
+
+
+def choix_histo_min(event=None) :
+    global camera,val_histo_min,echelle5
+    
+    val_histo_min=echelle5.get()
+
+ 
+def choix_phi(event=None) :
+    global val_phi,echelle12
+    
+    val_phi=echelle12.get()
+
+
+def choix_theta(event=None) :
+    global val_theta,echelle13
+    
+    val_theta=echelle13.get()
+
+ 
+def choix_histo_max(event=None) :
+    global camera,val_histo_max,echelle6
+    
+    val_histo_max=echelle6.get()
+
+
+def commande_histogram_stretch() :
+    global flag_histogram_stretch
+    
+    if choix_histogram_stretch.get() == 0 :
+        flag_histogram_stretch = 0
+    else :
+        flag_histogram_stretch = 1
+
+
+def commande_histogram_phitheta() :
+    global flag_histogram_phitheta
+    
+    if choix_histogram_phitheta.get() == 0 :
+        flag_histogram_phitheta = 0
+    else :
+        flag_histogram_phitheta = 1
+
+
+def commande_contrast_CLAHE() :
+    global flag_contrast_CLAHE
+    
+    if choix_contrast_CLAHE.get() == 0 :
+        flag_contrast_CLAHE= 0
+    else :
+        flag_contrast_CLAHE = 1
+
+
+def commande_CLL() :
+    global flag_CLL
+    
+    if choix_CLL.get() == 0 :
+        flag_CLL = 0
+    else :
+        flag_CLL = 1
+
+
+def commande_filtrage_ON() :
+    global flag_filtrage_ON
+    
+    reset_general_FS()
+    if choix_filtrage_ON.get() == 0 :
+        flag_filtrage_ON= 0
+    else :
+        flag_filtrage_ON = 1
+
+
+def commande_HQ_capt() :
+    global flag_HQ
+    
+    if choix_HQ_capt.get() == 0 :
+        flag_HQ = 0
+    else :
+        flag_HQ = 1
+
+
+def commande_AmpSoft() :
+    global flag_AmpSoft
+    
+    if choix_AmpSoft.get() == 0 :
+        flag_AmpSoft = 0
+    else :
+        flag_AmpSoft = 1
+
+
+def commande_hard_bin() :
+    global camera,flag_16b,flag_HB
+
+    if flag_camera_ok == True :
+        if flag_16b == False :
+            if choix_hard_bin.get() == 0 :
+                camera.set_control_value(asi.ASI_HARDWARE_BIN,0)
+                flag_HB = False
+            else :
+                camera.set_control_value(asi.ASI_HARDWARE_BIN,1)
+                flag_HB = True
+            time.sleep(0.1)
+        else :
+            if choix_hard_bin.get() == 0 :
+                flag_HB = False
+            else :
+                flag_HB = True
+    else :
+        if choix_hard_bin.get() == 0 :
+            flag_HB = False
+        else :
+            flag_HB = True
+            
+
+def choix_mean_stacking(event=None):
+    global flag_stacking
+    
+    flag_stacking = "Mean"
+    reset_FS()
+
+
+def choix_sum_stacking(event=None):
+    global flag_stacking
+    
+    flag_stacking = "Sum"
+    reset_FS()
+
+
+def choix_dyn_high(event=None):
+    global flag_dyn_AANR
+    
+    flag_dyn_AANR = 1 
+
+
+def choix_dyn_low(event=None):
+    global flag_dyn_AANR
+    
+    flag_dyn_AANR = 0    
+
+
+def choix_SAT_Vid() :
+    global flag_SAT_Image
+    
+    flag_SAT_Image = False
+
+
+def choix_SAT_Img() :
+    global flag_SAT_Image
+    
+    flag_SAT_Image = True
+
+
+def commande_autoexposure() :
+    global flag_autoexposure_exposition,flag_autoexposure_gain,camera,controls,echelle1,val_exposition
+
+    if flag_camera_ok == True :
+        if choix_autoexposure.get() == 0 :
+            flag_autoexposure_exposition = False
+            camera.set_control_value(asi.ASI_EXPOSURE,controls['Exposure']['DefaultValue'],auto=False)
+            val_exposition = echelle1.get()
+            exposition = val_exposition * 1000
+            camera.set_control_value(asi.ASI_EXPOSURE, exposition)
+            timeout = (camera.get_control_value(asi.ASI_EXPOSURE)[0] / 1000) * 2 + 500
+            camera.default_timeout = timeout
+            camera.set_control_value(asi.ASI_HIGH_SPEED_MODE,1)
+        else :
+            flag_autoexposure_exposition = True
+            mode_acq_mediumS()
+            camera.set_control_value(asi.ASI_EXPOSURE,controls['Exposure']['DefaultValue'],auto=True)
+            camera.set_control_value(controls['AutoExpMaxExpMS']['ControlType'], 500)
+
+
+def commande_autogain() :
+    global flag_autoexposure_exposition,flag_autoexposure_gain,camera,controls,val_gain
+
+    if flag_camera_ok == True :
+        if choix_autogain.get() == 0 :
+            flag_autoexposure_gain = False
+            camera.set_control_value(asi.ASI_GAIN,controls['Gain']['DefaultValue'],auto=False)
+            camera.set_control_value(asi.ASI_GAIN, val_gain)
+        else :
+            flag_autoexposure_gain = True
+            camera.set_control_value(asi.ASI_GAIN,controls['Gain']['DefaultValue'],auto=True)
+            camera.set_control_value(controls['AutoExpMaxGain']['ControlType'], controls['AutoExpMaxGain']['MaxValue'])
+
+
+def commande_noir_blanc() :
+    global val_FS,flag_noir_blanc,flag_NB_estime,format_capture,flag_stop_acquisition,flag_filtrage_ON
+
+    reset_FS()
+    reset_general_FS()
+    flag_stop_acquisition=True
+    flag_restore_filtrage = False
+    if choix_noir_blanc.get() == 0 and flag_camera_ok == False :
+        flag_noir_blanc = 0
+    if choix_noir_blanc.get() == 1 and flag_camera_ok == False :
+        flag_noir_blanc = 1
+    if flag_camera_ok == True :
+        if flag_filtrage_ON == True :
+            flag_filtrage_ON == False
+            flag_restore_filtrage = True
+            time.sleep(0.3)
+        if choix_noir_blanc.get() == 0 and flag_colour_camera == True :
+            flag_noir_blanc = 0
+        else :
+            flag_noir_blanc = 1
+        if choix_noir_blanc_estime.get() == 0 :
+            flag_NB_estime = 0
+        else :
+            flag_NB_estime = 1
+        flag_stop_acquisition = False
+        time.sleep(0.2)
+        if flag_restore_filtrage == True :
+            flag_filtrage_ON = True
+    else :
+        if choix_noir_blanc_estime.get() == 0 :
+            flag_NB_estime = 0
+        else :
+            flag_NB_estime = 1
+
+
+def commande_16bLL() :
+    global flag_16b,format_capture,flag_stop_acquisition,flag_filtrage_ON,camera,flag_autorise_acquisition,flag_HDR
+
+    flag_autorise_acquisition = False
+    reset_FS()
+    reset_general_FS()
+    time.sleep(0.5)
+    flag_stop_acquisition=True
+    flag_restore_filtrage = False
+    if flag_camera_ok == True :
+        if flag_filtrage_ON == True :
+            flag_filtrage_ON == False
+            flag_restore_filtrage = True
+            time.sleep(0.3)
+        if choix_16bLL.get() == 0 :
+            flag_16b = False
+            format_capture = asi.ASI_IMG_RAW8
+            camera.stop_video_capture()
+            time.sleep(0.5)
+            camera.set_image_type(format_capture)
+            time.sleep(0.2)
+            camera.start_video_capture()
+        else :
+            flag_16b = True
+            format_capture = asi.ASI_IMG_RAW16
+            camera.stop_video_capture()
+            time.sleep(0.5)
+            camera.set_image_type(format_capture)
+            time.sleep(0.2)
+            camera.start_video_capture()
+        flag_stop_acquisition = False
+        time.sleep(0.2)
+        if flag_restore_filtrage == True :
+            flag_filtrage_ON = True
+        if flag_HDR == False :
+            flag_autorise_acquisition = True
+    else :
+        if choix_16bLL.get() == 0 :
+            flag_16b = False
+        else :
+            flag_16b = True
+
+
+def commande_IMQE() :
+    global flag_IQE,quality,max_quality,quality_pos
+    
+    if choix_IMQE.get() == 0 :
+        flag_IQE = 0
+    else :
+        flag_IQE = 1
+    for x in range(1,256) :
+        quality[x] = 0
+    max_quality = 1
+    quality_pos = 1
+       
+
+def commande_reverse_RB() :
+    global flag_reverse_RB
+    
+    if choix_reverse_RB.get() == 0 :
+        flag_reverse_RB = 0
+    else :
+        flag_reverse_RB = 1
+
+
+def choix_nb_captures(event=None) :
+    global val_nb_captures
+    
+    val_nb_captures=echelle8.get()
+
+
+def choix_deltat(event=None) :
+    global val_deltat
+    
+    val_deltat = echelle65.get()
+
+
+def choix_nb_video(event=None) :
+    global val_nb_capt_video
+    
+    val_nb_capt_video=echelle11.get()
+
+
+def mode_gradient() :
+    global grad_vignet
+    
+    grad_vignet = 1
+
+
+def mode_vignetting() :
+    global grad_vignet
+    
+    grad_vignet = 2
+
+
+def choix_w_red(event=None) :
+    global val_red, echelle14
+
+    if flag_camera_ok == True :
+        val_red=echelle14.get()
+        camera.set_control_value(asi.ASI_WB_R, val_red)
+
+
+def choix_w_blue(event=None) :
+    global val_blue, echelle15
+
+    if flag_camera_ok == True :
+        val_blue=echelle15.get()
+        camera.set_control_value(asi.ASI_WB_B, val_blue)
+
+
+def choix_heq2(event=None) :
+    global val_heq2, echelle16
+    
+    val_heq2=echelle16.get()
+
+
+def choix_val_KNN(event=None) :
+    global val_denoise_KNN, echelle30
+    
+    val_denoise_KNN=echelle30.get()
+
+
+def choix_amplif(event=None) :
+    global val_ampl, echelle80
+    
+    val_ampl = echelle80.get()
+
+
+def choix_SGR(event=None) :
+    global val_SGR, echelle60
+    
+    val_SGR=echelle60.get()
+
+
+def choix_val_reduce_variation(event=None) :
+    global val_reduce_variation, echelle270
+    
+    val_reduce_variation=echelle270.get()
+
+
+def choix_AGR(event=None) :
+    global val_AGR, echelle61
+    
+    val_AGR=echelle61.get()
+
+
+def choix_USB(event=None) :
+    global val_USB, echelle50,camera
+
+    if flag_camera_ok == True :
+        val_USB=echelle50.get()
+        camera.set_control_value(asi.ASI_BANDWIDTHOVERLOAD, val_USB)
+
+
+def choix_ASI_GAMMA(event=None) :
+    global ASIGAMMA, echelle204,camera
+
+    if flag_camera_ok == True :
+        ASIGAMMA=echelle204.get()
+        camera.set_control_value(asi.ASI_GAMMA, ASIGAMMA)
+
+
+def choix_TH_16B(event=None) :
+    global TH_16B, echelle804,camera,threshold_16bits
+
+    TH_16B=echelle804.get()
+    threshold_16bits = 2 ** TH_16B - 1
+
+
+def choix_sensor_ratio_4_3(event=None) :
+    global sensor_factor,cam_displ_x,cam_displ_y,RES_X_BIN1,RES_Y_BIN1,RES_X_BIN2,RES_Y_BIN2,\
+           RES_X_BIN1_4_3,RES_Y_BIN1_4_3,RES_X_BIN2_4_3,RES_Y_BIN2_4_3
+
+    if flag_camera_ok == True :
+        sensor_factor = "4_3"
+        cam_displ_x = int(1350*fact_s)
+        cam_displ_y = int(1012*fact_s)
+        RES_X_BIN1 = RES_X_BIN1_4_3
+        RES_Y_BIN1 = RES_Y_BIN1_4_3
+        RES_X_BIN2 = RES_X_BIN2_4_3
+        RES_Y_BIN2 = RES_Y_BIN2_4_3
+        choix_resolution_camera()
+        
+
+def choix_sensor_ratio_16_9(event=None) :
+    global sensor_factor,cam_displ_x,cam_displ_y,RES_X_BIN1,RES_Y_BIN1,RES_X_BIN2,RES_Y_BIN2,\
+           RES_X_BIN1_16_9,RES_Y_BIN1_16_9,RES_X_BIN2_16_9,RES_Y_BIN2_16_9
+
+    if flag_camera_ok == True :
+        sensor_factor = "16_9"
+        cam_displ_x = int(1350*fact_s)
+        cam_displ_y = int(760*fact_s)
+        RES_X_BIN1 = RES_X_BIN1_16_9
+        RES_Y_BIN1 = RES_Y_BIN1_16_9
+        RES_X_BIN2 = RES_X_BIN2_16_9
+        RES_Y_BIN2 = RES_Y_BIN2_16_9
+        choix_resolution_camera()
+
+
+def choix_sensor_ratio_1_1(event=None) :
+    global sensor_factor,cam_displ_x,cam_displ_y,RES_X_BIN1,RES_Y_BIN1,RES_X_BIN2,RES_Y_BIN2,\
+           RES_X_BIN1_1_1,RES_Y_BIN1_1_1,RES_X_BIN2_1_1,RES_Y_BIN2_1_1
+
+    if flag_camera_ok == True :
+        v = "1_1"
+        cam_displ_x = int(1012*fact_s)
+        cam_displ_y = int(1012*fact_s)
+        RES_X_BIN1 = RES_X_BIN1_1_1
+        RES_Y_BIN1 = RES_Y_BIN1_1_1
+        RES_X_BIN2 = RES_X_BIN2_1_1
+        RES_Y_BIN2 = RES_Y_BIN2_1_1
+        choix_resolution_camera()
+
+
+def choix_demo_left(event=None) :
+    global flag_demo_side
+    
+    flag_demo_side = "Left"
+
+
+def choix_demo_right(event=None) :
+    global flag_demo_side
+    
+    flag_demo_side = "Right"
+
+
+def choix_read_speed_fast(event=None) :
+    global cam_read_speed,camera,flag_read_speed
+    
+    if flag_camera_ok == True :
+        camera.set_control_value(asi.ASI_HIGH_SPEED_MODE,1)
+        flag_read_speed = "Fast"
+
+
+def choix_read_speed_slow(event=None) :
+    global cam_read_speed,camera,flag_read_speed
+    
+    if flag_camera_ok == True :
+        camera.set_control_value(asi.ASI_HIGH_SPEED_MODE,0)
+        flag_read_speed = "Slow"
+
+
+def command_BFReference(event=None) :
+    global flag_BFReference
+    
+    flag_BFReference = "BestFrame"
+
+
+def command_PFReference(event=None) :
+    global flag_BFReference
+    
+    flag_BFReference = "PreviousFrame"
+
+
+def choix_position_EFW0(event=None) :
+    global fw_position
+    
+    if flag_camera_ok == True :
+        if flag_filter_wheel == True :
+            fw_position = 0
+            filter_wheel.set_position(fw_position)
+
+
+def choix_position_EFW1(event=None) :
+    global fw_position
+    
+    if flag_camera_ok == True :
+        if flag_filter_wheel == True :
+            fw_position = 1
+            filter_wheel.set_position(fw_position)
+
+
+def choix_position_EFW2(event=None) :
+    global fw_position
+    
+    if flag_camera_ok == True :
+        if flag_filter_wheel == True :
+            fw_position = 2
+            filter_wheel.set_position(fw_position)
+
+
+def choix_position_EFW3(event=None) :
+    global fw_position
+    
+    if flag_camera_ok == True :
+        if flag_filter_wheel == True :
+            fw_position = 3
+            filter_wheel.set_position(fw_position)
+
+
+def choix_position_EFW4(event=None) :
+    global fw_position
+    
+    if flag_camera_ok == True :
+        if flag_filter_wheel == True :
+            fw_position = 4
+            filter_wheel.set_position(fw_position)
+
+
+def choix_bayer_RAW(event=None) :
+    global Camera_Bayer,GPU_BAYER,Video_Bayer,choix_flipV,choix_flipH,type_flip,type_debayer
+    
+    type_debayer = 0
+    Camera_Bayer = "RAW"
+    Video_Bayer = "RAW"
+    GPU_BAYER = 0
+    choix_flipV.set(0)
+    choix_flipH.set(0)
+    commande_flipV()
+
+
+def choix_bayer_RGGB(event=None) :
+    global Camera_Bayer,GPU_BAYER,Video_Bayer,choix_flipV,choix_flipH,type_flip,type_debayer
+    
+    type_debayer = cv2.COLOR_BayerBG2RGB
+    Camera_Bayer = "RGGB"
+    Video_Bayer = "RGGB"
+    GPU_BAYER = 1
+    choix_flipV.set(0)
+    choix_flipH.set(0)
+    commande_flipV()
+
+
+def choix_bayer_BGGR(event=None) :
+    global Camera_Bayer,GPU_BAYER,Video_Bayer,choix_flipV,choix_flipH,type_flip,type_debayer
+    
+    type_debayer = cv2.COLOR_BayerRG2RGB
+    Camera_Bayer = "BGGR"
+    Video_Bayer = "BGGR"
+    GPU_BAYER = 2
+    choix_flipV.set(0)
+    choix_flipH.set(0)
+    commande_flipV()
+
+
+def choix_bayer_GBRG(event=None) :
+    global Camera_Bayer,GPU_BAYER,Video_Bayer,choix_flipV,choix_flipH,type_flip,type_debayer
+    
+    type_debayer = cv2.COLOR_BayerGB2RGB
+    Camera_Bayer = "GBRG"
+    Video_Bayer = "GBRG"
+    GPU_BAYER = 3
+    choix_flipV.set(0)
+    choix_flipH.set(0)
+    commande_flipV()
+
+
+def choix_bayer_GRBG(event=None) :
+    global Camera_Bayer,GPU_BAYER,Video_Bayer,choix_flipV,choix_flipH,type_flip,type_debayer
+    
+    type_debayer = cv2.COLOR_BayerGR2RGB
+    Camera_Bayer = "GRBG"
+    Video_Bayer = "GRBG"
+    GPU_BAYER = 4
+    choix_flipV.set(0)
+    choix_flipH.set(0)
+    commande_flipV()
+
+
+def choix_FS(event=None) :
+    global val_FS,compteur_FS,Im1OK,Im2OK,Im3OK,Im4OK,Im5OK,stack_div
+    
+    val_FS=echelle20.get()
+    compteur_FS = 0
+    Im1OK = False
+    Im2OK = False
+    Im3OK = False
+    Im4OK = False
+    Im5OK = False
+    if flag_stacking == "Mean":
+        stack_div = val_FS
+    else :
+        stack_div = 1
+
+
+def reset_FS(event=None) :
+    global val_FS,compteur_FS,Im1OK,Im2OK,Im3OK,Im4OK,Im5OK
+    
+    val_FS = 1
+    compteur_FS = 0
+    Im1OK = False
+    Im2OK = False
+    Im3OK = False
+    Im4OK = False
+    Im5OK = False
+    echelle20.set(val_FS)
+
+
+def reset_general_FS():
+    global val_FS,compteur_FS,Im1OK,Im2OK,Im3OK,Im4OK,Im5OK,stack_div,echelle20,choix_AANR,choix_AANRB,flag_first_sat_pass,nb_sat,\
+           flag_AANR,compteur_AANR,Im1fsdnOK,Im2fsdnOK,flag_AANRB,compteur_AANRB,Im1fsdnOKB,Im2fsdnOKB,delta_RX,delta_RY,delta_BX,delta_BY,\
+           flag_STAB,flag_Template,choix_STAB,compteur_RV,Im1rvOK,Im2rvOK,flag_reduce_variation,choix_reduce_variation,\
+           flag_3FNR,compteur_3FNR,img1_3FNROK,img2_3FNROK,img3_3FNROK,FNR_First_Start,flag_3FNRB,compteur_3FNRB,\
+           img1_3FNROKB,img2_3FNROKB,img3_3FNROKB,FNR_First_StartB,flag_BFR,flag_STAB,flag_IQE,choix_IMQE,choix_BFR,labelInfo10,\
+           flag_3FNR2,compteur_3FNR2,img1_3FNR2OK,img2_3FNR2OK,img3_3FNR2OK,FNR2_First_Start,flag_3FNR2B,compteur_3FNR2B,\
+           img1_3FNR2OKB,img2_3FNR2OKB,img3_3FNR2OKB,FNR2_First_StartB,choix_3FNR2B,\
+           flag_CONST,flag_TRKSAT,flag_REMSAT,flag_DETECT_STARS,choix_CONST,choix_TRKSAT,choix_REMSAT,choix_DETECT_STARS,choix_AI_Craters,flag_AI_Craters,\
+           flag_reduce_variation_post_treatment,flag_BFREF_imagePT,max_qual_PT,flag_BFREFPT,choix_HDR,flag_HDR,choix_HOTPIX,flag_hot_pixels,\
+           flag_AI_Craters,track_crater_history,flag_AI_Satellites,choix_AI_Satellites,track_satelitte_history,model_craters_track,model_satellites_track,\
+           flag_image_disponible,flag_img_sat_buf1,flag_img_sat_buf2,flag_img_sat_buf3,flag_img_sat_buf4,flag_img_sat_buf5,sat_frame_count,\
+           flag_img_sat_buf1_AI,flag_img_sat_buf2_AI,flag_img_sat_buf3_AI,flag_img_sat_buf4_AI,flag_img_sat_buf5_AI,sat_frame_count_AI,flag_first_sat_pass_AI,\
+           choix_sub_img_ref,flag_capture_image_reference,flag_image_ref_sub,flag_image_reference_OK
+
+    choix_sub_img_ref.set(0)
+    flag_capture_image_reference = False
+    flag_image_reference_OK = False
+    flag_image_ref_sub = False
+    flag_image_disponible = False
+    val_FS = 1
+    compteur_FS = 0
+    Im1OK = False
+    Im2OK = False
+    Im3OK = False
+    Im4OK = False
+    Im5OK = False
+    echelle20.set(val_FS)
+    choix_AANR.set(0)
+    choix_AANRB.set(0)
+    flag_AANR = False
+    compteur_AANR = 0
+    Im1fsdnOK = False
+    Im2fsdnOK = False
+    flag_AANRB = False
+    compteur_AANRB = 0
+    Im1fsdnOKB = False
+    Im2fsdnOKB = False
+    flag_STAB = False
+    flag_Template = False
+    choix_STAB.set(0)
+    compteur_RV = 0
+    Im1rvOK = False
+    Im2rvOK = False
+    flag_reduce_variation = False
+    choix_reduce_variation.set(0)
+    choix_3FNR.set(0)
+    flag_3FNR = False
+    compteur_3FNR = 0
+    img1_3FNROK = False
+    img2_3FNROK = False
+    img3_3FNROK = False
+    FNR_First_Start = True
+    choix_3FNRB.set(0)
+    flag_3FNRB = False
+    compteur_3FNRB = 0
+    img1_3FNROKB = False
+    img2_3FNROKB = False
+    img3_3FNROKB = False
+    FNRB_First_Start = True
+    choix_3FNR2.set(0)
+    flag_3FNR2 = False
+    compteur_3FNR2 = 0
+    img1_3FNR2OK = False
+    img2_3FNR2OK = False
+    img3_3FNR2OK = False
+    FNR2_First_Start = True
+    choix_3FNR2B.set(0)
+    flag_3FNR2B = False
+    compteur_3FNR2B = 0
+    img1_3FNR2OKB = False
+    img2_3FNR2OKB = False
+    img3_3FNR2OKB = False
+    FNR2B_First_Start = True
+    flag_BFR = False
+    choix_BFR.set(0)
+    choix_IMQE.set(0)
+    flag_IQE = False
+    delta_RX = 0
+    delta_RY = 0
+    delta_BX = 0
+    delta_BY =0
+    flag_first_sat_pass = True
+    flag_first_sat_pass_AI = True
+    flag_img_sat_buf1 = False
+    flag_img_sat_buf2 = False
+    flag_img_sat_buf3 = False
+    flag_img_sat_buf4 = False
+    flag_img_sat_buf5 = False
+    flag_img_sat_buf1_AI = False
+    flag_img_sat_buf2_AI = False
+    flag_img_sat_buf3_AI = False
+    flag_img_sat_buf4_AI = False
+    flag_img_sat_buf5_AI = False
+    sat_frame_count = 0
+    sat_frame_count_AI = 0
+    nb_sat = -1
+    texte = " "
+    labelInfo10.config(text = texte)
+    flag_CONST = 0
+    choix_CONST.set(0)
+    flag_TRKSAT = 0
+    choix_TRKSAT.set(0)
+    flag_REMSAT = 0
+    choix_REMSAT.set(0)
+    flag_DETECT_STARS = 0
+    choix_DETECT_STARS.set(0)
+    time.sleep(0.5)
+    flag_AI_Craters = False
+    choix_AI_Craters.set(0)
+    flag_reduce_variation_post_treatment = False
+    flag_BFREFPT = False
+    flag_BFREF_image = False
+    max_qual_PT = 0
+    choix_HOTPIX.set(0)
+    flag_hot_pixels = False
+    choix_HDR.set(0)
+    flag_HDR = False
+    choix_AI_Craters.set(0)
+    try :
+        model_craters_track.predictor.trackers[0].reset()
+        model_satellites_track.predictor.trackers[0].reset()
+    except :
+        pass
+    track_crater_history = defaultdict(lambda: [])
+    track_satelitte_history = defaultdict(lambda: [])
+    flag_AI_Craters = False
+    choix_AI_Satellites.set(0)
+    flag_AI_Satellites = False
+    time.sleep(0.2)
+
+
+def choix_val_sharpen(event=None) :
+    global val_sharpen, echelle152
+    
+    val_sharpen = echelle152.get()
+
+
+def choix_val_sharpen2(event=None) :
+    global val_sharpen2, echelle154
+    
+    val_sharpen2 = echelle154.get()
+
+
+def choix_val_sigma_sharpen(event=None) :
+    global val_sigma_sharpen, echelle153
+    
+    val_sigma_sharpen = echelle153.get()
+
+
+def choix_val_sigma_sharpen2(event=None) :
+    global val_sigma_sharpen2, echelle155
+    
+    val_sigma_sharpen2 = echelle155.get()
+
+
+def choix_val_SAT(event=None) :
+    global val_SAT, echelle70
+    
+    val_SAT = echelle70.get()
+
+
+def commande_FW() :
+    time.sleep(0.01)
+
+def choix_w_reds(event=None) :
+    global val_reds, echelle100
+    
+    val_reds = echelle100.get()
+
+
+def choix_w_greens(event=None) :
+    global val_greens, echelle101
+    
+    val_greens = echelle101.get()
+
+
+def choix_w_blues(event=None) :
+    global val_blues, echelle102
+    
+    val_blues = echelle102.get()
+
+
+def choix_Mu(event=None) :
+    global val_Mu, echelle182,Corr_GS,flag_lin_gauss
+    
+    val_Mu = echelle82.get()
+    if flag_lin_gauss == 2 or flag_lin_gauss == 3 :
+        for x in range(0,255) :
+            Corr_GS[x] = np.exp(-0.5*((x*0.0392157-5-val_Mu)/val_Ro)**2)
+
+
+def choix_Ro(event=None) :
+    global val_Ro, echelle184,Corr_GS,flag_lin_gauss
+    
+    val_Ro = echelle84.get()
+    if flag_lin_gauss == 2 or flag_lin_gauss == 3 :
+        for x in range(0,255) :
+            Corr_GS[x] = np.exp(-0.5*((x*0.0392157-5-val_Mu)/val_Ro)**2)
+
+
+def choix_Var_CLL(event=None) :
+    global val_MuCLL, val_RoCLL, val_AmpCLL, echelle200, echelle201, echelle202,Corr_CLL
+    
+    val_MuCLL = echelle200.get()
+    val_RoCLL = echelle201.get()
+    val_AmpCLL = echelle202.get()
+    for x in range(0,256) :
+        Corr = np.exp(-0.5*((x*0.0392157-val_MuCLL)/val_RoCLL)**2)
+        Corr_CLL[x] = int(x * (1/(1 + val_AmpCLL*Corr)))
+        if x> 0 :
+            if Corr_CLL[x] <= Corr_CLL[x-1] :
+                Corr_CLL[x] = Corr_CLL[x-1]
+
+
+def commande_TRKSAT() :
+    global flag_TRKSAT,flag_nouvelle_resolution,flag_first_sat_pass,flag_img_sat_buf1,flag_img_sat_buf2,flag_img_sat_buf3,flag_img_sat_buf4,flag_img_sat_buf5,sat_frame_count
+
+    if choix_TRKSAT.get() == 0 :
+        flag_TRKSAT = 0
+    else :
+        flag_TRKSAT = 1
+        flag_nouvelle_resolution = True
+    flag_first_sat_pass = True
+    sat_frame_count = 0
+    flag_img_sat_buf1 = False
+    flag_img_sat_buf2 = False
+    flag_img_sat_buf3 = False
+    flag_img_sat_buf4 = False
+    flag_img_sat_buf5 = False
+
+
+def commande_CONST() :
+    global flag_CONST,flag_nouvelle_resolution
+    
+    if choix_CONST.get() == 0 :
+        flag_CONST = 0
+    else :
+        flag_CONST = 1
+        flag_nouvelle_resolution = True
+
+
+def commande_REMSAT() :
+    global flag_REMSAT,flag_nouvelle_resolution
+    
+    if choix_REMSAT.get() == 0 :
+        flag_REMSAT = 0
+    else :
+        flag_REMSAT = 1
+        flag_nouvelle_resolution = True
+
+
+def commande_TRIGGER() :
+    global flag_TRIGGER
+    
+    if choix_TRIGGER.get() == 0 :
+        flag_TRIGGER = 0
+    else :
+        flag_TRIGGER = 1
+
+
+def commande_BFR() :
+    global flag_BFR,min_qual,max_qual,val_BFR,echelle300,SFN,frame_number,labelInfo10
+    
+    if choix_BFR.get() == 0 :
+        flag_BFR = False
+        max_qual = 0
+        min_qual = 10000
+        val_BFR = 50
+        echelle300.set(val_BFR)
+        SFN = 0
+        frame_number = 0
+        labelInfo10.config(text = "                                             ")
+    else :
+        flag_BFR = True
+        max_qual = 0
+        min_qual = 10000
+        val_BFR = 50
+        echelle300.set(val_BFR)
+        SFN = 0
+        frame_number = 0
+        labelInfo10.config(text = "                                             ")
+
+
+def choix_val_BFR(event=None) :
+    global val_BFR, echelle300
+    
+    val_BFR = echelle300.get()
+
+
+def choix_position_frame(event=None) :
+    global  echelle210,video,flag_new_frame_position,flag_SER_file,video_frame_position
+    
+    if flag_cap_video == False and flag_image_mode == False :
+        flag_new_frame_position = True
+        video_frame_position = echelle210.get()
+        if flag_SER_file == False :
+            video.set(cv2.CAP_PROP_POS_FRAMES,video_frame_position)
+        else :
+            video.setCurrentPosition(video_frame_position)
+
+
+def raz_framecount() :
+    global frame_number
+    
+    frame_number = 0
+
+
+def raz_tracking() :
+    global flag_nouvelle_resolution
+    
+    flag_nouvelle_resolution = True
+
+
+def stop_tracking() :
+    global flag_TRKSAT,flag_DETECT_STARS,flag_nouvelle_resolution,choix_DETECT_STARS,choix_TRKSAT
+    
+    flag_TRKSAT = 0
+    flag_DETECT_STARS = 0    
+    flag_nouvelle_resolution = True
+    choix_DETECT_STARS.set(0)
+    choix_TRKSAT.set(0)
+
+
+def calc_jour_julien (jours, mois, annee):
+    global jour_julien
+    
+    if mois < 3 :
+        mois = mois + 12
+        annee = annee - 1
+    coef_a = annee // 100
+    coef_b = 2 - coef_a + (coef_a // 4)
+    coef_c = int(365.25 * annee)
+    coef_d = int(30.6001 * (mois + 1))
+    jour_julien = coef_b + coef_c + coef_d + jours + 1720994.5
+
+
+def calc_heure_siderale(jrs_jul,heure_obs, min_obs, zone):
+    global HS
+    
+    TT = (jrs_jul - 2451545) / 36525
+    H1 = 24110.54841 + (8640184.812866 * TT) + (0.093104 * (TT * TT)) - (0.0000062 * (TT * TT * TT))
+    HSH = H1 / 3600
+    HS = ((HSH / 24) - int(HSH / 24)) * 24
+
+
+# Calcul azimut et hauteur cible - coordonnÃ©es altaz - a partir donnÃ©es cible, lieu observation et date
+def calcul_AZ_HT_cible(jours_obs, mois_obs, annee_obs, heure_obs, min_obs, second_obs, lat_obs, long_obs, cible_ASD, cible_DEC):
+    global azimut_cible, hauteur_cible, HS
+    
+    calc_jour_julien(jours_obs, mois_obs, annee_obs)
+    calc_heure_siderale(jour_julien,heure_obs, min_obs, zone)
+
+    angleH =  (2 * Pi * HS / (23 + 56 / 60 + 4 / 3600)) * 180 / Pi
+    angleT = ((heure_obs - 12 + min_obs / 60 - zone + second_obs / 3600) * 2 * Pi / (23 + 56 / 60 + 4 / 3600)) * 180 / Pi
+
+    H = angleH + angleT - 15*(cible_ASD) + (long_obs)
+    
+    sinushauteur = math.sin(cible_DEC * conv_rad) * math.sin(lat_obs * conv_rad) - math.cos(cible_DEC * conv_rad) * math.cos(lat_obs * conv_rad) * math.cos(H * conv_rad)
+    hauteur_cible = math.asin(sinushauteur)
+
+    cosazimut = (math.sin(cible_DEC * conv_rad) - math.sin(lat_obs * conv_rad) * math.sin(hauteur_cible)) / (math.cos(lat_obs*conv_rad) * math.cos(hauteur_cible))
+    sinazimut = (math.cos(cible_DEC * conv_rad) * math.sin(H* conv_rad)) / math.cos(hauteur_cible)
+
+    if sinazimut > 0 :
+        azimut_cible = math.acos(cosazimut)
+    else :
+        azimut_cible = - math.acos(cosazimut)
+
+
+# Calcul ascension droite et declinaison d'un astre de l'azimut et la hauteur observees d'un astre, du lieu d'observation et de la date
+def calcul_ASD_DEC_cible(jours_obs, mois_obs, annee_obs, heure_obs, min_obs, second_obs, lat_obs, long_obs, azimut_cible, hauteur_cible):
+    global ASD_calculee, DEC_calculee,HS
+    
+    calc_jour_julien(jours_obs, mois_obs, annee_obs)
+    calc_heure_siderale(jour_julien,heure_obs, min_obs, zone)
+
+    angleH =  (2 * Pi * HS / (23 + 56 / 60 + 4 / 3600)) * 180 / Pi
+    angleT = ((heure_obs - 12 + min_obs / 60 - zone + second_obs / 3600) * 2 * Pi / (23 + 56 / 60 + 4 / 3600)) * 180 / Pi
+
+    DEC_calculee = math.asin(math.cos(azimut_cible) * math.cos(lat_obs * conv_rad) * math.cos(hauteur_cible) + math.sin(lat_obs * conv_rad) * math.sin(hauteur_cible))
+
+    if azimut_cible > 0 :
+        H = math.acos((math.sin(DEC_calculee) * math.sin(lat_obs * conv_rad) - math.sin(hauteur_cible))/(math.cos(DEC_calculee) * math.cos(lat_obs * conv_rad)))
+    else :
+        H = - math.asin(math.sin(azimut_cible)*math.cos(hauteur_cible)/math.cos(DEC_calculee)) + Pi
+
+    ASD_calculee = (angleH + angleT + long_obs - H * conv_deg)/15
+
+    DEC_calculee = DEC_calculee
+
+
+def Mount_calibration() :
+    global azimut_moteur,hauteur_moteur,lat_obs,long_obs,Polaris_AD, Polaris_DEC,jour_julien,zone,azimut_monture,hauteur_monture,delta_azimut,delta_hauteur,labelInfo1
+
+    date = datetime.now()
+    annee_obs = date.year
+    mois_obs = date.month
+    jours_obs = date.day
+    heure_obs = date.hour
+    min_obs = date.minute
+    second_obs = date.second
+
+    cible_polaire_ASD = Polaris_AD
+    cible_polaire_DEC = Polaris_DEC
+
+    calc_jour_julien(jours_obs, mois_obs, annee_obs)
+    calc_heure_siderale(jour_julien,heure_obs, min_obs, zone)
+
+    angleH =  (2 * Pi * HS / (23 + 56 / 60 + 4 / 3600)) * 180 / Pi
+    angleT = ((heure_obs - 12 + min_obs / 60 - zone + second_obs / 3600) * 2 * Pi / (23 + 56 / 60 + 4 / 3600)) * 180 / Pi
+
+    H = angleH + angleT - 15*(cible_polaire_ASD) + (long_obs)
+    
+    sinushauteur = math.sin(cible_polaire_DEC * conv_rad) * math.sin(lat_obs * conv_rad) - math.cos(cible_polaire_DEC * conv_rad) * math.cos(lat_obs * conv_rad) * math.cos(H * conv_rad)
+    hauteurcible = math.asin(sinushauteur)
+
+    cosazimut = (math.sin(cible_polaire_DEC * conv_rad) - math.sin(lat_obs * conv_rad) * math.sin(hauteurcible)) / (math.cos(lat_obs*conv_rad) * math.cos(hauteurcible))
+    sinazimut = (math.cos(cible_polaire_DEC * conv_rad) * math.sin(H* conv_rad)) / math.cos(hauteurcible)
+
+    if sinazimut > 0 :
+        azimut_polaris = math.acos(cosazimut) * conv_deg # compris entre -180 et +180
+    else :
+        azimut_polaris = - math.acos(cosazimut) * conv_deg # compris entre -180 et +180
+
+    if azimut_polaris < 0 :
+        azimut_polaris = 360 + azimut_polaris
+        
+    hauteur_polaris = hauteurcible * conv_deg # compris entre 0 et 90
+           
+    texte = "Azimut : %6.2f" %azimut_polaris
+    texte = texte + "  "            
+    print(texte)
+    texte = "Hauteur : %6.2f" %hauteur_polaris
+    texte = texte + "  "
+    print(texte)
+    print(azimut," ",hauteur)
+    delta_azimut = azimut_polaris - azimut_monture
+    delta_hauteur = hauteur_polaris - hauteur_monture
+    print(delta_azimut,delta_hauteur)
+    labelInfo1.config(text = " Mount aligned on Polaris     ")
+
+
+def commande_false_colours() :
+    global flag_false_colours
+    
+    if choix_false_colours.get() == 0 :
+        flag_false_colours = False
+    else :
+        flag_false_colours = True
+
+
+def commande_AI_Craters() :
+    global flag_AI_Craters,model_craters,track_crater_history
+    
+    if choix_AI_Craters.get() == 0 :
+        if flag_crater_model_loaded == True :
+            try :
+                model_craters_track.predictor.trackers[0].reset()
+            except :
+                pass
+        track_crater_history = defaultdict(lambda: [])
+        flag_AI_Craters = False
+    else :
+        if flag_crater_model_loaded == True :
+            try :
+                model_craters_track.predictor.trackers[0].reset()
+            except :
+                pass
+        track_crater_history = defaultdict(lambda: [])
+        flag_AI_Craters = True
+
+
+def commande_AI_Satellites() :
+    global flag_AI_Satellites,model_Satellites,track_satellite_history,sat_frame_count_AI,flag_img_sat_buf1_AI,flag_img_sat_buf2_AI,flag_img_sat_buf3_AI,\
+           flag_img_sat_buf4_AI,flag_img_sat_buf5_AI,flag_first_sat_pass_AI
+           
+    if choix_AI_Satellites.get() == 0 :
+        if flag_satellites_model_loaded == True :
+            try :
+                model_satellites_track.predictor.trackers[0].reset()
+            except :
+                pass
+        track_satellite_history = defaultdict(lambda: [])
+        flag_AI_Satellites = False
+    else :
+        if flag_satellites_model_loaded == True :
+            try :
+                model_satellites_track.predictor.trackers[0].reset()
+            except :
+                pass
+        track_satellite_history = defaultdict(lambda: [])
+        flag_AI_Satellites = True
+    sat_frame_count_AI = 0
+    flag_img_sat_buf1_AI = False
+    flag_img_sat_buf2_AI = False
+    flag_img_sat_buf3_AI = False
+    flag_img_sat_buf4_AI = False
+    flag_img_sat_buf5_AI = False
+    flag_first_sat_pass_AI = True
+    
+
+def commande_AI_Trace() :
+    global flag_AI_Trace,track_crater_history,track_satellite_history,model_craters_track,model_satellites_track
+    
+    if choix_AI_Trace.get() == 0 :
+        flag_AI_Trace = False
+        try :
+            model_satellites_track.predictor.trackers[0].reset()
+            model_craters_track.predictor.trackers[0].reset()
+        except :
+            pass
+        track_satellite_history = defaultdict(lambda: [])
+        track_crater_history = defaultdict(lambda: [])        
+    else :
+        flag_AI_Trace = True
+        try :
+            model_satellites_track.predictor.trackers[0].reset()
+            model_craters_track.predictor.trackers[0].reset()
+        except :
+            pass
+        track_satellite_history = defaultdict(lambda: [])
+        track_crater_history = defaultdict(lambda: [])
+
+
+def Capture_Ref_Img() :
+    global flag_capture_image_reference
+    
+    flag_capture_image_reference = True
+
+
+def commande_sub_img_ref() :
+    global flag_image_ref_sub
+    
+    if choix_sub_img_ref.get() == 0 :
+        flag_image_ref_sub = False
+    else :
+        flag_image_ref_sub = True
+
+
+def commande_Blur_img_ref() :
+    global flag_blur_image_ref_sub
+    
+    if choix_Blur_img_ref.get() == 0 :
+        flag_blur_image_ref_sub = False
+    else :
+        flag_blur_image_ref_sub = True
+
+
+def commande_GBL() :
+    global flag_GaussBlur
+    
+    if choix_GBL.get() == 0 :
+        flag_GaussBlur = False
+    else :
+        flag_GaussBlur = True
+
 
 # initialisation des boites scrolbar, buttonradio et checkbutton
 
@@ -2656,38 +7732,637 @@ yS3=80
 xS1=1490
 yS1=270
 
-# Filter Pipeline - now using filter_pipeline module with proper OOP design
-# Functions application_filtrage_color() and application_filtrage_mono() are imported directly
-# and initialized via filter_pipeline.init_filter_pipeline(globals(), app_state) after CUDA kernels
 
-# Refresh Loop - using class-based pattern (registers refresh() into globals namespace)
-# This replaces the old exec() pattern with proper Python class methods
-refresh_loop_obj = RefreshLoop(globals(), app_state)
-refresh_loop_obj.register()
+###########################
+#     VARIOUS WIDGETS     #
+###########################
 
-# GUI Callbacks - using class-based pattern (BEFORE widgets since widgets reference callbacks in command= params)
-# Initialize GUICallbacks class which registers all callbacks into globals namespace
-# This replaces the old exec() pattern with proper Python class methods
-gui_callbacks_obj = GUICallbacks(globals(), app_state)
-gui_callbacks_obj.register_all()
+# Bandwidth USB
+labelParam50 = Label (cadre, text = "USB")
+labelParam50.place(anchor="w", x=15,y=255)
+echelle50 = Scale (cadre, from_ = 40, to = 100, command= choix_USB, orient=VERTICAL, length = 80, width = 7, resolution = 1, label="",showvalue=1,tickinterval=None,sliderlength=10)
+echelle50.set(val_USB)
+echelle50.place(anchor="c", x=20,y=310)
 
-# Various widgets - loaded from gui_widgets module (direct function call, no exec)
-gui_widgets.create_various_widgets(globals())
+# Flip Vertical
+CBFV = Checkbutton(cadre,text="FlipV", variable=choix_flipV,command=commande_flipV,onvalue = 1, offvalue = 0)
+CBFV.place(anchor="w",x=5, y=20)
 
-# Top row widgets - loaded from gui_widgets module (direct function call, no exec)
-gui_widgets.create_top_row_widgets(globals())
+# Flip Horizontal
+CBFH = Checkbutton(cadre,text="FlipH", variable=choix_flipH,command=commande_flipH,onvalue = 1, offvalue = 0)
+CBFH.place(anchor="w",x=5, y=45)
 
-# Exposition settings widgets - loaded from gui_widgets module (direct function call, no exec)
-gui_widgets.create_exposition_widgets(globals())
+# Hot Pixel removal
+CBHOTPIX = Checkbutton(cadre,text="Hot Pix", variable=choix_HOTPIX,command=commande_HOTPIX,onvalue = 1, offvalue = 0)
+CBHOTPIX.place(anchor="w",x=5, y=180)
 
-# Sharpen/Denoise widgets - loaded from gui_widgets module (direct function call, no exec)
-gui_widgets.create_sharpen_denoise_widgets(globals())
+# Filter Wheel position
+labelFW = Label (cadre, text = "FW :")
+labelFW.place (anchor="w",x=5, y=400)
+RBEFW1 = Radiobutton(cadre,text="#1", variable=fw_position_,command=choix_position_EFW0,value=0)
+RBEFW1.place(anchor="w",x=5, y=420)
+RBEFW2 = Radiobutton(cadre,text="#2", variable=fw_position_,command=choix_position_EFW1,value=1)
+RBEFW2.place(anchor="w",x=5, y=440)
+RBEFW3 = Radiobutton(cadre,text="#3", variable=fw_position_,command=choix_position_EFW2,value=2)
+RBEFW3.place(anchor="w",x=5, y=460)
+RBEFW4 = Radiobutton(cadre,text="#4", variable=fw_position_,command=choix_position_EFW3,value=3)
+RBEFW4.place(anchor="w",x=5, y=480)
+RBEFW5 = Radiobutton(cadre,text="#5", variable=fw_position_,command=choix_position_EFW4,value=4)
+RBEFW5.place(anchor="w",x=5, y=500)
 
-# Histogram widgets - loaded from gui_widgets module (direct function call, no exec)
-gui_widgets.create_histogram_widgets(globals())
+# Bayer Matrix
+labelBM = Label (cadre, text = "Debayer :")
+labelBM.place (anchor="w",x=5, y=525)
+RBEBM1 = Radiobutton(cadre,text="RAW", variable=bayer_sensor,command=choix_bayer_RAW,value=1)
+RBEBM1.place(anchor="w",x=5, y=545)
+RBEBM2 = Radiobutton(cadre,text="RGGB", variable=bayer_sensor,command=choix_bayer_RGGB,value=2)
+RBEBM2.place(anchor="w",x=5, y=565)
+RBEBM3 = Radiobutton(cadre,text="BGGR", variable=bayer_sensor,command=choix_bayer_BGGR,value=3)
+RBEBM3.place(anchor="w",x=5, y=585)
+RBEBM4 = Radiobutton(cadre,text="GRBG", variable=bayer_sensor,command=choix_bayer_GRBG,value=4)
+RBEBM4.place(anchor="w",x=5, y=605)
+RBEBM5 = Radiobutton(cadre,text="GBRG", variable=bayer_sensor,command=choix_bayer_GBRG,value=5)
+RBEBM5.place(anchor="w",x=5, y=625)
 
-# Capture widgets and buttons - loaded from gui_widgets module (direct function call, no exec)
-gui_widgets.create_capture_widgets(globals())
+labelTRK = Label (cadre, text = "Tracking :")
+labelTRK.place (anchor="w",x=0, y=650)
+
+# Find Stars
+CBDTCSTARS = Checkbutton(cadre,text="Stars", variable=choix_DETECT_STARS,command=commande_DETECT_STARS,onvalue = 1, offvalue = 0)
+CBDTCSTARS.place(anchor="w",x=0, y=670)
+
+# Track Satellites
+CBTRKSAT = Checkbutton(cadre,text="Sat Detect", variable=choix_TRKSAT,command=commande_TRKSAT,onvalue = 1, offvalue = 0)
+CBTRKSAT.place(anchor="w",x=0, y=690)
+
+# Remove Satellites
+CBREMSAT = Checkbutton(cadre,text="Sat Remov", variable=choix_REMSAT,command=commande_REMSAT,onvalue = 1, offvalue = 0)
+CBREMSAT.place(anchor="w",x=0, y=710)
+
+# Track Meteor
+CBTRIGGER = Checkbutton(cadre,text="Trigger", variable=choix_TRIGGER,command=commande_TRIGGER,onvalue = 1, offvalue = 0)
+CBTRIGGER.place(anchor="w",x=0, y=730)
+
+# Image reconstruction
+CBCONST = Checkbutton(cadre,text="Reconst", variable=choix_CONST,command=commande_CONST,onvalue = 1, offvalue = 0)
+CBCONST.place(anchor="w",x=0, y=750)
+
+# Artifical intelligence object detection
+labelAI = Label (cadre, text = " A I detect:")
+labelAI.place (anchor="w",x=0, y=780)
+
+CBAICTR = Checkbutton(cadre,text="Craters", variable=choix_AI_Craters,command=commande_AI_Craters,onvalue = 1, offvalue = 0)
+CBAICTR.place(anchor="w",x=0, y=800)
+CBAISAT = Checkbutton(cadre,text="Satellites", variable=choix_AI_Satellites,command=commande_AI_Satellites,onvalue = 1, offvalue = 0)
+CBAISAT.place(anchor="w",x=0, y=820)
+CBAITRC = Checkbutton(cadre,text="Tracking", variable=choix_AI_Trace,command=commande_AI_Trace,onvalue = 1, offvalue = 0)
+CBAITRC.place(anchor="w",x=0, y=840)
+
+# Capture reference image
+Button7 = Button (cadre,text = "Ref Img Cap", command = Capture_Ref_Img,padx=10,pady=0)
+Button7.place(anchor="w", x=0,y=870)
+CBSUBIMREF = Checkbutton(cadre,text="Sub Img Ref", variable=choix_sub_img_ref,command=commande_sub_img_ref,onvalue = 1, offvalue = 0)
+CBSUBIMREF.place(anchor="w",x=0, y=895)
+CBBLURIMREF = Checkbutton(cadre,text="Blur Res", variable=choix_Blur_img_ref,command=commande_Blur_img_ref,onvalue = 1, offvalue = 0)
+CBBLURIMREF.place(anchor="w",x=0, y=920)
+
+# Set 16 bits threshold
+labelParam804 = Label (cadre, text = "16bit Th")
+labelParam804.place(anchor="w", x=1840+delta_s,y=20)
+echelle804 = Scale (cadre, from_ = 8, to = 16, command= choix_TH_16B, orient=VERTICAL, length = 80, width = 7, resolution = 0.5, label="",showvalue=1,tickinterval=None,sliderlength=10)
+echelle804.set(TH_16B)
+echelle804.place(anchor="c", x=1860+delta_s,y=70)
+
+# Set Gamma value ZWO camera
+labelParam204 = Label (cadre, text = "Gamma Cam")
+labelParam204.place(anchor="w", x=1840+delta_s,y=125)
+echelle204 = Scale (cadre, from_ = 0, to = 100, command= choix_ASI_GAMMA, orient=VERTICAL, length = 100, width = 7, resolution = 1, label="",showvalue=1,tickinterval=None,sliderlength=10)
+echelle204.set(ASIGAMMA)
+echelle204.place(anchor="c", x=1860+delta_s,y=190)
+
+# Set camera read speed
+labelCamSpeed = Label (cadre, text = "Cam Speed")
+labelCamSpeed.place (anchor="w",x=1840+delta_s, y=260)
+RBCS1 = Radiobutton(cadre,text="Fast", variable=cam_read_speed,command=choix_read_speed_fast,value=0)
+RBCS1.place(anchor="w",x=1840+delta_s, y=280)
+RBCS2 = Radiobutton(cadre,text="Slow", variable=cam_read_speed,command=choix_read_speed_slow,value=1)
+RBCS2.place(anchor="w",x=1840+delta_s, y=300)
+
+# Text in picture
+CBTIP = Checkbutton(cadre,text="TIP", variable=choix_TIP,command=commande_TIP,onvalue = 1, offvalue = 0)
+CBTIP.place(anchor="w",x=1840+delta_s, y=95+240)
+
+# Cross
+CBCR = Checkbutton(cadre,text="Cr", variable=choix_cross,command=commande_cross,onvalue = 1, offvalue = 0)
+CBCR.place(anchor="w",x=1840+delta_s, y=135+240)
+
+# Histogram
+CBHST = Checkbutton(cadre,text="Hst", variable=choix_HST,command=commande_HST,onvalue = 1, offvalue = 0)
+CBHST.place(anchor="w",x=1840+delta_s, y=165+240)
+
+# Histogram
+CBTRSF = Checkbutton(cadre,text="Trsf", variable=choix_TRSF,command=commande_TRSF,onvalue = 1, offvalue = 0)
+CBTRSF.place(anchor="w",x=1840+delta_s, y=190+240)
+
+# Affichage fonction de transfert amplification soft
+CBTRGS = Checkbutton(cadre,text="TrGS", variable=choix_TRGS,command=commande_TRGS,onvalue = 1, offvalue = 0)
+CBTRGS.place(anchor="w",x=1840+delta_s, y=210+240)
+
+# Affichage fonction de transfert Contrast Low Light
+
+CBGBL = Checkbutton(cadre,text="GBL", variable=choix_GBL,command=commande_GBL,onvalue = 1, offvalue = 0)
+CBGBL.place(anchor="w",x=1840+delta_s, y=495)
+
+# Saturation
+CBSAT = Checkbutton(cadre,text="SAT", variable=choix_SAT,command=commande_SAT,onvalue = 1, offvalue = 0)
+CBSAT.place(anchor="w",x=1840+delta_s,y=640)
+RBSATVI1 = Radiobutton(cadre,text="Vid", variable=Sat_Vid_Img,command=choix_SAT_Vid,value=0)
+RBSATVI1.place(anchor="w",x=1840+delta_s, y=660)
+RBSATVI2 = Radiobutton(cadre,text="Img", variable=Sat_Vid_Img,command=choix_SAT_Img,value=1)
+RBSATVI2.place(anchor="w",x=1840+delta_s, y=680)
+CBSAT2PASS = Checkbutton(cadre,text="2pass", variable=choix_SAT2PASS,command=commande_SAT2PASS,onvalue = 1, offvalue = 0)
+CBSAT2PASS.place(anchor="w",x=1840+delta_s,y=700)
+echelle70 = Scale (cadre, from_ = 0, to = 20, command= choix_val_SAT, orient=VERTICAL, length = 150, width = 7, resolution = 0.01, label="",showvalue=1,tickinterval=None,sliderlength=10)
+echelle70.set(val_SAT)
+echelle70.place(anchor="c", x=1855+delta_s,y=800)
+
+# DEMO
+CBDEMO = Checkbutton(cadre,text="Demo", variable=choix_DEMO,command=commande_DEMO,onvalue = 1, offvalue = 0)
+CBDEMO.place(anchor="w",x=1840+delta_s, y=960)
+RBDEML = Radiobutton(cadre,text="Left", variable=demo_side,command=choix_demo_left,value=0)
+RBDEML.place(anchor="w",x=1840+delta_s, y=985)
+RBDEMR = Radiobutton(cadre,text="Right", variable=demo_side,command=choix_demo_right,value=1)
+RBDEMR.place(anchor="w",x=1840+delta_s, y=1010)
+
+# Choix filtrage ON
+CBF = Checkbutton(cadre,text="Filters ON", variable=choix_filtrage_ON,command=commande_filtrage_ON,onvalue = 1, offvalue = 0)
+CBF.place(anchor="w",x=1440+delta_s, y=50)
+
+# Fulres displaying
+CBMFR = Checkbutton(cadre,text="Full Res", variable=choix_mode_full_res,command=commande_mode_full_res,onvalue = 1, offvalue = 0)
+CBMFR.place(anchor="w",x=1510+delta_s, y=50)
+
+# Choix forcage N&B
+CBFNB = Checkbutton(cadre,text="Set B&W", variable=choix_noir_blanc,command=commande_noir_blanc,onvalue = 1, offvalue = 0)
+CBFNB.place(anchor="w",x=1570+delta_s, y=50)
+
+# Choix forcage N&B Estimate
+CBFNBE = Checkbutton(cadre,text="B&W Est", variable=choix_noir_blanc_estime,command=commande_noir_blanc,onvalue = 1, offvalue = 0)
+CBFNBE.place(anchor="w",x=1630+delta_s, y=50)
+
+# Choix forcage N&B Estimate
+CBRRB = Checkbutton(cadre,text="R-B Rev", variable=choix_reverse_RB,command=commande_reverse_RB,onvalue = 1, offvalue = 0)
+CBRRB.place(anchor="w",x=1695+delta_s, y=50)
+
+# Choix False colours
+CBFC = Checkbutton(cadre,text="False Col", variable=choix_false_colours,command=commande_false_colours,onvalue = 1, offvalue = 0)
+CBFC.place(anchor="w",x=1750+delta_s, y=50)
+
+# Stacking Mode
+RBSM1 = Radiobutton(cadre,text="MEAN", variable=choix_stacking,command=choix_mean_stacking,value=1)
+RBSM1.place(anchor="w",x=1610+delta_s, y=20)
+RBSM2 = Radiobutton(cadre,text="SUM", variable=choix_stacking,command=choix_sum_stacking,value=2)
+RBSM2.place(anchor="w",x=1660+delta_s, y=20)
+# Number frames stacked
+echelle20 = Scale (cadre, from_ = 1, to = 5, command= choix_FS, orient=HORIZONTAL, length = 80, width = 7, resolution = 1, label="",showvalue=1,tickinterval=1,sliderlength=20)
+echelle20.set(val_FS)
+echelle20.place(anchor="w", x=1720+delta_s,y=20)
+
+
+###########################
+#   EXPOSITION SETTINGS   #
+###########################
+
+# Speed mode acquisition
+labelMode_Acq = Label (cadre, text = "Speed")
+labelMode_Acq.place (anchor="w",x=1430+delta_s, y=240)
+RBMA1 = Radiobutton(cadre,text="Fast", variable=mode_acq,command=mode_acq_rapide,value=1)
+RBMA1.place(anchor="w",x=1460+delta_s, y=240)
+RBMA2 = Radiobutton(cadre,text="MedF", variable=mode_acq,command=mode_acq_mediumF,value=2)
+RBMA2.place(anchor="w",x=1505+delta_s, y=240)
+RBMA3 = Radiobutton(cadre,text="MedS", variable=mode_acq,command=mode_acq_mediumS,value=3)
+RBMA3.place(anchor="w",x=1550+delta_s, y=240)
+RBMA4 = Radiobutton(cadre,text="Slow", variable=mode_acq,command=mode_acq_lente,value=4)
+RBMA4.place(anchor="w",x=1595+delta_s, y=240)
+
+# Choix HDR
+CBHDR = Checkbutton(cadre,text="HDR", variable=choix_HDR,command=commande_HDR,onvalue = 1, offvalue = 0)
+CBHDR.place(anchor="w",x=1650+delta_s, y=240)
+RBHDR1 = Radiobutton(cadre,text="Mertens", variable=mode_HDR_select,command=HDR_Mertens,value=1)
+RBHDR1.place(anchor="w",x=1690+delta_s, y=240)
+RBHDR2 = Radiobutton(cadre,text="Median", variable=mode_HDR_select,command=HDR_Median,value=2)
+RBHDR2.place(anchor="w",x=1745+delta_s, y=240)
+RBHDR3 = Radiobutton(cadre,text="Mean", variable=mode_HDR_select,command=HDR_Mean,value=3)
+RBHDR3.place(anchor="w",x=1795+delta_s, y=240)
+
+
+# Automatic exposition time
+CBOE = Checkbutton(cadre,text="AE", variable=choix_autoexposure,command=commande_autoexposure,onvalue = 1, offvalue = 0)
+CBOE.place(anchor="w",x=1440+delta_s, y=yS1)
+
+# Exposition setting
+echelle1 = Scale (cadre, from_ = exp_min, to = exp_max , command= valeur_exposition, orient=HORIZONTAL, length = 330, width = 7, resolution = exp_delta, label="",showvalue=1,tickinterval=exp_interval,sliderlength=20)
+echelle1.set(val_exposition)
+echelle1.place(anchor="w", x=xS1+delta_s,y=yS1)
+
+# Choix du mode BINNING - 1, 2 ou 3
+labelBIN = Label (cadre, text = "BIN : ")
+labelBIN.place (anchor="w",x=1440+delta_s, y=80)
+RBB1 = Radiobutton(cadre,text="BIN1", variable=choix_bin,command=choix_BIN1,value=1)
+RBB1.place(anchor="w",x=1470+delta_s, y=80)
+RBB2 = Radiobutton(cadre,text="BIN2", variable=choix_bin,command=choix_BIN2,value=2)
+RBB2.place(anchor="w",x=1510+delta_s, y=80)
+
+# Choix Hardware Bin
+CBHB = Checkbutton(cadre,text="HB", variable=choix_hard_bin,command=commande_hard_bin,onvalue = 1, offvalue = 0)
+CBHB.place(anchor="w",x=1550+delta_s, y=80)
+
+
+# Choix 16 bits Low Light
+CBHDR = Checkbutton(cadre,text="16bLL", variable=choix_16bLL,command=commande_16bLL,onvalue = 1, offvalue = 0)
+CBHDR.place(anchor="w",x=1600+delta_s, y=80)
+
+# Resolution setting
+labelParam3 = Label (cadre, text = "RES : ")
+labelParam3.place(anchor="w", x=1660+delta_s,y=80)
+echelle3 = Scale (cadre, from_ = 1, to = 9, command= choix_resolution_camera, orient=HORIZONTAL, length = 130, width = 7, resolution = 1, label="",showvalue=1,tickinterval=1,sliderlength=20)
+echelle3.set (val_resolution)
+echelle3.place(anchor="w", x=xS3+delta_s,y=yS3)
+
+# choix hold picture
+#CBOP = Checkbutton(cadre,text="Hold Picture", variable=choix_hold_picture,command=commande_hold_picture,onvalue = 1, offvalue = 0)
+#CBOP.place(anchor="w",x=1730+delta_s, y=240)
+    
+# Automatic gain
+CBOG = Checkbutton(cadre,text="Auto Gain", variable=choix_autogain,command=commande_autogain,onvalue = 1, offvalue = 0)
+CBOG.place(anchor="w",x=1440+delta_s, y=120)
+
+echelle2 = Scale (cadre, from_ = 0, to = val_maxgain , command= valeur_gain, orient=HORIZONTAL, length = 320, width = 7, resolution = 1, label="",showvalue=1,tickinterval=50,sliderlength=20)
+echelle2.set(val_gain)
+echelle2.place(anchor="w", x=1500+delta_s,y=120)
+
+# Signal amplification soft
+CBAS = Checkbutton(cadre,text="Amplif Soft", variable=choix_AmpSoft,command=commande_AmpSoft,onvalue = 1, offvalue = 0)
+CBAS.place(anchor="w",x=1450+delta_s, y=160)
+echelle80 = Scale (cadre, from_ = 0, to = 20.0, command= choix_amplif, orient=HORIZONTAL, length = 280, width = 7, resolution = 0.1, label="",showvalue=1,tickinterval=1,sliderlength=20)
+echelle80.set(val_ampl)
+echelle80.place(anchor="w", x=1540+delta_s,y=160)
+
+RBMuRo1 = Radiobutton(cadre,text="Lin", variable=mode_Lin_Gauss,command=mode_Lineaire,value=1)
+RBMuRo1.place(anchor="w",x=1440+delta_s, y=200)
+RBMuRo2 = Radiobutton(cadre,text="Gauss", variable=mode_Lin_Gauss,command=mode_Gauss,value=2)
+RBMuRo2.place(anchor="w",x=1480+delta_s, y=200)
+RBMuRo3 = Radiobutton(cadre,text="Stars", variable=mode_Lin_Gauss,command=mode_Stars,value=3)
+RBMuRo3.place(anchor="w",x=1525+delta_s, y=200)
+
+labelParam82 = Label (cadre, text = "µX") # choix Mu X
+labelParam82.place(anchor="w", x=1573+delta_s,y=200)
+echelle82 = Scale (cadre, from_ = -5.0, to = 5.0, command= choix_Mu, orient=HORIZONTAL, length = 100, width = 7, resolution = 0.1, label="",showvalue=1,tickinterval=2,sliderlength=20)
+echelle82.set(val_Mu)
+echelle82.place(anchor="w", x=1593+delta_s,y=200)
+
+labelParam84 = Label (cadre, text = "Ro") # choix Mu X
+labelParam84.place(anchor="w", x=1705+delta_s,y=200)
+echelle84 = Scale (cadre, from_ = 0.2, to = 5.0, command= choix_Ro, orient=HORIZONTAL, length = 100, width = 7, resolution = 0.1, label="",showvalue=1,tickinterval=1,sliderlength=20)
+echelle84.set(val_Ro)
+echelle84.place(anchor="w", x=1720+delta_s,y=200)
+
+# Camera Red balance
+labelParam14 = Label (cadre, text = "CRed") # choix balance rouge
+labelParam14.place(anchor="w", x=1450+delta_s,y=305)
+echelle14 = Scale (cadre, from_ = 1, to = 99, command= choix_w_red, orient=HORIZONTAL, length = 140, width = 7, resolution = 1, label="",showvalue=1,tickinterval=0,sliderlength=20)
+echelle14.set(val_red)
+echelle14.place(anchor="w", x=1485+delta_s,y=305)
+
+# Camera Blue balance
+labelParam15 = Label (cadre, text = "CBlue") # choix balance bleue
+labelParam15.place(anchor="w", x=1645+delta_s,y=305)
+echelle15 = Scale (cadre, from_ = 1, to = 99, command= choix_w_blue, orient=HORIZONTAL, length = 140, width = 7, resolution = 1, label="",showvalue=1,tickinterval=0,sliderlength=20)
+echelle15.set(val_blue)
+echelle15.place(anchor="w", x=1680+delta_s,y=305)
+
+# Software Red balance
+labelParam100 = Label (cadre, text = "R") # choix balance rouge
+labelParam100.place(anchor="w", x=1440+delta_s,y=340)
+echelle100 = Scale (cadre, from_ = 0, to = 2, command= choix_w_reds, orient=HORIZONTAL, length = 360, width = 7, resolution = 0.005, label="",showvalue=1,tickinterval=0,sliderlength=20)
+echelle100.set(val_reds)
+echelle100.place(anchor="w", x=1440+delta_s+15,y=340)
+
+# Software Green balance
+labelParam101 = Label (cadre, text = "G") # choix balance rouge
+labelParam101.place(anchor="w", x=1440+delta_s,y=370)
+echelle101 = Scale (cadre, from_ = 0, to = 2, command= choix_w_greens, orient=HORIZONTAL, length = 360, width = 7, resolution = 0.005, label="",showvalue=1,tickinterval=0,sliderlength=20)
+echelle101.set(val_greens)
+echelle101.place(anchor="w", x=1440+delta_s+15,y=370)
+
+# Software Blue balance
+labelParam102 = Label (cadre, text = "B") # choix balance bleue
+labelParam102.place(anchor="w", x=1440+delta_s,y=400)
+echelle102 = Scale (cadre, from_ = 0, to = 2, command= choix_w_blues, orient=HORIZONTAL, length = 360, width = 7, resolution = 0.005, label="",showvalue=1,tickinterval=0,sliderlength=20)
+echelle102.set(val_blues)
+echelle102.place(anchor="w", x=1440+delta_s+15,y=400)
+
+
+###########################
+# SHARPEN DENOISE WIDGETS #
+###########################
+
+# Choix Sharpen 1 & 2
+CBSS1 = Checkbutton(cadre,text="Sharpen 1  Val/Sigma", variable=choix_sharpen_soft1,command=commande_sharpen_soft1,onvalue = 1, offvalue = 0)
+CBSS1.place(anchor="w",x=1450+delta_s, y=435)
+echelle152 = Scale (cadre, from_ = 0, to = 10, command= choix_val_sharpen, orient=HORIZONTAL, length = 120, width = 7, resolution = 0.2, label="",showvalue=1,tickinterval=0,sliderlength=20)
+echelle152.set(val_sharpen)
+echelle152.place(anchor="w", x=1560+delta_s,y=435)
+echelle153 = Scale (cadre, from_ = 1, to = 9, command= choix_val_sigma_sharpen, orient=HORIZONTAL, length = 120, width = 7, resolution = 1, label="",showvalue=1,tickinterval=0,sliderlength=20)
+echelle153.set(val_sigma_sharpen)
+echelle153.place(anchor="w", x=1690+delta_s,y=435)
+
+CBSS2 = Checkbutton(cadre,text="Sharpen 2  Val/Sigma", variable=choix_sharpen_soft2,command=commande_sharpen_soft2,onvalue = 1, offvalue = 0)
+CBSS2.place(anchor="w",x=1450+delta_s, y=460)
+echelle154 = Scale (cadre, from_ = 0, to = 10, command= choix_val_sharpen2, orient=HORIZONTAL, length = 120, width = 7, resolution = 0.2, label="",showvalue=1,tickinterval=0,sliderlength=20)
+echelle154.set(val_sharpen2)
+echelle154.place(anchor="w", x=1560+delta_s,y=460)
+echelle155 = Scale (cadre, from_ = 1, to = 9, command= choix_val_sigma_sharpen2, orient=HORIZONTAL, length = 120, width = 7, resolution = 1, label="",showvalue=1,tickinterval=0,sliderlength=20)
+echelle155.set(val_sigma_sharpen2)
+echelle155.place(anchor="w", x=1690+delta_s,y=460)
+
+# Choix filtre Denoise Paillou image
+CBEPF = Checkbutton(cadre,text="NR P1", variable=choix_denoise_Paillou,command=commande_denoise_Paillou,onvalue = 1, offvalue = 0)
+CBEPF.place(anchor="w",x=1450+delta_s, y=495)
+
+# Choix filtre Denoise Paillou 2 image
+CBEPF2 = Checkbutton(cadre,text="NR P2", variable=choix_denoise_Paillou2,command=commande_denoise_Paillou2,onvalue = 1, offvalue = 0)
+CBEPF2.place(anchor="w",x=1500+delta_s, y=495)
+
+# Choix filtre Denoise KNN
+CBEPF = Checkbutton(cadre,text="KNN", variable=choix_denoise_KNN,command=choix_KNN,onvalue = 1, offvalue = 0)
+CBEPF.place(anchor="w",x=1550+delta_s, y=495)
+echelle30 = Scale (cadre, from_ = 0.05, to = 1.2, command= choix_val_KNN, orient=HORIZONTAL, length = 70, width = 7, resolution = 0.1, label="",showvalue=1,tickinterval=0,sliderlength=20)
+echelle30.set(val_denoise_KNN)
+echelle30.place(anchor="w", x=1600+delta_s,y=490)
+
+# Choix filtre Denoise NLM2
+CBDS = Checkbutton(cadre,text="NLM2", variable=choix_NLM2,command=commande_NLM2,onvalue = 1, offvalue = 0)
+CBDS.place(anchor="w",x=1690+delta_s, y=495)
+echelle4 = Scale (cadre, from_ = 0.1, to = 1.2, command= choix_valeur_denoise, orient=HORIZONTAL, length = 70, width = 7, resolution = 0.1, label="",showvalue=1,tickinterval=0,sliderlength=20)
+echelle4.set(val_denoise)
+echelle4.place(anchor="w", x=1740+delta_s,y=490)
+
+
+# Choix filtre Denoise Paillou 3FNR 1 Front
+CB3FNRF = Checkbutton(cadre,text="3FNR 1F", variable=choix_3FNR,command=commande_3FNR,onvalue = 1, offvalue = 0)
+CB3FNRF.place(anchor="w",x=1450+delta_s, y=525)
+
+# Choix filtre Denoise Paillou 3FNR 1 Back
+CB3FNRB = Checkbutton(cadre,text="3FNR 1B", variable=choix_3FNRB,command=commande_3FNRB,onvalue = 1, offvalue = 0)
+CB3FNRB.place(anchor="w",x=1505+delta_s, y=525)
+
+echelle330 = Scale (cadre, from_ = 0.2, to = 0.8, command= choix_val_3FNR_Thres, orient=HORIZONTAL, length = 110, width = 7, resolution = 0.05, label="",showvalue=1,tickinterval=0,sliderlength=20)
+echelle330.set(val_3FNR_Thres)
+echelle330.place(anchor="w", x=1565+delta_s,y=520)
+
+# Choix filtre Denoise Paillou 3FNR 2 Front
+CB3FNR2F = Checkbutton(cadre,text="3FNR 2F", variable=choix_3FNR2,command=commande_3FNR2,onvalue = 1, offvalue = 0)
+CB3FNR2F.place(anchor="w",x=1705+delta_s, y=525)
+
+# Choix filtre Denoise Paillou 3FNR Back
+CB3FNR2B = Checkbutton(cadre,text="3FNR 2B", variable=choix_3FNR2B,command=commande_3FNR2B,onvalue = 1, offvalue = 0)
+CB3FNR2B.place(anchor="w",x=1760+delta_s, y=525)
+
+# Choix filtre Denoise Paillou AANRF 2 Front
+CBEPFS = Checkbutton(cadre,text="AANRF", variable=choix_AANR,command=commande_AANR,onvalue = 1, offvalue = 0)
+CBEPFS.place(anchor="w",x=1450+delta_s, y=560)
+
+# AANR Mode
+RBAADP1 = Radiobutton(cadre,text="H", variable=choix_dyn_AADP,command=choix_dyn_high,value=1)
+RBAADP1.place(anchor="w",x=1500+delta_s, y=560)
+RBAADP2 = Radiobutton(cadre,text="L", variable=choix_dyn_AADP,command=choix_dyn_low,value=2)
+RBAADP2.place(anchor="w",x=1530+delta_s, y=560)
+
+# AANR ghost reducer
+CBGR = Checkbutton(cadre,text="GR", variable=choix_ghost_reducer,command=commande_ghost_reducer,onvalue = 1, offvalue = 0)
+CBGR.place(anchor="w",x=1531+30+delta_s, y=560)
+echelle130 = Scale (cadre, from_ = 20, to = 70, command= choix_val_ghost_reducer, orient=HORIZONTAL, length = 130, width = 7, resolution = 2, label="",showvalue=1,tickinterval=10,sliderlength=20)
+echelle130.set(val_ghost_reducer)
+echelle130.place(anchor="w", x=1600+delta_s,y=560)
+
+# Choix filtre Denoise Paillou AANRF Back
+CBEPFSB = Checkbutton(cadre,text="AANRB", variable=choix_AANRB,command=commande_AANRB,onvalue = 1, offvalue = 0)
+CBEPFSB.place(anchor="w",x=1750+delta_s, y=560)
+
+# Stabilization
+CBSTAB = Checkbutton(cadre,text="STAB", variable=choix_STAB,command=commande_STAB,onvalue = 1, offvalue = 0)
+CBSTAB.place(anchor="w",x=1840+delta_s, y=525)
+
+# Image Quality Estimate
+CBIMQE = Checkbutton(cadre,text="IQE", variable=choix_IMQE,command=commande_IMQE,onvalue = 1, offvalue = 0)
+CBIMQE .place(anchor="w",x=1840+delta_s, y=565)
+
+# BFR Bad Frame Remove
+CBBFR = Checkbutton(cadre,text="RmBF", variable=choix_BFR,command=commande_BFR,onvalue = 1, offvalue = 0)
+CBBFR.place(anchor="w",x=1450+delta_s, y=600)
+echelle300 = Scale (cadre, from_ = 0, to = 100, command= choix_val_BFR, orient=HORIZONTAL, length = 100, width = 7, resolution = 5, label="",showvalue=1,tickinterval=20,sliderlength=20)
+echelle300.set(val_BFR)
+echelle300.place(anchor="w", x=1500+delta_s,y=600)
+
+# Choix 2 frames variation Reduction Filter for turbulence pre treatment
+CBRV = Checkbutton(cadre,text="VAR", variable=choix_reduce_variation,command=commande_reduce_variation,onvalue = 1, offvalue = 0)
+CBRV.place(anchor="w",x=1615+delta_s, y=600)
+RBRVBPF1 = Radiobutton(cadre,text="BF", variable=choix_BFReference,command=command_BFReference,value=1) # Best frame reference
+RBRVBPF1.place(anchor="w",x=1655+delta_s, y=600)
+RBRVBPF2 = Radiobutton(cadre,text="PF", variable=choix_BFReference,command=command_PFReference,value=2)  # Previous frame reference
+RBRVBPF2.place(anchor="w",x=1688+delta_s, y=600)
+
+echelle270 = Scale (cadre, from_ = 0.5, to = 3, command= choix_val_reduce_variation, orient=HORIZONTAL, length = 100, width = 7, resolution = 0.1, label="",showvalue=1,tickinterval=2,sliderlength=20)
+echelle270.set(val_reduce_variation)
+echelle270.place(anchor="w", x=1720+delta_s,y=600)
+
+# Choix 2 frames variation Reduction Filter for turbulence post treatment
+CBRVPT = Checkbutton(cadre,text="VARPT", variable=choix_reduce_variation_post_treatment,command=commande_reduce_variation_post_treatment,onvalue = 1, offvalue = 0)
+CBRVPT.place(anchor="w",x=1840+delta_s, y=600)
+
+
+#####################
+# HISTOGRAM WIDGETS #
+#####################
+
+# Choix filtre Gradient Removal
+CBGR = Checkbutton(cadre,text="Grad/Vignet", variable=choix_GR,command=commande_GR,onvalue = 1, offvalue = 0)
+CBGR.place(anchor="w",x=1450+delta_s, y=640)
+
+# Choix du mode gradient ou vignetting
+RBGV1 = Radiobutton(cadre,text="Gr", variable=gradient_vignetting,command=mode_gradient,value=1)
+RBGV1.place(anchor="w",x=1530+delta_s, y=640)
+RBGV2 = Radiobutton(cadre,text="Vig", variable=gradient_vignetting,command=mode_vignetting,value=2)
+RBGV2.place(anchor="w",x=1560+delta_s, y=640)
+
+# Choix Parametre Seuil Gradient Removal
+echelle60 = Scale (cadre, from_ = 0, to = 100, command= choix_SGR, orient=HORIZONTAL, length = 100, width = 7, resolution = 1, label="",showvalue=1,tickinterval=20,sliderlength=20)
+echelle60.set(val_SGR)
+echelle60.place(anchor="w", x=1600+delta_s,y=640)
+
+# Choix Parametre Atenuation Gradient Removal
+labelParam61 = Label (cadre, text = "At")
+labelParam61.place(anchor="e", x=1735+delta_s,y=640)
+echelle61 = Scale (cadre, from_ = 0, to = 100, command= choix_AGR, orient=HORIZONTAL, length = 80, width = 7, resolution = 1, label="",showvalue=1,tickinterval=25,sliderlength=20)
+echelle61.set(val_AGR)
+echelle61.place(anchor="w", x=1740+delta_s,y=640)
+
+# Choix du mode image en négatif
+CBIN = Checkbutton(cadre,text="Img Neg", variable=choix_img_Neg,command=commande_img_Neg,onvalue = 1, offvalue = 0)
+CBIN.place(anchor="w",x=1450+delta_s, y=680)
+
+# Histogram equalize
+CBHE2 = Checkbutton(cadre,text="Gamma", variable=choix_histogram_equalize2,command=commande_histogram_equalize2,onvalue = 1, offvalue = 0)
+CBHE2.place(anchor="w",x=1520+delta_s, y=680)
+echelle16 = Scale (cadre, from_ = 0.1, to = 4, command= choix_heq2, orient=HORIZONTAL, length = 240, width = 7, resolution = 0.05, label="",showvalue=1,tickinterval=0.5,sliderlength=20)
+echelle16.set(val_heq2)
+echelle16.place(anchor="w", x=1580+delta_s,y=680)
+
+# Choix histogramme stretch
+CBHS = Checkbutton(cadre,text="Histo Stretch", variable=choix_histogram_stretch,command=commande_histogram_stretch,onvalue = 1, offvalue = 0)
+CBHS.place(anchor="w",x=1450+delta_s, y=720)
+
+labelParam5 = Label (cadre, text = "Min") # choix valeur histogramme strech minimum
+labelParam5.place(anchor="w", x=1555+delta_s,y=720)
+echelle5 = Scale (cadre, from_ = 0, to = 150, command= choix_histo_min, orient=HORIZONTAL, length = 100, width = 7, resolution = 1, label="",showvalue=1,tickinterval=50,sliderlength=20)
+echelle5.set(val_histo_min)
+echelle5.place(anchor="w", x=1580+delta_s,y=720)
+
+labelParam6 = Label (cadre, text = "Max") # choix valeur histogramme strech maximum
+labelParam6.place(anchor="w", x=1700+delta_s,y=720)
+echelle6 = Scale (cadre, from_ = 155, to = 255, command= choix_histo_max, orient=HORIZONTAL, length = 100, width = 7, resolution = 1, label="",showvalue=1,tickinterval=25,sliderlength=20)
+echelle6.set(val_histo_max)
+echelle6.place(anchor="w", x=1720+delta_s,y=720)
+
+#Choix histogramme Sigmoide
+CBHPT = Checkbutton(cadre,text="Histo Sigmoide", variable=choix_histogram_phitheta,command=commande_histogram_phitheta,onvalue = 1, offvalue = 0)
+CBHPT.place(anchor="w",x=1450+delta_s, y=760)
+
+labelParam12 = Label (cadre, text = "Pnt") # choix valeur histogramme Signoide param 1
+labelParam12.place(anchor="w", x=1555+delta_s,y=760)
+echelle12 = Scale (cadre, from_ = 0.5, to = 3, command= choix_phi, orient=HORIZONTAL, length = 100, width = 7, resolution = 0.1, label="",showvalue=1,tickinterval=0.5,sliderlength=20)
+echelle12.set(val_phi)
+echelle12.place(anchor="w", x=1580+delta_s,y=760)
+
+labelParam13 = Label (cadre, text = "Dec") # choix valeur histogramme Signoide param 2
+labelParam13.place(anchor="w", x=1700+delta_s,y=760)
+echelle13 = Scale (cadre, from_ = 50, to = 200, command= choix_theta, orient=HORIZONTAL, length = 100, width = 7, resolution = 2, label="",showvalue=1,tickinterval=50,sliderlength=20)
+echelle13.set(val_theta)
+echelle13.place(anchor="w", x=1720+delta_s,y=760)
+
+# Choix contrast CLAHE
+CBCC = Checkbutton(cadre,text="Contrast", variable=choix_contrast_CLAHE,command=commande_contrast_CLAHE,onvalue = 1, offvalue = 0)
+CBCC.place(anchor="w",x=1450+delta_s, y=800)
+
+labelParam9 = Label (cadre, text = "Clip") # choix valeur contrate CLAHE
+labelParam9.place(anchor="w", x=1555+delta_s,y=800)
+echelle9 = Scale (cadre, from_ = 0.1, to = 4, command= choix_valeur_CLAHE, orient=HORIZONTAL, length = 100, width = 7, resolution = 0.1, label="",showvalue=1,tickinterval=1,sliderlength=20)
+echelle9.set(val_contrast_CLAHE)
+echelle9.place(anchor="w", x=1580+delta_s,y=800)
+labelParam109 = Label (cadre, text = "Grid") # choix valeur contrate CLAHE
+labelParam109.place(anchor="w", x=1700+delta_s,y=800)
+echelle109 = Scale (cadre, from_ = 4, to = 24, command= choix_grid_CLAHE, orient=HORIZONTAL, length = 100, width = 7, resolution = 2, label="",showvalue=1,tickinterval=8,sliderlength=20)
+echelle109.set(val_grid_CLAHE)
+echelle109.place(anchor="w", x=1720+delta_s,y=800)
+
+# Choix Contrast Low Light
+CBCLL = Checkbutton(cadre,text="CLL", variable=choix_CLL,command=commande_CLL,onvalue = 1, offvalue = 0)
+CBCLL.place(anchor="w",x=1450+delta_s, y=840)
+
+labelParam200 = Label (cadre, text = "µ") # choix Mu CLL
+labelParam200.place(anchor="w", x=1500+delta_s,y=840)
+echelle200 = Scale (cadre, from_ = 0, to = 5.0, command= choix_Var_CLL, orient=HORIZONTAL, length = 80, width = 7, resolution = 0.1, label="",showvalue=1,tickinterval=2,sliderlength=20)
+echelle200.set(val_MuCLL)
+echelle200.place(anchor="w", x=1510+delta_s,y=840)
+
+labelParam201 = Label (cadre, text = "Ro") # choix Ro CLL
+labelParam201.place(anchor="w", x=1605+delta_s,y=840)
+echelle201 = Scale (cadre, from_ = 0.5, to = 5.0, command= choix_Var_CLL, orient=HORIZONTAL, length = 80, width = 7, resolution = 0.1, label="",showvalue=1,tickinterval=2,sliderlength=20)
+echelle201.set(val_RoCLL)
+echelle201.place(anchor="w", x=1625+delta_s,y=840)
+
+labelParam202 = Label (cadre, text = "amp") # choix Amplification CLL
+labelParam202.place(anchor="w", x=1715+delta_s,y=840)
+echelle202 = Scale (cadre, from_ = 0.5, to = 5.0, command= choix_Var_CLL, orient=HORIZONTAL, length = 80, width = 7, resolution = 0.1, label="",showvalue=1,tickinterval=2,sliderlength=20)
+echelle202.set(val_AmpCLL)
+echelle202.place(anchor="w", x=1740+delta_s,y=840)
+
+
+####################
+# CAPTURES WIDGETS #
+####################
+
+# Choix HQ Capture
+CBHQC = Checkbutton(cadre,text="RAW Capture", variable=choix_HQ_capt,command=commande_HQ_capt,onvalue = 1, offvalue = 0)
+CBHQC.place(anchor="w",x=1450+delta_s, y=1010)
+
+# Number of pictures to capture
+echelle8 = Scale (cadre, from_ = 1, to = 501, command= choix_nb_captures, orient=HORIZONTAL, length = 250, width = 7, resolution = 1, label="",showvalue=1,tickinterval=50,sliderlength=20)
+echelle8.set(val_nb_captures)
+echelle8.place(anchor="w", x=1570+delta_s,y=883)
+
+# Frames number Video
+echelle11 = Scale (cadre, from_ = 0, to = 4000, command= choix_nb_video, orient=HORIZONTAL, length = 250, width = 7, resolution = 20, label="",showvalue=1,tickinterval=500,sliderlength=20)
+echelle11.set(val_nb_capt_video)
+echelle11.place(anchor="w", x=1570+delta_s,y=930)
+
+labelParam65 = Label (cadre, text = "Delta T") # choix valeur contrate CLAHE
+labelParam65.place(anchor="w", x=1535+delta_s,y=975)
+echelle65 = Scale (cadre, from_ = 0, to = 60, command= choix_deltat, orient=HORIZONTAL, length = 250, width = 7, resolution = 1, label="",showvalue=1,tickinterval=10,sliderlength=20)
+echelle65.set(val_deltat)
+echelle65.place(anchor="w",x=1570+delta_s,y=975)
+
+labelInfo1 = Label (cadre, text = text_info1) # label info n°1
+labelInfo1.place(anchor="w", x=1550+delta_s,y=1010)
+
+labelInfo10 = Label (cadre, text = text_info10) # label info n°10
+labelInfo10.place(anchor="w", x=1450+delta_s,y=1030)
+
+labelParam100 = Label (cadre, text = "Treatment time : ")
+labelParam100.place(anchor="w", x=1450+delta_s,y=20)
+
+labelInfo2 = Label (cadre, text = "") # label info n°2
+labelInfo2.place(anchor="w", x=1520+delta_s,y=20)
+
+
+####################
+#      BUTTONS     #
+####################
+
+Button1 = Button (cadre,text = "Start CAP", command = start_pic_capture,padx=10,pady=0)
+Button1.place(anchor="w", x=1460+delta_s,y=875)
+
+Button2 = Button (cadre,text = "Stop CAP", command = stop_pic_capture,padx=10,pady=0)
+Button2.place(anchor="w", x=1460+delta_s,y=900)
+
+Button3 = Button (cadre,text = "Start REC", command = start_video_capture,padx=10,pady=0)
+Button3.place(anchor="w", x=1460+delta_s,y=935)
+
+Button4 = Button (cadre,text = "Stop REC", command = stop_video_capture,padx=10,pady=0)
+Button4.place(anchor="w", x=1460+delta_s,y=960)
+
+Button5 = Button (cadre,text = "Pause REC", command = pause_video_capture,padx=10,pady=0)
+Button5.place(anchor="w", x=1460+delta_s,y=985)
+
+# RAZ frame counter
+Button10 = Button (cadre,text = "RZ Fr Cnt", command = raz_framecount,padx=10,pady=0)
+Button10.place(anchor="w", x=5,y=370)
+
+if flag_camera_ok == False :
+    Button12 = Button (cadre,text = "Load Vid", command = load_video,padx=10,pady=0)
+    Button12.place(anchor="w", x=5,y=945)
+    Button17 = Button (cadre,text = "Load Pic", command = load_image,padx=10,pady=0)
+    Button17.place(anchor="w", x=5,y=970)
+
+Button15 = Button (cadre,text = "Dir Vid", command = choose_dir_vid,padx=10,pady=0)
+Button15.place(anchor="w", x=5,y=995)
+
+Button16 = Button (cadre,text = "Dir Pic", command = choose_dir_pic,padx=10,pady=0)
+Button16.place(anchor="w", x=5,y=1020)
+
+
+Button (fenetre_principale, text = "Quit", command = quitter,padx=10,pady=5).place(x=1700+delta_s,y=1030, anchor="w")
 
 
 def init_camera() :
@@ -3286,4 +8961,3 @@ else :
 
 
 fenetre_principale.destroy()
-
