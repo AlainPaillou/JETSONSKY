@@ -217,6 +217,7 @@ else :
 
 
 import cv2
+
 try :
     CudaEnable = cv2.cuda.getCudaEnabledDeviceCount()
     if CudaEnable == 1 :
@@ -293,29 +294,32 @@ except :
 # Choose the size of the fonts in the Main Window - It depends of your system - can be set from 5 to 7
 MainWindowFontSize = 6
 
+# Get script directory for proper path resolution (allows running from any directory)
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+
 if Dev_system == "Linux" :
     # Choose your directories for images and videos
-    image_path = os.path.join(os.getcwd(), 'Images')
-    video_path = os.path.join(os.getcwd(), 'Videos')
+    image_path = os.path.join(SCRIPT_DIR, 'Images')
+    video_path = os.path.join(SCRIPT_DIR, 'Videos')
 
     # Path to librairies ZWO Jetson sbc
     if platform.machine() == "aarch64" :
-        env_filename_camera = os.path.join(os.getcwd(), 'Lib','libASICamera2.so')
-        env_filename_efw = os.path.join(os.getcwd(), 'Lib','libEFWFilter.so')
+        env_filename_camera = os.path.join(SCRIPT_DIR, 'Lib','libASICamera2.so')
+        env_filename_efw = os.path.join(SCRIPT_DIR, 'Lib','libEFWFilter.so')
     elif platform.machine() == "x86_64" :
-        env_filename_camera = os.path.join(os.getcwd(), 'x64_Lib','libASICamera2.so.1.27')
-        env_filename_efw = os.path.join(os.getcwd(), 'Lib','libEFWFilter.so.1.7')
+        env_filename_camera = os.path.join(SCRIPT_DIR, 'x64_Lib','libASICamera2.so.1.27')
+        env_filename_efw = os.path.join(SCRIPT_DIR, 'Lib','libEFWFilter.so.1.7')
 
     USBCam = 70
     
 else :
     # Choose your directories for images and videos
-    image_path = os.path.join(os.getcwd(), 'Images')
-    video_path = os.path.join(os.getcwd(), 'Videos')
+    image_path = os.path.join(SCRIPT_DIR, 'Images')
+    video_path = os.path.join(SCRIPT_DIR, 'Videos')
     
     # Path to librairies ZWO Windows
-    env_filename_camera = os.path.join(os.getcwd(), 'Lib','ASICamera2.dll')
-    env_filename_efw = os.path.join(os.getcwd(), 'Lib','EFW_filter.dll')
+    env_filename_camera = os.path.join(SCRIPT_DIR, 'Lib','ASICamera2.dll')
+    env_filename_efw = os.path.join(SCRIPT_DIR, 'Lib','EFW_filter.dll')
 
     USBCam = 95
 
@@ -655,47 +659,16 @@ def Mount_calibration():
         labelInfo1.config(text=" Astronomy calculator not initialized ")
 
 
-# Splash screen - Show before main window
-try:
-    from PIL import Image, ImageTk
-    splash_root = Tk()
-    splash_root.title("JetsonSky")
-    splash_root.overrideredirect(True)
-    
-    # Get screen dimensions
-    screen_width = splash_root.winfo_screenwidth()
-    screen_height = splash_root.winfo_screenheight()
-    
-    # Load and display splash image
-    splash_image = Image.open('JetsonSky_Logo.jpg')
-    splash_photo = ImageTk.PhotoImage(splash_image)
-    splash_label = Label(splash_root, image=splash_photo)
-    splash_label.image = splash_photo
-    splash_label.pack()
-    
-    # Center splash screen
-    splash_width = splash_image.width
-    splash_height = splash_image.height
-    x = (screen_width - splash_width) // 2
-    y = (screen_height - splash_height) // 2
-    splash_root.geometry(f"{splash_width}x{splash_height}+{x}+{y}")
-    
-    # Add instruction text
-    instruction_label = Label(splash_root, text="Press any key to continue...", 
-                             font=("Arial", 12), bg="white", fg="black")
-    instruction_label.pack(pady=10)
-    
-    # Wait for key press
-    splash_root.bind("<Key>", lambda e: splash_root.destroy())
-    splash_root.focus_force()
-    splash_root.mainloop()
-except:
-    pass  # Skip splash if image not found or PIL not available
-
 # Main Window
 fenetre_principale = Tk ()
 screen_width = fenetre_principale.winfo_screenwidth()
 screen_height = fenetre_principale.winfo_screenheight()
+
+# Splash screen using OpenCV
+image_JetsonSky = cv2.imread(os.path.join(SCRIPT_DIR, 'JetsonSky_Logo.jpg'), cv2.IMREAD_COLOR)
+cv2.imshow(titre, image_JetsonSky)
+cv2.waitKey()
+cv2.destroyAllWindows()
 
 if screen_width > 2000 :
     if askyesno("Hires Window", "Choose Hires Window ?") :
