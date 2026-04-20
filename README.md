@@ -1,5 +1,12 @@
 # JETSONSKY
 
+**** 2026-04-20 UPDATE :
+
+I have uploaded JetsonSky_Github_V53_11RC.py :
+- some Claude AI optimizations
+- some personal optimizations
+- some bug fixed
+  
 **** 2025-12-04 UPDATE :
 
 I have uploaded JetsonSky_Old_Way_V53_07RC.py which is the original 53_07RC version (standalone with the entire code).
