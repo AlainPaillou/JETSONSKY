@@ -1,5 +1,14 @@
 # JETSONSKY
 
+**** 2026-08-21 UPDATE :
+
+I have uploaded JetsonSky_Github_V53_21RC.py :
+- some personal optimizations
+- some bug fixed
+- 16 bits capture or SER video HDR
+
+ You will also have to upload the new __init__.py file for Serfile library 
+
 **** 2026-04-20 UPDATE :
 
 I have uploaded JetsonSky_Github_V53_11RC.py :
